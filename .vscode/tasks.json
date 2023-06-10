@@ -1,0 +1,20 @@
+{
+	"version": "2.0.0",
+    "options": {
+        "cwd": "${workspaceRoot}/build"
+    },
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "cmake",
+			"command": "D:\\Qt\\Tools\\CMake_64\\bin\\cmake.EXE --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -SD:/code/DeviceIntegration -Bd:/code/DeviceIntegration/build -DCMAKE_BUILD_TYPE=Debug"
+		},
+		{
+			"label": "build",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"cmake"
+			]
+		}
+	]
+}

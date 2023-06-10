@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "msvc-64",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "D:\\code\\DeviceIntegration\\build\\Debug\\DeviceIntegration.exe",
+            "cwd": "${workspaceRoot}",
+            "console": "internalConsole",
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            },
+            "preLaunchTask": "build",
+            "visualizerFile": "c:\\Users\\Administrator\\AppData\\Roaming\\Code\\User\\workspaceStorage\\9d25ee632f5b8a1d9b1dead071f7613f\\tonka3000.qtvsctools\\qt.natvis.xml"
+        }
+    ]
+}
