@@ -3,12 +3,11 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/src/**",
                 "${workspaceFolder}/src/utils",
                 "${workspaceFolder}/src/sql",
                 "${workspaceFolder}/src/app",
                 "${workspaceFolder}/src/domino",
-                "${workspaceFolder}/third_party/include/**",
+                "${workspaceFolder}/third_party/include",
                 "D:/Qt/6.5.1/msvc2019_64/include",
                 "D:/Qt/6.5.1/msvc2019_64/include/ActiveQt",
                 "D:/Qt/6.5.1/msvc2019_64/include/Qt3DAnimation",
@@ -136,12 +135,11 @@
             ],
             "browse": {
                 "path": [
-                    "${workspaceFolder}/src/**",
                     "${workspaceFolder}/src/utils",
                     "${workspaceFolder}/src/sql",
                     "${workspaceFolder}/src/app",
                     "${workspaceFolder}/src/domino",
-                    "${workspaceFolder}/third_party/include/**",
+                    "${workspaceFolder}/third_party/include",
                     "D:/Qt/6.5.1/msvc2019_64/include",
                     "D:/Qt/6.5.1/msvc2019_64/include/ActiveQt",
                     "D:/Qt/6.5.1/msvc2019_64/include/Qt3DAnimation",

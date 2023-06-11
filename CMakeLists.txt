@@ -14,7 +14,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(3RD_ROOT_DIR ${CMAKE_SOURCE_DIR}/third_party)
 
 include_directories(${3RD_ROOT_DIR}/include
-                    ${CMAKE_SOURCE_DIR}/src
                     ${CMAKE_SOURCE_DIR}/src/utils
                     ${CMAKE_SOURCE_DIR}/src/sql
                     ${CMAKE_SOURCE_DIR}/src/domino
@@ -60,6 +59,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${3RD_ROOT_DIR}/lib/jsoncppd.lib
     ${3RD_ROOT_DIR}/lib/fmtd.lib
     ${3RD_ROOT_DIR}/lib/spdlogd.lib
+    ${3RD_ROOT_DIR}/lib/modbusd.lib
 )
 
 # release 版本使用
@@ -72,6 +72,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${3RD_ROOT_DIR}/lib/jsoncpp.lib
     ${3RD_ROOT_DIR}/lib/fmt.lib
     ${3RD_ROOT_DIR}/lib/spdlog.lib
+    ${3RD_ROOT_DIR}/lib/modbus.lib
 )
 ]]
 # debug 版本使用

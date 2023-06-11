@@ -57,7 +57,6 @@ bool AppFrame::AppFrameworkImpl::dominoConnect(const QString &ip, quint16 port)
 		
 		myList.append(false);
 		button->setProperty("myProperty", myList);
-		// invokeCpp(button, "myProperty", myList);
 	}
 	return invokeCpp(domino_, domino_->getNameConnectToServer(), ip, port);
 }

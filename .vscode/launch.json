@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "msvc-64",
+            "name": "msvc-64-debug",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "D:\\code\\DeviceIntegration\\build\\Debug\\DeviceIntegration.exe",
@@ -13,7 +13,7 @@
                 "trace": true
             },
             "preLaunchTask": "build",
-            "visualizerFile": "c:\\Users\\Administrator\\AppData\\Roaming\\Code\\User\\workspaceStorage\\9d25ee632f5b8a1d9b1dead071f7613f\\tonka3000.qtvsctools\\qt.natvis.xml"
+            "visualizerFile": "c:\\Users\\Administrator\\AppData\\Roaming\\Code\\User\\workspaceStorage\\e449329a9d9bb97140870a9f1ae9d472\\tonka3000.qtvsctools\\qt.natvis.xml"
         }
     ]
 }

@@ -37,13 +37,13 @@ namespace AppFrame
 
         std::list<QThread *> lvThread_;
         // Module 组装区域
-        AppMetaFlash *appMetaFlash_= nullptr;
+        AppMetaFlash *appMetaFlash_ = nullptr;
         Domino *domino_ = nullptr;
         SqlHelper *mysqlTool_ = nullptr;
 
     protected:
         // 调用qml 对象函数工具
-       
+
         // 调用C++ 对象函数工具
         bool invokeCpp(QObject *object, const QString &functionName, const QVariantList &args)
         {
