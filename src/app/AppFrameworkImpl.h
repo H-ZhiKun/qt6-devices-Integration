@@ -7,6 +7,7 @@
 #include "Domino.h"
 #include "SqlHelper.h"
 #include <thread>
+#include "ModbusClient.h"
 namespace AppFrame
 {
     class AppFrameworkImpl final : public AppFramework
@@ -27,6 +28,7 @@ namespace AppFrame
     private:
         // 私有接口区域
         void runDomino();
+        void runPLC();
         void initMysqlTool();
         void timeToClean();
         void memoryClean();
@@ -40,6 +42,7 @@ namespace AppFrame
         AppMetaFlash *appMetaFlash_ = nullptr;
         Domino *domino_ = nullptr;
         SqlHelper *mysqlTool_ = nullptr;
+        ModbusClient* mbsPLC_ = nullptr;
 
     protected:
         // 调用qml 对象函数工具

@@ -35,6 +35,7 @@ int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
 	LOGINFO("AppFrame Run");
 	initMysqlTool();
 	runDomino();
+	runPLC();
 	return 0;
 }
 
@@ -51,10 +52,8 @@ bool AppFrame::AppFrameworkImpl::dominoConnect(const QString &ip, quint16 port)
 		QVariantList myList;
 		myList.append(3);
 
-
 		myList.append("zk");
 
-		
 		myList.append(false);
 		button->setProperty("myProperty", myList);
 	}
@@ -74,10 +73,26 @@ void AppFrame::AppFrameworkImpl::runDomino()
 	domino_->moveToThread(th);
 	//  在子线程中定义槽函数，用于终止对象事件循环
 	QObject::connect(qApp, &QCoreApplication::aboutToQuit, th, &QThread::quit);
-	QObject::connect(th, &QThread::finished, [this](){ domino_->cleanup(); });
+	QObject::connect(th, &QThread::finished, [this]()
+					 { domino_->cleanup(); });
 	th->start();
 	invokeCpp(domino_, domino_->getNameStartClient(), Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 11110));
 	lvThread_.push_back(th);
+}
+
+void AppFrame::AppFrameworkImpl::runPLC()
+{
+	mbsPLC_ = new ModbusClient("127.0.0.1", 502);
+	std::vector<ModbusReadArgument> args;
+	for (int i = 1; i < 6; i++)
+	{
+		ModbusReadArgument arg;
+		arg.addr = 22 + i;
+		arg.offset = 1;
+		arg.clock = i * 20;
+		args.emplace_back(arg);
+	}
+	mbsPLC_->work(args);
 }
 
 void AppFrame::AppFrameworkImpl::initMysqlTool()
@@ -127,5 +142,10 @@ void AppFrame::AppFrameworkImpl::memoryClean()
 	{
 		delete domino_;
 		domino_ = nullptr;
+	}
+	if (mbsPLC_ != nullptr)
+	{
+		delete mbsPLC_;
+		mbsPLC_ = nullptr;
 	}
 }
