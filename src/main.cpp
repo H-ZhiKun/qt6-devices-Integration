@@ -1,3 +1,13 @@
+/*
+ * @Author: A炼 834022125@qq.com
+ * @Date: 2023-06-10 14:28:59
+ * @LastEditors: A炼 834022125@qq.com
+ * @LastEditTime: 2023-06-10 16:12:33
+ * @FilePath: \DeviceIntegration\src\main.cpp
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
 #ifdef _DEBUG
 #include "vld/vld.h"
 #endif
@@ -6,6 +16,7 @@
 #include <QQmlContext>
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
+#include <QQuickStyle>
 using namespace AppFrame;
 
 int main(int argc, char *argv[])
@@ -22,8 +33,9 @@ int main(int argc, char *argv[])
         { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
     engine.rootContext()->setContextProperty("appMetaFlash", appFramework().getAppMetaFlash());
+    // 设置资源路径
 
-    engine.loadFromModule("DeviceIntegration", "Main");
+    engine.loadFromModule("DeviceIntegration", "App");
     appFramework().run(&engine);
     return app.exec();
 }
