@@ -54,6 +54,8 @@ std::vector<uint16_t> ModbusClient::readDatas(uint16_t address, uint16_t count)
 {
     std::shared_lock<std::shared_mutex> lock(mtxCache_); // 加缓存读锁
 
+
+
     std::vector<uint16_t> res;
     for (int i = 0; i < count; i++)
     {

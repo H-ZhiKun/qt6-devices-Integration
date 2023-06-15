@@ -56,6 +56,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Network
     Qt6::Sql
     ${3RD_ROOT_DIR}/lib/vld.lib
+    ${3RD_ROOT_DIR}/lib/zlibd.lib
     ${3RD_ROOT_DIR}/lib/jsoncppd.lib
     ${3RD_ROOT_DIR}/lib/fmtd.lib
     ${3RD_ROOT_DIR}/lib/spdlogd.lib
@@ -69,6 +70,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Quick
     Qt6::Network
     Qt6::Sql
+    ${3RD_ROOT_DIR}/lib/zlib.lib
     ${3RD_ROOT_DIR}/lib/jsoncpp.lib
     ${3RD_ROOT_DIR}/lib/fmt.lib
     ${3RD_ROOT_DIR}/lib/spdlog.lib

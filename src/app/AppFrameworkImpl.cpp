@@ -87,9 +87,9 @@ void AppFrame::AppFrameworkImpl::runPLC()
 	for (int i = 1; i < 6; i++)
 	{
 		ModbusReadArgument arg;
-		arg.addr = 22 + i;
+		arg.addr = 32;
 		arg.offset = 1;
-		arg.clock = i * 20;
+		arg.clock = 500;
 		args.emplace_back(arg);
 	}
 	mbsPLC_->work(args);

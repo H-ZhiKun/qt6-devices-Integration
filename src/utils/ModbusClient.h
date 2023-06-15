@@ -1,11 +1,11 @@
 #pragma once
-
 #include <modbus/modbus.h>
 #include <shared_mutex>
 #include <unordered_map>
 #include <string>
 #include <vector>
 #include "Logger.h"
+
 
 /**
  * @brief Modbus读取参数
@@ -45,6 +45,7 @@ public:
     ModbusClient(ModbusClient &&) noexcept(true) = default;
     ModbusClient &operator=(ModbusClient &&) noexcept(true) = default;
     void work(const std::vector<ModbusReadArgument> &startArgs);
+
 
     /**
      * @brief 读取寄存器数据
