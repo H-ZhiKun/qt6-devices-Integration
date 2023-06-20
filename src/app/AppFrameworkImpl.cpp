@@ -47,7 +47,7 @@ bool AppFrame::AppFrameworkImpl::dominoConnect(const QString &ip, quint16 port)
 {
 
 	asyncTask([this]
-			  {
+	{
 							int i = 0;
 							while(1)
 							{
@@ -90,6 +90,7 @@ void AppFrame::AppFrameworkImpl::runDomino()
 	QObject::connect(qApp, &QCoreApplication::aboutToQuit, th, &QThread::quit);
 	QObject::connect(th, &QThread::finished, [this]()
 					 { domino_->cleanup(); });
+
 	th->start();
 	invokeCpp(domino_, domino_->invokeStartClient(), Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 11110));
 	lvThread_.push_back(th);
@@ -114,7 +115,6 @@ void AppFrame::AppFrameworkImpl::initMysqlTool()
 {
 	mysqlTool_ = new SqlHelper(new MysqlConnectionPool(20, 5000));
 }
-
 
 void AppFrame::AppFrameworkImpl::timeToClean()
 {

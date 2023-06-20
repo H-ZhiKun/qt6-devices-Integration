@@ -26,7 +26,7 @@ void ModbusClient::work(const std::vector<ModbusReadArgument> &startArgs)
     for (const auto &arg : startArgs)
     {
         tasks_.emplace_back(std::thread([arg, this]()
-        {
+                                        {
             std::vector<uint16_t> readBuffer;
             readBuffer.resize(arg.offset);
 
@@ -45,16 +45,13 @@ void ModbusClient::work(const std::vector<ModbusReadArgument> &startArgs)
                 {
                     std::this_thread::sleep_for(std::chrono::seconds(2));
                 }
-            }
-        }));
+            } }));
     }
 }
 
 std::vector<uint16_t> ModbusClient::readDatas(uint16_t address, uint16_t count)
 {
     std::shared_lock<std::shared_mutex> lock(mtxCache_); // 加缓存读锁
-
-
 
     std::vector<uint16_t> res;
     for (int i = 0; i < count; i++)
@@ -113,7 +110,7 @@ void ModbusClient::updateCache(uint16_t address, const std::vector<uint16_t> &va
 void ModbusClient::keepConnection()
 {
     tasks_.emplace_back(std::thread([this]()
-    {
+                                    {
         while (bThreadHolder_)
         {
             std::unique_lock<std::mutex> lock(mtxMbs_);
@@ -153,6 +150,5 @@ void ModbusClient::keepConnection()
             tv.tv_usec = 2000000;
             modbus_set_response_timeout(mbsContext_, tv.tv_sec, tv.tv_usec);
             bConnected_ = true;
-        }
-    }));
+        } }));
 }
