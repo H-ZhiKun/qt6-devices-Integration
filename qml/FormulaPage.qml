@@ -2,16 +2,19 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQml.Models 2.15
 
-Window {
+GroupBox {
 
+    /*
     modality: Qt.WindowModal
     //固定窗口大小
     minimumWidth: 780
     maximumWidth: 780
     minimumHeight: 600
     maximumHeight: 600
-
-    title: "配方页面"
+    visible: true
+    */
+    width: 1110  //Screen.desktopAvailableWidth
+    height: 640  //Screen.desktopAvailableHeight
 
     id: formulaControllWin
     objectName: "formulaControllWin"
@@ -25,8 +28,8 @@ Window {
         id: formulaSelect
         objectName: "formulaSelect"
         y: 20
-        x: 10
-        width: 200
+        x: 100
+        width: 250
         height: 550
         title: "配方选择"
         font.pointSize: 20
@@ -98,7 +101,7 @@ Window {
         objectName: "formulaDisplay"
         width: 280
         height: 550
-        x: 250
+        x: 420
         y: 20
         title:"配方信息"
         font.pointSize: 20
@@ -370,7 +373,7 @@ Window {
         objectName: "formulaControll"
         width: 180
         height: 550
-        x: 580
+        x: 770
         y: 20
         title:"配方配置"
         font.pointSize: 20

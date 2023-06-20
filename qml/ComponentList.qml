@@ -65,7 +65,7 @@ ListView{
                 height: 30
                 y:20
                 x:8
-                source: "./ico/green.png"
+                source: "file:./ico/green.png"
                 fillMode: Image.PreserveAspectFit
             }
 

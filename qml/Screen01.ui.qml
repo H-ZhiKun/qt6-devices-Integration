@@ -7,7 +7,6 @@ Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on
 
 import QtQuick 6.2
 import QtQuick.Controls 6.2
-import UntitledProject
 
 
 Rectangle {
@@ -20,6 +19,8 @@ Rectangle {
         text: qsTr("Hello ElectricalPage")
         anchors.centerIn: parent
         font.family: Constants.font.family
+        
     }
+    
 }
 

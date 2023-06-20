@@ -1,27 +1,28 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-//import UntitledProject
+import QtQuick 6.2
+import QtQuick.Controls 6.2
 import QtQuick.Window
 import QtQuick.Layouts
 
 
-Window {
+GroupBox {
     id: sensorControllWin
     objectName: "sensorControllWin"
+    /*
     modality: Qt.WindowModal
     //固定窗口大小
     minimumWidth: 670
     maximumWidth: 670
     minimumHeight: 620
     maximumHeight: 620
+    */
+    width: 1110  //Screen.desktopAvailableWidth
+    height: 640  //Screen.desktopAvailableHeight
 
     property string objName: "传感器"
     visible: true
-
-    title: objName + "控制页面"
 
     /*GroupBox{
         id: sensorControll
@@ -214,28 +215,28 @@ Window {
             Rectangle  {
                 anchors.fill: stacklaout
                 ComponentList{
-                    anchors.leftMargin: 0
+                    anchors.leftMargin: 100
                     id: sensorListView1
                     objectName: "sensorListView1"
                     baseIndex: 1
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 140
+                    anchors.leftMargin: 300
                     id: sensorListView2
                     objectName: "sensorListView2"
                     baseIndex:6
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 280
+                    anchors.leftMargin: 500
                     id: sensorListView3
                     objectName: "sensorListView3"
                     baseIndex:11
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 420
+                    anchors.leftMargin: 700
                     id: sensorListView4
                     objectName: "sensorListView4"
                     baseIndex:16
@@ -245,28 +246,28 @@ Window {
             Rectangle  {
                 anchors.fill: stacklaout
                 ComponentList{
-                    anchors.leftMargin: 0
+                    anchors.leftMargin: 100
                     id: sensorListView5
                     objectName: "sensorListView5"
                     baseIndex: 21
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 140
+                    anchors.leftMargin: 300
                     id: sensorListView6
                     objectName: "sensorListView6"
                     baseIndex:26
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 280
+                    anchors.leftMargin: 500
                     id: sensorListView7
                     objectName: "sensorListView7"
                     baseIndex:31
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 420
+                    anchors.leftMargin: 700
                     id: sensorListView8
                     objectName: "sensorListView8"
                     baseIndex:36
@@ -276,28 +277,28 @@ Window {
             Rectangle  {
                 anchors.fill: stacklaout
                 ComponentList{
-                    anchors.leftMargin: 0
+                    anchors.leftMargin: 100
                     id: sensorListView9
                     objectName: "sensorListView9"
                     baseIndex: 41
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 140
+                    anchors.leftMargin: 300
                     id: sensorListView10
                     objectName: "sensorListView10"
                     baseIndex:46
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 280
+                    anchors.leftMargin: 500
                     id: sensorListView11
                     objectName: "sensorListView11"
                     baseIndex:51
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 420
+                    anchors.leftMargin: 700
                     id: sensorListView12
                     objectName: "sensorListView12"
                     baseIndex:56
@@ -307,28 +308,28 @@ Window {
             Rectangle  {
                 anchors.fill: stacklaout
                 ComponentList{
-                    anchors.leftMargin: 0
+                    anchors.leftMargin: 100
                     id: sensorListView13
                     objectName: "sensorListView13"
                     baseIndex: 61
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 140
+                    anchors.leftMargin: 300
                     id: sensorListView14
                     objectName: "sensorListView14"
                     baseIndex:66
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 280
+                    anchors.leftMargin: 500
                     id: sensorListView15
                     objectName: "sensorListView15"
                     baseIndex:71
                     listName: sensorControllWin.objName
                 }
                 ComponentList{
-                    anchors.leftMargin: 420
+                    anchors.leftMargin: 700
                     id: sensorListView16
                     objectName: "sensorListView16"
                     baseIndex:76

@@ -147,12 +147,3 @@ void TCPClient::ping()
 {
     pingBehavior();
 }
-
-QString TCPClient::getNameStartClient()
-{
-    return "startClient";
-}
-QString TCPClient::getNameConnectToServer()
-{
-    return "connectToServer";
-}

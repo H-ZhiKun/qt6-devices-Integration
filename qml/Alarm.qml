@@ -2,20 +2,21 @@ import QtQuick 6.2
 import QtQuick.Controls 6.2
 import Qt.labs.qmlmodels 1.0
 
-Window  {
+GroupBox  {
     id: alarmWin
     objectName: "alarmWin"
 
+    /*
     modality: Qt.WindowModal
     //固定窗口大小
     minimumWidth: 670
     maximumWidth: 670
     minimumHeight: 620
     maximumHeight: 620
-    visible: true
-
-
-    title: "报警页面"
+    //visible: true
+    */
+    width: 1110  //Screen.desktopAvailableWidth
+    height: 640  //Screen.desktopAvailableHeight
 
     GroupBox{
         id: alarmGroup
@@ -36,7 +37,7 @@ Window  {
             objectName: "alarmTable"
 
             // 设置列的宽
-            property var columnWidths: [150, 430]
+            property var columnWidths: [300, 700]
             columnWidthProvider: function (column) { return columnWidths[column] }
 
             model: TableModel {
@@ -50,11 +51,11 @@ Window  {
                     },
                     {
                         "date": "2023-02-25 16:21:54",
-                        "alarmText": "warning: xxx"
+                        "alarmText": "error: xxx"
                     },
                     {
                         "date": "2023-02-25 16:23:54",
-                        "alarmText": "warning: xxxx"
+                        "alarmText": "error: xxxx"
                     }
                 ]
 
@@ -84,20 +85,17 @@ Window  {
 
     Button{
         y:550
-        x:350
-
+        x:363
         text: "屏蔽安全门"
         icon.source: "file:./ico/pingbi.png"
-        icon.width: 20
-        icon.height: 20
         width:120
     }
-    
+
     Button{
         y:550
-        x:510
+        x:603
         text: "静音"
-        icon.source: "file:ico/jingyin.png"
+        icon.source: "file:./ico/jingyin.png"
         width:120
     }
 }

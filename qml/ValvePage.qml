@@ -1,27 +1,28 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-//import UntitledProject
+import QtQuick 6.2
+import QtQuick.Controls 6.2
 import QtQuick.Window
 import QtQuick.Layouts
-import "../qml/"
 
-Window {
+
+GroupBox {
     id: valveControllWin
     objectName: "valveControllWin"
+    /*
     modality: Qt.WindowModal
     //固定窗口大小
     minimumWidth: 1000
     maximumWidth: 1000
     minimumHeight: 620
     maximumHeight: 620
+    */
+    width: 1110  //Screen.desktopAvailableWidth
+    height: 640  //Screen.desktopAvailableHeight
 
     property string objName: "阀门"
     visible: true
-
-    title: objName + "控制页面"
 
     GroupBox{
         id: valveControll
@@ -43,7 +44,7 @@ Window {
             height: parent.height-180
             title: "当前未选中" + valveControllWin.objName
             property int curentSensor: -1
-            font.pointSize: 10
+            font.pointSize: 15
 
             Button {
                 // TODO:手动后一键自动按钮变色
@@ -51,12 +52,12 @@ Window {
                 objectName: "buttonAuto"
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 52
-                width: 235
-                height: 71
+                width: 155
+                height: 30
                 property int switchState: 0 //0:自动 1:手动
-                icon.height: 40
-                icon.width: 40
-                font.pointSize: 16
+                icon.height: 30
+                icon.width: 30
+                font.pointSize: 15
                 // 图标、文字随状态发生改变
                 icon.source: switchState === 1 ? "file:./ico/shoudong.png" : "file:./ico/zidong_1.png"
                 text: switchState === 1 ? qsTr("手动模式中") : qsTr("自动模式中")
@@ -96,13 +97,13 @@ Window {
                 property int switchState: 0 //0:关闭 1:开启
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 152
-                width: 235
-                height: 71
+                width: 155
+                height: 30
                 text: switchState === 0 ? qsTr("已关闭") : qsTr("已开启")
-                icon.height: 40
-                icon.width: 40
+                icon.height: 30
+                icon.width: 30
                 icon.source: switchState === 0 ? "file:./ico/guanbi.png" : "file:./ico/kaiqi.png"
-                font.pointSize: 16
+                font.pointSize: 15
                 background: Rectangle {
                     id: switchColor
                     color: buttonSwitch.switchState === 0 ? "#d6d7d7" : "#64fa32"
@@ -132,19 +133,19 @@ Window {
             id: buttonAllAuto
             objectName: "buttonAllAuto"
             anchors.horizontalCenter: parent.horizontalCenter
-            y:350
-            width:160
-            height:75
-            text: "      一键自动"
+            y:400
+            width:155
+            height:30
+            text: "    全部自动"
             highlighted: false
             flat: false
-            font.pointSize: 16
+            font.pointSize: 15
             property int allAutoState: 0  // 0:一键自动 1:未一键自动 2:自动中
             Image {
-                width: 45
-                height: 45
-                y:17
-                x:5
+                width: 25
+                height: 25
+                y: 3
+                x: 5
                 source: "file:./ico/zidong.png"
                 fillMode: Image.PreserveAspectFit
             }
@@ -184,7 +185,7 @@ Window {
         title: valveControllWin.objName + "列表"
         font.pointSize: 20
         anchors.bottomMargin: 40
-        anchors.rightMargin: 380
+        anchors.rightMargin: 480
 
         TabBar {    //点击相应的按钮实现切换
                 id: bar

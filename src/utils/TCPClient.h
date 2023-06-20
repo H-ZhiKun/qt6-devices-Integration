@@ -15,23 +15,29 @@ class TCPClient : public QObject
 public:
     explicit TCPClient(QObject *parent = nullptr);
     virtual ~TCPClient() noexcept;
+    TCPClient(const TCPClient &) = delete;
+    TCPClient &operator=(const TCPClient &) = delete;
+    TCPClient(TCPClient &&) noexcept(true) = default;
+    TCPClient &operator=(TCPClient &&) noexcept(true) = default;
     virtual void dealing(std::vector<unsigned char>) = 0; // 数据接收处理接口，纯虚接口，必须重写
     virtual void pingBehavior(){};                        // 子类继承实现具体心跳行为
 public slots:
     void startClient(const QString &host, quint16 port);
     void connectToServer(const QString &host = "", quint16 port = 0);
     void sendData(const QByteArray &data);
+
 public:
     void cleanup();
+
     // 获取方法名称系列函数
     /**
-     * @brief 函数调用参数(const QString& host，quint16 port)
+     * @brief invoke函数调用参数(const QString& host，quint16 port)
      */
-     QString getNameConnectToServer();
+    QString invokeStartClient(){return "startClient";}
     /**
-     * @brief 函数调用参数(const QString& host，quint16 port)
+     * @brief invoke函数调用参数(const QString& host，quint16 port)
      */
-     QString getNameStartClient();
+    QString invokeConnectToServer(){return "connectToServer";}
 private slots:
     void onConnected();
     void onDisconnected();

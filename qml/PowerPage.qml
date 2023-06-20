@@ -6,34 +6,35 @@ import QtQuick.Controls 6.2
 import QtQuick.Window
 import QtQuick.Layouts
 
+GroupBox {
+    id: valveControllWin
+    objectName: "valveControllWin"
 
-Window {
-    id: powerControllWin
-    objectName: "powerControllWin"
-
+    /*
     modality: Qt.WindowModal
     //固定窗口大小
     minimumWidth: 1110
     maximumWidth: 1110
     minimumHeight: 640
     maximumHeight: 640
+    */
+    width: 1110  //Screen.desktopAvailableWidth
+    height: 640  //Screen.desktopAvailableHeight
 
     property string objName: "电机"
     visible: true
-    title: objName + "控制页面"
-
 
     // 右侧控制栏
     GroupBox{
         id: valveControll
         objectName: "valveControll"
         anchors.fill: parent
-        anchors.margins: 30
+        anchors.margins: 10
         title: objName + "控制"
         font.pointSize: 20
         anchors.leftMargin: 610
         anchors.bottomMargin: 40
-        
+
         // 右上角单个电机的控制栏
         GroupBox{
             id: singalComponent
@@ -42,10 +43,10 @@ Window {
             x:0
             width: parent.width
             height: parent.height-75
-            title: "当前未选中" + powerControllWin.objName
+            title: "当前未选中" + valveControllWin.objName
             property int curentSensor: -1
             font.pointSize: 12
-            
+
             // 手自动切换按钮
             Button {
                 id: buttonAuto
@@ -88,7 +89,7 @@ Window {
 
             }
 
-            
+
             // 电机开启关闭切换按钮
             Button {
                 id: buttonSwitch
@@ -175,7 +176,7 @@ Window {
                     x:76
                 }
             }
-            
+
             // 电机参数修改栏
             GroupBox{
                 width: 200
@@ -245,7 +246,7 @@ Window {
                     }
                 }
             }
-            
+
             // 电机方向设置
             GroupBox{
                 width: 200
@@ -260,7 +261,7 @@ Window {
                 MySwitch {
                     id: switchPowerDirection
                     anchors.horizontalCenter: parent.horizontalCenter
-                    y:5
+                    y:0
                 }
 
                 Text {
@@ -277,7 +278,7 @@ Window {
                     y:switchPowerDirection.y
                 }
             }
-            
+
             // 电机模式设置
             GroupBox{
                 width: 200
@@ -327,9 +328,8 @@ Window {
                     color: "gray"
                 }
             }
-            
-        }
 
+        }
 
         // 一键自动按钮
         Button {
@@ -348,7 +348,14 @@ Window {
             font.pointSize: 12
             property int allAutoState: 0  // 0:一键自动 1:未一键自动 2:自动中
             text: allAutoState === 1 ? "一键自动" : "全部自动中"
-
+            /*Image {
+                width: 45
+                height: 45
+                y:17
+                x:5
+                source: "file:./ico/zidong.png"
+                fillMode: Image.PreserveAspectFit
+            }*/
 
             background: Rectangle {
                 id: allAutoColor
@@ -419,18 +426,15 @@ Window {
                 }
             }
         }
-        
     }
 
-
-    
     // 左侧电机展示栏
     GroupBox{
         id: valveDisplay
         objectName: "valveDisplay"
         anchors.fill: parent
-        anchors.margins: 30
-        title: powerControllWin.objName + "列表"
+        anchors.margins: 10
+        title: valveControllWin.objName + "列表"
         font.pointSize: 20
         anchors.bottomMargin: 40
         anchors.rightMargin: 510
@@ -454,6 +458,12 @@ Window {
                     font.pointSize: 18
                     background: Rectangle { color: "#bc948e8e" }
                 }
+                /*TabButton {
+                    text: qsTr("61~80")
+                    font.pointSize: 18
+                    anchors.top: parent.top
+                    background: Rectangle { color: "#bc948e8e" }
+                }*/
         }
 
         StackLayout {   //栈布局管理器
@@ -464,32 +474,31 @@ Window {
             x:0
             height: parent.height-100
             currentIndex: bar.currentIndex  //当前视图的索引
-            
             Rectangle  {
                 anchors.fill: stacklaout
                 ComponentList{
                     anchors.leftMargin: 0
                     id: valveListView1
                     baseIndex: 1
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 140
                     id: valveListView2
                     baseIndex:6
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 280
                     id: valveListView3
                     baseIndex:11
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 420
                     id: valveListView4
                     baseIndex:16
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
             }
             Rectangle  {
@@ -498,25 +507,25 @@ Window {
                     anchors.leftMargin: 0
                     id: valveListView5
                     baseIndex: 21
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 140
                     id: valveListView6
                     baseIndex:26
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 280
                     id: valveListView7
                     baseIndex:31
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 420
                     id: valveListView8
                     baseIndex:36
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
             }
             Rectangle  {
@@ -525,30 +534,54 @@ Window {
                     anchors.leftMargin: 0
                     id: valveListView9
                     baseIndex: 41
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 140
                     id: valveListView10
                     baseIndex:46
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 280
                     id: valveListView11
                     baseIndex:51
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
                 ComponentList{
                     anchors.leftMargin: 420
                     id: valveListView12
                     baseIndex:56
-                    listName: powerControllWin.objName
+                    listName: valveControllWin.objName
                 }
             }
-            
+            /*Rectangle  {
+                anchors.fill: stacklaout
+                ComponentList{
+                    anchors.leftMargin: 0
+                    id: valveListView13
+                    baseIndex: 61
+                    listName: valveControllWin.objName
+                }
+                ComponentList{
+                    anchors.leftMargin: 140
+                    id: valveListView14
+                    baseIndex:66
+                    listName: valveControllWin.objName
+                }
+                ComponentList{
+                    anchors.leftMargin: 280
+                    id: valveListView15
+                    baseIndex:71
+                    listName: valveControllWin.objName
+                }
+                ComponentList{
+                    anchors.leftMargin: 420
+                    id: valveListView16
+                    baseIndex:76
+                    listName: valveControllWin.objName
+                }
+            }*/
         }
     }
-    
-  
 }

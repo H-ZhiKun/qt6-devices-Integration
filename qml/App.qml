@@ -12,14 +12,29 @@ Window {
     width: 1366
     height: 668
     visible: true
+/*
+    function loadButton() {
+        var component = Qt.createComponent("Alarm.qml");
+        if (component.status === Component.Ready) {
+            var button = component.createObject(root);
+        }
+    }*/
 
-    function loadPowerPage() {
-        var component = Qt.createComponent("PowerPage.qml");
+    function loadCameraParam() {
+        var componentCameraParam = Qt.createComponent("CameraParam.qml");
+        var buttonCameraParam = componentCameraParam.createObject(root);
+
+    }
+
+    function loadFormulaPage() {
+        var component = Qt.createComponent("FormulaPage.qml");
         if (component.status === Component.Ready) {
             var button2 = component.createObject(root);
         }
     }
-    
+
+
+    //Component.onCompleted: loadButton()
     Button {
         id: button
         x: 53
@@ -50,9 +65,7 @@ Window {
         y: 68
         text: qsTr("配方页面")
         onClicked: {
-            var component = Qt.createComponent("FormulaPage.qml")
-            var window    = component.createObject(root)
-            window.show()
+            loadFormulaPage()
         }
     }
 

@@ -35,7 +35,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("appMetaFlash", appFramework().getAppMetaFlash());
     // 设置资源路径
 
-    engine.loadFromModule("DeviceIntegration", "App");
-    appFramework().run(&engine);
+    engine.loadFromModule("DeviceIntegration", "Master");
+    appFramework().run();
+
+
     return app.exec();
 }

@@ -13,8 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(3RD_ROOT_DIR ${CMAKE_SOURCE_DIR}/third_party)
 
-include_directories(${3RD_ROOT_DIR}/include
-                    ${CMAKE_SOURCE_DIR}/src
+include_directories(${3RD_ROOT_DIR}/include/
+                    ${3RD_ROOT_DIR}/include/Siso
+                    ${3RD_ROOT_DIR}/include/Baumer
                     ${CMAKE_SOURCE_DIR}/src/utils
                     ${CMAKE_SOURCE_DIR}/src/sql
                     ${CMAKE_SOURCE_DIR}/src/domino
@@ -22,7 +23,7 @@ include_directories(${3RD_ROOT_DIR}/include
                     ${CMAKE_SOURCE_DIR}/src/camera
                     ${CMAKE_SOURCE_DIR}/src/camera/Baumer)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Quick Network Sql QuickControls2)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Quick Network Sql QuickControls2 Widgets)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -32,7 +33,7 @@ aux_source_directory (./src/sql SRC_SQL)
 aux_source_directory (./src/app SRC_APP)
 aux_source_directory (./src/domino SRC_DOMINO)
 aux_source_directory (./src/camera SRC_CAMERA)
-aux_source_directory (./src/camera/baumer SRC_BAUMER)
+aux_source_directory (./src/camera/Baumer SRC_BAUMER)
 
 qt_add_executable(${PROJECT_NAME}
         src/main.cpp
@@ -68,6 +69,8 @@ qt_add_qml_module(${PROJECT_NAME}
         qml/ValvePage.qml 
         qml/MySwitch.qml  
         qml/ComponentList.qml   
+        qml/Master.qml 
+        qml/MainWindow.qml 
 )
 
 
@@ -83,10 +86,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Network
     Qt6::Sql
     Qt6::QuickControls2
+    Qt6::Widgets
     ${3RD_ROOT_DIR}/lib/vld.lib
     ${3RD_ROOT_DIR}/lib/jsoncppd.lib
     ${3RD_ROOT_DIR}/lib/fmtd.lib
     ${3RD_ROOT_DIR}/lib/spdlogd.lib
+    ${3RD_ROOT_DIR}/lib/modbusd.lib
+    ${3RD_ROOT_DIR}/lib/bgapi2_ext_sc.lib
+    ${3RD_ROOT_DIR}/lib/bgapi2_genicam.lib
+    ${3RD_ROOT_DIR}/lib/iolibrt.lib
+
 )
 
 # release 版本使用
@@ -97,9 +106,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Network
     Qt6::Sql
     Qt6::QuickControls2
+    ${3RD_ROOT_DIR}/lib/zlib.lib
     ${3RD_ROOT_DIR}/lib/jsoncpp.lib
     ${3RD_ROOT_DIR}/lib/fmt.lib
     ${3RD_ROOT_DIR}/lib/spdlog.lib
+    ${3RD_ROOT_DIR}/lib/modbus.lib
 )
 ]]
 # debug 版本使用

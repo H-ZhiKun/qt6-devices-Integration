@@ -3,16 +3,20 @@ import QtQuick.Controls 2.15
 import QtQuick.Window
 import QtQuick.Layouts
 import Qt.labs.qmlmodels 1.0
-Window {
+GroupBox {
     id: userPageWin
     objectName: "userPageWin"
 
+    /*
     modality: Qt.WindowModal
     //固定窗口大小
     minimumWidth: 620
     maximumWidth: 620
     minimumHeight: 520
     maximumHeight: 520
+    */
+    width: 1110  //Screen.desktopAvailableWidth
+    height: 640  //Screen.desktopAvailableHeight
 
     Rectangle {
         anchors.fill: parent

@@ -103,6 +103,7 @@
         "ranges": "cpp",
         "stack": "cpp",
         "codecvt": "cpp",
-        "qtimer": "cpp"
+        "qtimer": "cpp",
+        "shared_mutex": "cpp"
     }
 }
