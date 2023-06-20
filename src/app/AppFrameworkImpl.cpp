@@ -27,9 +27,8 @@ AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 	memoryClean();
 }
 
-int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
+int AppFrame::AppFrameworkImpl::run()
 {
-	engine_ = engine;
 	sWorkPath_ = qApp->applicationDirPath().toStdString();
 	Logger::InitLogger(sWorkPath_ + "/logs");
 	LOGINFO("AppFrame Run");
@@ -46,23 +45,39 @@ std::string AppFrame::AppFrameworkImpl::getWorkPath()
 
 bool AppFrame::AppFrameworkImpl::dominoConnect(const QString &ip, quint16 port)
 {
-	QObject *button = engine_->rootObjects().first()->findChild<QObject *>("button1");
-	if (button)
-	{
-		QVariantList myList;
-		myList.append(3);
 
-		myList.append("zk");
-
-		myList.append(false);
-		button->setProperty("myProperty", myList);
-	}
-	return invokeCpp(domino_, domino_->getNameConnectToServer(), ip, port);
+	asyncTask([this]
+			  {
+							int i = 0;
+							while(1)
+							{
+			invokeCpp(appMetaFlash_, appMetaFlash_->invokeSetValue1(), QString::number(i)); 
+			if(i > 10000) i = 0;
+			i++;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+							} });
+	asyncTask([this]
+			  {
+							int i = 10000;
+							while(1)
+							{
+			invokeCpp(appMetaFlash_, appMetaFlash_->invokeSetValue2(), QString::number(i)); 
+			if(i < 0) i = 10000;
+			i--;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+							} });
+	return invokeCpp(domino_, domino_->invokeConnectToServer(), ip, port);
 }
 
 AppMetaFlash *AppFrame::AppFrameworkImpl::getAppMetaFlash()
 {
 	return appMetaFlash_;
+}
+
+void AppFrame::AppFrameworkImpl::asyncTask(const std::function<void(void)> &task)
+{
+	taskPool_->start([task]
+					 { task(); });
 }
 
 void AppFrame::AppFrameworkImpl::runDomino()
@@ -76,7 +91,7 @@ void AppFrame::AppFrameworkImpl::runDomino()
 	QObject::connect(th, &QThread::finished, [this]()
 					 { domino_->cleanup(); });
 	th->start();
-	invokeCpp(domino_, domino_->getNameStartClient(), Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 11110));
+	invokeCpp(domino_, domino_->invokeStartClient(), Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 11110));
 	lvThread_.push_back(th);
 }
 
@@ -98,14 +113,8 @@ void AppFrame::AppFrameworkImpl::runPLC()
 void AppFrame::AppFrameworkImpl::initMysqlTool()
 {
 	mysqlTool_ = new SqlHelper(new MysqlConnectionPool(20, 5000));
-	taskPool_->start([this]
-					 {
-	QStringList fields;
-	fields << "id INT PRIMARY KEY AUTO_INCREMENT"
-		   << "name VARCHAR(100) NOT NULL UNIQUE"
-		   << "age INT NOT NULL";
-	mysqlTool_->createTable("test", fields); });
 }
+
 
 void AppFrame::AppFrameworkImpl::timeToClean()
 {

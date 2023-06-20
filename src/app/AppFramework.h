@@ -1,6 +1,5 @@
 #pragma once
 #include "NonCopyable.h"
-#include <QQmlApplicationEngine>
 #include <QObject>
 #include "AppMetaFlash.h"
 
@@ -16,10 +15,11 @@ namespace AppFrame
 		 * @return 返回AppFramework类型的引用，表示应用程序框架的唯一实例。
 		 */
 		static AppFramework &instance();
-		virtual int run(QQmlApplicationEngine *engine) = 0;
+		virtual int run() = 0;
 		virtual std::string getWorkPath() = 0;
 		virtual bool dominoConnect(const QString &ip = "", quint16 port = 0) = 0;
 		virtual AppMetaFlash *getAppMetaFlash() = 0;
+		virtual void asyncTask(const std::function<void(void)>& task) = 0;
 	};
 	inline AppFramework &appFramework()
 	{

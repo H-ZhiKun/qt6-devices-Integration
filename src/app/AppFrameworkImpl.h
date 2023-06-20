@@ -7,6 +7,7 @@
 #include "Domino.h"
 #include "SqlHelper.h"
 #include <thread>
+#include <mutex>
 #include "ModbusClient.h"
 namespace AppFrame
 {
@@ -20,10 +21,11 @@ namespace AppFrame
             static AppFrameworkImpl instance;
             return instance;
         }
-        int run(QQmlApplicationEngine *engine) override;
+        int run() override;
         std::string getWorkPath() override;
         bool dominoConnect(const QString &ip = "", quint16 port = 0) override;
         AppMetaFlash *getAppMetaFlash() override;
+        void asyncTask(const std::function<void(void)>& task) override;
 
     private:
         // 私有接口区域
@@ -33,7 +35,6 @@ namespace AppFrame
         void timeToClean();
         void memoryClean();
         // 私有变量区域
-        QQmlApplicationEngine *engine_ = nullptr;
         std::string sWorkPath_{};
         QThreadPool *taskPool_ = QThreadPool().globalInstance();
 
@@ -43,8 +44,7 @@ namespace AppFrame
         Domino *domino_ = nullptr;
         SqlHelper *mysqlTool_ = nullptr;
         ModbusClient* mbsPLC_ = nullptr;
-
-    protected:
+    public:
         // 调用qml 对象函数工具
 
         // 调用C++ 对象函数工具

@@ -11,14 +11,15 @@ Window {
     Button {
         id: myText
         objectName: "button1"
-        text: "connect 127"
+        text: appMetaFlash.strValue1
         x: 200
         y: 220
-        property variant myProperty: [1, "two", true]
         onClicked: {
             var ip = "127.0.0.1";
             var port = 11110;
             var arguments = [ip, port]; // 传递多个参数作为数组
+
+
 
             var success = appMetaFlash.qmlDominoConnect(ip, port);
             if (success) {
@@ -28,14 +29,10 @@ Window {
             }
         }
 
-        onMyPropertyChanged: {
-            myText.text = myProperty[0]
-            console.log("myProperty changed to:", myProperty);
-        }
     }
     Button {
         objectName: "button2"
-        text: "connect 128"
+        text: appMetaFlash.strValue2
         x: 400
         y: 220
         onClicked: {

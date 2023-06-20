@@ -24,6 +24,6 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("appMetaFlash", appFramework().getAppMetaFlash());
 
     engine.loadFromModule("DeviceIntegration", "Main");
-    appFramework().run(&engine);
+    appFramework().run();
     return app.exec();
 }

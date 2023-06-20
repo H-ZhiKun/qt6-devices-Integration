@@ -62,6 +62,11 @@ public:
      */
     void writeDatas(uint16_t address, const std::vector<uint16_t> &values);
 
+    /**
+     * @brief 获取当前连接状态
+     * @return 返回连接状态
+     */
+    bool getConnection();
 private:
     /**
      * @brief 读取寄存器数据

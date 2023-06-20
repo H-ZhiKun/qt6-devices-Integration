@@ -73,6 +73,11 @@ void ModbusClient::writeDatas(uint16_t address, const std::vector<uint16_t> &val
     writeRegisters(address, values);
 }
 
+bool ModbusClient::getConnection()
+{
+    return bConnected_;
+}
+
 void ModbusClient::readRegisters(uint16_t address, uint16_t count, std::vector<uint16_t> &buffer)
 {
     std::lock_guard<std::mutex> lock(mtxMbs_);
