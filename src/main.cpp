@@ -8,7 +8,7 @@
 #include "string.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
-#include "MyBaumerManage.h"
+#include "BaumerManage.h"
 #include "Logger.h"
 using namespace AppFrame;
 
@@ -27,25 +27,24 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
     engine.rootContext()->setContextProperty("appMetaFlash", appFramework().getAppMetaFlash());
 
-    
+    BaumerManage *cameraManage = new BaumerManage();
+    cameraManage->updateCameraList();
     // 设置资源路径
-    // if(cameraManage->cameraList.size() > 0){
-    //     for(int i = 0; i < cameraManage->cameraList.size(); i++){
-    //         cameraManage->cameraList[i]->Init_Parameter();
-    //         cameraManage->cameraList[i]->OpenCamera();
+    if(cameraManage->cameraList.size() > 0){
+        for(int i = 0; i < cameraManage->cameraList.size(); i++){
+            cameraManage->cameraList[i]->Init_Parameter();
+            cameraManage->cameraList[i]->OpenCamera();
 
-    //         QString camName = "cameraCtl" + QString::number(i);
-    //         std::string IPName = "QYCamera" + std::to_string(i);
-    //         std::cout << "camName: " << camName.toStdString() << ",  IPName: " << IPName <<std::endl;
-    //         engine.rootContext()->setContextProperty(camName, cameraManage->cameraList[i]);
-    //         engine.addImageProvider(QLatin1String(IPName), cameraManage->cameraList[i]->getImageProvider());
-    //         cameraManage->cameraList[i]->start();
-    //     }        
-    // }
-    std::cout << "size of MyBaumerCamera: " << sizeof(MyBaumerCamera) << std::endl;
-    std::cout << "size of MyBaumerManage: " << sizeof(MyBaumerManage) << std::endl;
+            QString camName = "cameraCtl" + QString::number(i);
+            std::string IPName = "QYCamera" + std::to_string(i);
+            std::cout << "camName: " << camName.toStdString() << ",  IPName: " << IPName <<std::endl;
+            engine.rootContext()->setContextProperty(camName, cameraManage->cameraList[i]);
+            engine.addImageProvider(QLatin1String(IPName), cameraManage->cameraList[i]->getImageProvider());
+            cameraManage->cameraList[i]->start();
+        }        
+    }
 
-    engine.loadFromModule("DeviceIntegration", "Master");
+    engine.loadFromModule("DeviceIntegration", "MainWindow");
 
     appFramework().run();
     return app.exec();

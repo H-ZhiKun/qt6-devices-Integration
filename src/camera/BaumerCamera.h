@@ -2,14 +2,14 @@
  * @Author: A炼 834022125@qq.com
  * @Date: 2023-06-15 14:56:55
  * @LastEditors: A炼 834022125@qq.com
- * @LastEditTime: 2023-06-25 15:39:03
- * @FilePath: \DeviceIntegration\src\camera\MyBaumerCamera.h
+ * @LastEditTime: 2023-06-25 16:37:03
+ * @FilePath: \DeviceIntegration\src\camera\BaumerCamera.h
  * @Description: 单个相机的管理类，包括开启关闭和获取图像
  * 
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
  */
-#ifndef MYBAUMERCAMERA_H
-#define MYBAUMERCAMERA_H
+#ifndef BAUMERCAMERA_H
+#define BAUMERCAMERA_H
 //#include <QMainWindow>
 #include <iostream>
 #include "string.h"
@@ -21,7 +21,7 @@
 #include <QTimerEvent>
 #include <QMessageBox>
 #include <QFileDialog>
-#include "MyBaumerManage.h"
+#include "BaumerManage.h"
 #include "Windows.h"
 #include "Siso/sisoIo.h"
 #include "Mythread.h"
@@ -32,12 +32,12 @@
 class MyThread;
 
 
-class MyBaumerCamera: public QObject
+class BaumerCamera: public QObject
 {
     Q_OBJECT
 public:
-    explicit MyBaumerCamera(QObject *parent = 0);
-    ~MyBaumerCamera();
+    explicit BaumerCamera(QObject *parent = 0);
+    ~BaumerCamera();
     void Init_Parameter();         //初始化参数
     bool OpenCamera();             //打开相机
     void GetImageBuff();           //获取图像数据
@@ -120,4 +120,4 @@ private slots:
 };
 
 
-#endif // MYBAUMERCAMERA_H
+#endif // BAUMERCAMERA_H

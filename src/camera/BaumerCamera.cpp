@@ -1,8 +1,8 @@
-﻿#include "MyBaumerCamera.h"
+﻿#include "BaumerCamera.h"
 #include <QDebug>
 #include <functional>
 
-MyBaumerCamera::MyBaumerCamera(QObject *parent)
+BaumerCamera::BaumerCamera(QObject *parent)
         :QObject(parent){}
 
 /**
@@ -12,7 +12,7 @@ MyBaumerCamera::MyBaumerCamera(QObject *parent)
  * @param {void} *pData 回调的相机图像数据
  * @return {*}
  */
-bool MyBaumerCamera::CameraProc0(int h,int w,void *pData)
+bool BaumerCamera::CameraProc0(int h,int w,void *pData)
 {
     qDebug() << "m_width:" << m_width;
     m_width = 1920; //2448
@@ -49,12 +49,12 @@ bool MyBaumerCamera::CameraProc0(int h,int w,void *pData)
  * @description: 打开相机，注册回调函数，开启线程
  * @return {*}
  */
-bool MyBaumerCamera::OpenCamera()
+bool BaumerCamera::OpenCamera()
 {
     bool res = false;
     if(m_pCam->OpenCamera())
     {
-        auto boundFunc = std::bind(&MyBaumerCamera::CameraProc0,this,
+        auto boundFunc = std::bind(&BaumerCamera::CameraProc0,this,
                                   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
         m_pCam->RegisterEvent(boundFunc); //注册回调函数
         res = true;
@@ -85,7 +85,7 @@ bool MyBaumerCamera::OpenCamera()
  * @description: 初始化指针等参数
  * @return {*}
  */
-void MyBaumerCamera::Init_Parameter()
+void BaumerCamera::Init_Parameter()
 {
 
     pBuff = new unsigned char[IMG_W*IMG_H*2];
@@ -113,7 +113,7 @@ void MyBaumerCamera::Init_Parameter()
  * @description: 获取窗口的宽高位置信息
  * @return {*}
  */
-void MyBaumerCamera::GetWindowSize()
+void BaumerCamera::GetWindowSize()
 {
 
     float fw1 = m_height * 1.0 / m_width;
@@ -139,7 +139,7 @@ void MyBaumerCamera::GetWindowSize()
  * @param {QTimerEvent} *e 获取图像数据的时间间隔
  * @return {*}
  */
-void MyBaumerCamera::timerEvent(QTimerEvent *e)
+void BaumerCamera::timerEvent(QTimerEvent *e)
 {
     if(e->timerId() == m_timeID)
     {
@@ -167,7 +167,7 @@ void MyBaumerCamera::timerEvent(QTimerEvent *e)
  * @description: 开启获取图像数据的线程
  * @return {*}
  */
-void MyBaumerCamera::start(){
+void BaumerCamera::start(){
     m_width = m_pCam->GetWidth();
     m_height = m_pCam->GetHeight();
     m_pCam->StartCamera();
@@ -183,7 +183,7 @@ void MyBaumerCamera::start(){
  * @description: 析构函数，释放资源
  * @return {*}
  */
-MyBaumerCamera::~MyBaumerCamera()
+BaumerCamera::~BaumerCamera()
 {
     m_pCam = nullptr;
 

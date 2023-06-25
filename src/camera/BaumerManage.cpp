@@ -2,15 +2,19 @@
  * @Author: A炼 834022125@qq.com
  * @Date: 2023-06-15 14:56:55
  * @LastEditors: A炼 834022125@qq.com
- * @LastEditTime: 2023-06-21 09:49:11
- * @FilePath: \DeviceIntegration\src\camera\MyBaumerManage.cpp
+ * @LastEditTime: 2023-06-25 17:15:57
+ * @FilePath: \DeviceIntegration\src\camera\BaumerManage.cpp
  * @Description: 
  * 
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
  */
-#include "MyBaumerManage.h"
+#include "BaumerManage.h"
 
-int MyBaumerManage::updateCameraList()
+/**
+ * @description: 更新接入的相机列表
+ * @return {*}
+ */
+int BaumerManage::updateCameraList()
 {
     int res = -1;
     cameraList.clear();
@@ -26,10 +30,13 @@ int MyBaumerManage::updateCameraList()
         else
         {
             for(int i = 0; i < m_cameraCount; i++){
-                MyBaumerCamera *tempCamera = new MyBaumerCamera;
+                BaumerCamera *tempCamera = new BaumerCamera();
                 tempCamera->m_pCam = m_WorkSpace.m_vectorCameras[i];
                 tempCamera->setCameraId(tempCamera->m_pCam->m_sDeviceID);
                 cameraList.push_back(tempCamera);
+
+                ImageProvider *tempIP = new ImageProvider();
+                imageProvider.push_back(tempIP);
             }
             res = m_cameraCount;
         }
@@ -37,9 +44,14 @@ int MyBaumerManage::updateCameraList()
     return res;
 }
 
-MyBaumerManage::~MyBaumerManage(){
+BaumerManage::~BaumerManage(){
     for(int i = 0; i < cameraList.size(); i++){
         delete cameraList[i];
         cameraList[i] = nullptr;
+    }
+
+    for(int i = 0; i < imageProvider.size(); i++){
+        delete imageProvider[i];
+        imageProvider[i] = nullptr;
     }
 }
