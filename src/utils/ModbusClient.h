@@ -1,18 +1,17 @@
 #pragma once
+#include "Logger.h"
 #include <modbus/modbus.h>
 #include <shared_mutex>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 #include <vector>
-#include "Logger.h"
-
 
 /**
  * @brief Modbus读取参数
  */
 class ModbusReadArgument
 {
-public:
+  public:
     uint16_t addr = 0;   /**< 寄存器起始地址 */
     uint16_t offset = 0; /**< 寄存器数量 */
     uint8_t clock = 0;   /**< 读取间隔 */
@@ -23,7 +22,7 @@ public:
  */
 class ModbusClient
 {
-public:
+  public:
     /**
      * @brief 构造函数，创建ModbusClient对象
      * @param ip Modbus设备的IP地址
@@ -46,7 +45,6 @@ public:
     ModbusClient &operator=(ModbusClient &&) noexcept(true) = default;
     void work(const std::vector<ModbusReadArgument> &startArgs);
 
-
     /**
      * @brief 读取寄存器数据
      * @param address 寄存器起始地址
@@ -67,7 +65,8 @@ public:
      * @return 返回连接状态
      */
     bool getConnection();
-private:
+
+  private:
     /**
      * @brief 读取寄存器数据
      * @param address 寄存器起始地址
@@ -83,7 +82,7 @@ private:
      */
     void writeRegisters(uint16_t address, const std::vector<uint16_t> &values);
 
-private:
+  private:
     modbus_t *mbsContext_ = nullptr;               /**< Modbus上下文指针 */
     std::string ip_;                               /**< Modbus设备的IP地址 */
     uint16_t port_;                                /**< Modbus设备的端口号 */

@@ -33,7 +33,10 @@
 
 
 # 忽略build目录
+build
+*.editorconfig
 
+# 忽略vscode配置文件
+.vscode/
 
-
-
+src/main.cpp

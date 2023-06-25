@@ -1,8 +1,8 @@
 #include "TCPClient.h"
-#include <QMetaEnum>
 #include "Logger.h"
-#include <QThread>
 #include <QCoreApplication>
+#include <QMetaEnum>
+#include <QThread>
 
 TCPClient::TCPClient(QObject *parent) : QObject(parent)
 {

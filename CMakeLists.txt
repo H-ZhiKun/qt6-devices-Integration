@@ -19,6 +19,7 @@ include_directories(${3RD_ROOT_DIR}/include/
                     ${CMAKE_SOURCE_DIR}/src/utils
                     ${CMAKE_SOURCE_DIR}/src/sql
                     ${CMAKE_SOURCE_DIR}/src/domino
+                    ${CMAKE_SOURCE_DIR}/src/plc
                     ${CMAKE_SOURCE_DIR}/src/app
                     ${CMAKE_SOURCE_DIR}/src/camera
                     ${CMAKE_SOURCE_DIR}/src/camera/Baumer)
@@ -32,6 +33,7 @@ aux_source_directory (./src/utils SRC_UTILS)
 aux_source_directory (./src/sql SRC_SQL)
 aux_source_directory (./src/app SRC_APP)
 aux_source_directory (./src/domino SRC_DOMINO)
+aux_source_directory (./src/plc SRC_PLC)
 aux_source_directory (./src/camera SRC_CAMERA)
 aux_source_directory (./src/camera/Baumer SRC_BAUMER)
 
@@ -40,6 +42,7 @@ qt_add_executable(${PROJECT_NAME}
         ${SRC_SQL}
         ${SRC_UTILS}
         ${SRC_DOMINO}
+        ${SRC_PLC}
         ${SRC_APP}
         ${SRC_CAMERA}
         ${SRC_BAUMER}
@@ -96,6 +99,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${3RD_ROOT_DIR}/lib/bgapi2_genicam.lib
     ${3RD_ROOT_DIR}/lib/iolibrt.lib
 
+    ${3RD_ROOT_DIR}/lib/xlntd.lib
 )
 
 # release 版本使用
@@ -111,6 +115,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${3RD_ROOT_DIR}/lib/fmt.lib
     ${3RD_ROOT_DIR}/lib/spdlog.lib
     ${3RD_ROOT_DIR}/lib/modbus.lib
+    ${3RD_ROOT_DIR}/lib/xlnt.lib
 )
 ]]
 # debug 版本使用
