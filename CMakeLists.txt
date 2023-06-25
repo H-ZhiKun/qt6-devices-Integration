@@ -17,6 +17,7 @@ include_directories(${3RD_ROOT_DIR}/include
                     ${CMAKE_SOURCE_DIR}/src/utils
                     ${CMAKE_SOURCE_DIR}/src/sql
                     ${CMAKE_SOURCE_DIR}/src/domino
+                    ${CMAKE_SOURCE_DIR}/src/plc
                     ${CMAKE_SOURCE_DIR}/src/app)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Quick Network Sql)
@@ -28,12 +29,14 @@ aux_source_directory (./src/utils SRC_UTILS)
 aux_source_directory (./src/sql SRC_SQL)
 aux_source_directory (./src/app SRC_APP)
 aux_source_directory (./src/domino SRC_DOMINO)
+aux_source_directory (./src/plc SRC_PLC)
 
 qt_add_executable(${PROJECT_NAME}
         src/main.cpp
         ${SRC_SQL}
         ${SRC_UTILS}
         ${SRC_DOMINO}
+        ${SRC_PLC}
         ${SRC_APP}
 )
 
@@ -61,6 +64,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${3RD_ROOT_DIR}/lib/fmtd.lib
     ${3RD_ROOT_DIR}/lib/spdlogd.lib
     ${3RD_ROOT_DIR}/lib/modbusd.lib
+    ${3RD_ROOT_DIR}/lib/xlntd.lib
 )
 
 # release 版本使用
@@ -75,6 +79,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${3RD_ROOT_DIR}/lib/fmt.lib
     ${3RD_ROOT_DIR}/lib/spdlog.lib
     ${3RD_ROOT_DIR}/lib/modbus.lib
+    ${3RD_ROOT_DIR}/lib/xlnt.lib
 )
 ]]
 # debug 版本使用

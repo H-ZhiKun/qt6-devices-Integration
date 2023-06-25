@@ -3,21 +3,27 @@
         {
             "name": "Win32",
             "includePath": [
+                "${workspaceFolder}/**",
                 "${workspaceFolder}/src/utils",
                 "${workspaceFolder}/src/sql",
                 "${workspaceFolder}/src/app",
                 "${workspaceFolder}/src/domino",
+                "${workspaceFolder}/src/plc",
                 "${workspaceFolder}/third_party/include",
-                "D:/Qt/6.5.1/msvc2019_64/include"
+                "D:/Qt/6.5.1/msvc2019_64/include",
+                "D:/Qt/6.5.1/msvc2019_64/include/**"
             ],
             "browse": {
                 "path": [
+                    "${workspaceFolder}/**",
                     "${workspaceFolder}/src/utils",
                     "${workspaceFolder}/src/sql",
                     "${workspaceFolder}/src/app",
                     "${workspaceFolder}/src/domino",
+                    "${workspaceFolder}/src/plc",
                     "${workspaceFolder}/third_party/include",
-                    "D:/Qt/6.5.1/msvc2019_64/include"
+                    "D:/Qt/6.5.1/msvc2019_64/include",
+                    "D:/Qt/6.5.1/msvc2019_64/include/**"
                 ]
             },
             "defines": [
@@ -29,7 +35,7 @@
             "compilerPath": "D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/cl.exe",
             "cppStandard": "c++17",
             "cStandard": "c17",
-            "intelliSenseMode": "msvc-x64"
+            "intelliSenseMode": "${default}"
         }
     ],
     "version": 4

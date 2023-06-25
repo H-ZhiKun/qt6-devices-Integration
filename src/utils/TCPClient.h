@@ -1,18 +1,18 @@
 #ifndef TCPCLIENT_H
 #define TCPCLIENT_H
 
-#include <QObject>
 #include <QEventLoop>
+#include <QObject>
 #include <QTcpSocket>
 #include <QTimer>
-#include <vector>
 #include <QVariantList>
+#include <vector>
 
 class TCPClient : public QObject
 {
     Q_OBJECT
 
-public:
+  public:
     explicit TCPClient(QObject *parent = nullptr);
     virtual ~TCPClient() noexcept;
     TCPClient(const TCPClient &) = delete;
@@ -21,24 +21,30 @@ public:
     TCPClient &operator=(TCPClient &&) noexcept(true) = default;
     virtual void dealing(std::vector<unsigned char>) = 0; // 数据接收处理接口，纯虚接口，必须重写
     virtual void pingBehavior(){};                        // 子类继承实现具体心跳行为
-public slots:
+  public slots:
     void startClient(const QString &host, quint16 port);
     void connectToServer(const QString &host = "", quint16 port = 0);
     void sendData(const QByteArray &data);
 
-public:
+  public:
     void cleanup();
 
     // 获取方法名称系列函数
     /**
      * @brief invoke函数调用参数(const QString& host，quint16 port)
      */
-    QString invokeStartClient(){return "startClient";}
+    QString invokeStartClient()
+    {
+        return "startClient";
+    }
     /**
      * @brief invoke函数调用参数(const QString& host，quint16 port)
      */
-    QString invokeConnectToServer(){return "connectToServer";}
-private slots:
+    QString invokeConnectToServer()
+    {
+        return "connectToServer";
+    }
+  private slots:
     void onConnected();
     void onDisconnected();
     void onError(QAbstractSocket::SocketError errCode);
@@ -46,11 +52,11 @@ private slots:
     void reconnect();
     void ping();
 
-private:
+  private:
     void pingEnable(bool bEnable); // 是否开启心跳
     QString socketErrorToString(QAbstractSocket::SocketError socketError);
 
-private:
+  private:
     QTcpSocket *tcpSocket = nullptr;
     QTimer *reconnectTimer = nullptr;
     QTimer *pingHolder = nullptr;
