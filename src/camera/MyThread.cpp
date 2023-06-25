@@ -11,7 +11,7 @@
 #include "MyThread.h"
 
 //数据存储线程
-MyThread::MyThread(MyBaumerCamera *pCamera, QObject *paraent)
+MyThread::MyThread(BaumerCamera *pCamera, QObject *paraent)
 {
     pCameraDlg = pCamera;
     stopped1 = false;

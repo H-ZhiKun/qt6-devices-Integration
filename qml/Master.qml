@@ -2,7 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 
-Window  {
+GroupBox  {
     //x:0
     //y:0
     width: 1110  //Screen.desktopAvailableWidth

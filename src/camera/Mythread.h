@@ -11,19 +11,19 @@
 #ifndef MYTHREAD_H
 #define MYTHREAD_H
 
-#include "MyBaumerCamera.h"
+#include "BaumerCamera.h"
 
-class MyBaumerCamera;
+class BaumerCamera;
 class MyThread: public QThread
 {
 public:
-    MyThread(MyBaumerCamera *pCamera, QObject*paraent = 0);
+    MyThread(BaumerCamera *pCamera, QObject*paraent = 0);
     ~MyThread();
     void stop();
 protected:
     void run();
 public:
-    MyBaumerCamera *pCameraDlg;
+    BaumerCamera *pCameraDlg;
 private:
     volatile bool stopped1;
 };
