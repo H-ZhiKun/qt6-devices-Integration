@@ -14,8 +14,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(3RD_ROOT_DIR ${CMAKE_SOURCE_DIR}/third_party)
 
 include_directories(${3RD_ROOT_DIR}/include/
-                    ${3RD_ROOT_DIR}/include/Siso
-                    ${3RD_ROOT_DIR}/include/Baumer
                     ${CMAKE_SOURCE_DIR}/src/utils
                     ${CMAKE_SOURCE_DIR}/src/sql
                     ${CMAKE_SOURCE_DIR}/src/domino

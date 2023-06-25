@@ -1,6 +1,6 @@
 ﻿#ifndef PCAMERA_H
 #define PCAMERA_H
-#include "bgapi2_genicam.hpp"
+#include "Baumer/bgapi2_genicam.hpp"
 using namespace BGAPI2;
 #include <QVector>
 #include <QLabel>

@@ -2,7 +2,7 @@
  * @Author: A炼 834022125@qq.com
  * @Date: 2023-06-15 14:56:55
  * @LastEditors: A炼 834022125@qq.com
- * @LastEditTime: 2023-06-20 17:12:28
+ * @LastEditTime: 2023-06-25 15:39:03
  * @FilePath: \DeviceIntegration\src\camera\MyBaumerCamera.h
  * @Description: 单个相机的管理类，包括开启关闭和获取图像
  * 
@@ -23,7 +23,7 @@
 #include <QFileDialog>
 #include "MyBaumerManage.h"
 #include "Windows.h"
-#include "sisoIo.h"
+#include "Siso/sisoIo.h"
 #include "Mythread.h"
 #include "AppFramework.h"
 #include "ImageProvider.h"
