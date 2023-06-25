@@ -1,14 +1,13 @@
+import AppFrame 1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 
-
-Window  {
+Window {
     //x:0
     //y:0
     width: 1110  //Screen.desktopAvailableWidth
     height: 640  //Screen.desktopAvailableHeight
     visible: true
-
 
     GroupBox {
         id: frameLocatinCamera
@@ -23,12 +22,12 @@ Window  {
             anchors.fill: parent
         }
         Connections {
-                target: cameraCtl0
-                // 收到信号刷新图片
-                onCallQmlRefeshImg: {
-                    imageLocationCamera.source = "image://QYCamera0/"+ Math.random()
-                }
-        }       
+            target: cameraCtl0
+            // 收到信号刷新图片
+            onCallQmlRefeshImg: {
+                imageLocationCamera.source = "image://QYCamera0/" + Math.random();
+            }
+        }
     }
 
     GroupBox {
@@ -43,12 +42,12 @@ Window  {
             anchors.fill: parent
         }
         Connections {
-                target: cameraCtl1
-                // 收到信号刷新图片
-                onCallQmlRefeshImg: {
-                    imageLocationCheckCamera.source = "image://QYCamera1/"+ Math.random()
-                }
-        }       
+            target: cameraCtl1
+            // 收到信号刷新图片
+            onCallQmlRefeshImg: {
+                imageLocationCheckCamera.source = "image://QYCamera1/" + Math.random();
+            }
+        }
     }
 
     GroupBox {
@@ -63,12 +62,12 @@ Window  {
             anchors.fill: parent
         }
         Connections {
-                target: cameraCtl2
-                // 收到信号刷新图片
-                onCallQmlRefeshImg: {
-                    imageCodeCheckCamera.source = "image://QYCamera2/"+ Math.random()
-                }
-        }       
+            target: cameraCtl2
+            // 收到信号刷新图片
+            onCallQmlRefeshImg: {
+                imageCodeCheckCamera.source = "image://QYCamera2/" + Math.random();
+            }
+        }
     }
 
     GroupBox {
@@ -83,7 +82,7 @@ Window  {
             y: -45
             width: 20
             height: 20
-            mipmap:true
+            mipmap: true
             source: "file:./ico/peifang.png"
         }
 
@@ -138,7 +137,7 @@ Window  {
             y: -45
             width: 24
             height: 24
-            mipmap:true
+            mipmap: true
             source: "file:./ico/shuju1.png"
         }
 
@@ -336,7 +335,6 @@ Window  {
         font.pointSize: 11
     }
 
-
     Text {
         x: 425
         y: 450
@@ -392,13 +390,21 @@ Window  {
         id: produceStop
         x: 686
         y: 359
-        width: 30
-        height: 30
+        width: 100
+        height: 100
         property int state: 1
         mipmap: true
         source: state === 0 ? "file:./ico/zhongzhiblack.png" : "file:./ico/tingzhi.png"
         fillMode: Image.PreserveAspectFit
     }
+
+    Connections {
+        target: appMetaFlash // C++ 对象实例
+        onPageMainChange: {
+            // 执行其他操作...
+            var jsonData = JSON.parse(value);
+            console.log("Received mySignal from C++ with value:", jsonData.image);
+            produceStop.source = "data:image/png;base64," + jsonData.image;
+        }
+    }
 }
-
-

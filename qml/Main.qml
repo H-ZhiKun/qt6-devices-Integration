@@ -1,4 +1,3 @@
-import AppFrame 1.0
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
@@ -11,15 +10,12 @@ Window {
     Button {
         id: myText
         objectName: "button1"
-        text: appMetaFlash.strValue1
         x: 200
         y: 220
         onClicked: {
             var ip = "127.0.0.1";
             var port = 11110;
             var arguments = [ip, port]; // 传递多个参数作为数组
-
-
 
             var success = appMetaFlash.qmlDominoConnect(ip, port);
             if (success) {
@@ -28,11 +24,16 @@ Window {
                 console.error("Failed to call C++ function");
             }
         }
-
+    }
+    Connections {
+        target: appMetaFlash // C++ 对象实例
+        onPageMainChange: {
+            console.log("Received mySignal from C++ with value:", value);
+            // 执行其他操作...
+        }
     }
     Button {
         objectName: "button2"
-        text: appMetaFlash.strValue2
         x: 400
         y: 220
         onClicked: {
