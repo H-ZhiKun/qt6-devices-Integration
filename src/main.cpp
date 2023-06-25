@@ -2,7 +2,7 @@
  * @Author: A炼 834022125@qq.com
  * @Date: 2023-06-10 14:28:59
  * @LastEditors: A炼 834022125@qq.com
- * @LastEditTime: 2023-06-10 16:12:33
+ * @LastEditTime: 2023-06-25 11:43:12
  * @FilePath: \DeviceIntegration\src\main.cpp
  * @Description: 
  * 
@@ -14,9 +14,12 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickStyle>
+#include "string.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
-#include <QQuickStyle>
+#include "MyBaumerManage.h"
+#include "Logger.h"
 using namespace AppFrame;
 
 int main(int argc, char *argv[])
@@ -33,11 +36,27 @@ int main(int argc, char *argv[])
         { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
     engine.rootContext()->setContextProperty("appMetaFlash", appFramework().getAppMetaFlash());
+
+    
     // 设置资源路径
+    // if(cameraManage->cameraList.size() > 0){
+    //     for(int i = 0; i < cameraManage->cameraList.size(); i++){
+    //         cameraManage->cameraList[i]->Init_Parameter();
+    //         cameraManage->cameraList[i]->OpenCamera();
+
+    //         QString camName = "cameraCtl" + QString::number(i);
+    //         std::string IPName = "QYCamera" + std::to_string(i);
+    //         std::cout << "camName: " << camName.toStdString() << ",  IPName: " << IPName <<std::endl;
+    //         engine.rootContext()->setContextProperty(camName, cameraManage->cameraList[i]);
+    //         engine.addImageProvider(QLatin1String(IPName), cameraManage->cameraList[i]->getImageProvider());
+    //         cameraManage->cameraList[i]->start();
+    //     }        
+    // }
+    std::cout << "size of MyBaumerCamera: " << sizeof(MyBaumerCamera) << std::endl;
+    std::cout << "size of MyBaumerManage: " << sizeof(MyBaumerManage) << std::endl;
 
     engine.loadFromModule("DeviceIntegration", "Master");
+
     appFramework().run();
-
-
     return app.exec();
 }

@@ -9,6 +9,7 @@ public:
 
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
 
+    QPixmap requestPixmap(const QString &id, QSize *size, const QSize &requestedSize) override;
 private:
     QImage m_image;
 };

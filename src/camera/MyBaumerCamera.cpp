@@ -2,8 +2,6 @@
 #include <QDebug>
 #include <functional>
 
-extern MyBaumerManage* cameraList;
-
 MyBaumerCamera::MyBaumerCamera(QObject *parent)
         :QObject(parent){}
 
@@ -58,7 +56,6 @@ bool MyBaumerCamera::OpenCamera()
     {
         auto boundFunc = std::bind(&MyBaumerCamera::CameraProc0,this,
                                   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        //std::cout << "addr this = "<< boundFunc << std::endl;
         m_pCam->RegisterEvent(boundFunc); //注册回调函数
         res = true;
         m_IsOpen = true;
@@ -71,6 +68,7 @@ bool MyBaumerCamera::OpenCamera()
         m_showW = 295;
         m_showH = 197;
         GetWindowSize();
+        m_pCam->SetExposureTime(2000);
 
         m_storeThread = new MyThread(this);
         m_storeThread->start();
@@ -91,14 +89,15 @@ void MyBaumerCamera::Init_Parameter()
 {
 
     pBuff = new unsigned char[IMG_W*IMG_H*2];
-    memset(pBuff,0,IMG_W*IMG_H*2);
+    memset(pBuff, 0, IMG_W*IMG_H*2);
     pShowBuff = new unsigned char[IMG_W*IMG_H];
-    memset(pShowBuff,0,IMG_W*IMG_H);
+    memset(pShowBuff, 0, IMG_W*IMG_H);
+    m_imageProvider = new ImageProvider();
 
     for(int i = 0 ; i < BUFF_SIZE;i++)
     {
         pBufferList[i] = new unsigned char[IMG_W*IMG_H];
-        memset(pBufferList[i] ,0,IMG_W*IMG_H);
+        memset(pBufferList[i] , 0, IMG_W*IMG_H);
     }
 
     m_IsStartGrab = false;
@@ -150,11 +149,14 @@ void MyBaumerCamera::timerEvent(QTimerEvent *e)
         if(m_IsStartGrab==true && bCopyShowImg==false)
         {
             qDebug() << "timerEvent2";
-            QImage qImage = QImage(pShowBuff, m_width, m_height,QImage::Format_Indexed8);
+            QImage qImage = QImage(pShowBuff, m_width, m_height, QImage::Format_Indexed8);
             qImage.setColorTable(vColorTable);
             QImage ImageScaled = qImage.scaled(m_W, m_H, Qt::KeepAspectRatio);
-            pixmap = QPixmap::fromImage(ImageScaled);
-            
+            //pixmap = QPixmap::fromImage(ImageScaled);
+            m_imageProvider->updateImage(qImage);
+            //std::cout << "m_W: "<< m_W << "  , m_H: " << m_H << std::endl;
+            //std::cout << "m_width: "<< m_width << "  , m_height: " << m_height << std::endl;
+            emit callQmlRefeshImg();
 
             bCopyShowImg = true;
         }
@@ -183,15 +185,16 @@ void MyBaumerCamera::start(){
  */
 MyBaumerCamera::~MyBaumerCamera()
 {
-    //cameraList->deleteInstance();
-    //cameraList = nullptr;
     m_pCam = nullptr;
 
-    delete pBuff;
+    delete[] pBuff;
     pBuff  = nullptr;
 
-    delete pShowBuff;
+    delete[] pShowBuff;
     pShowBuff = nullptr;
+
+    delete m_imageProvider;
+    m_imageProvider = nullptr;
 
     m_storeThread = nullptr;
 
@@ -200,5 +203,4 @@ MyBaumerCamera::~MyBaumerCamera()
     }
 
     // 释放数组指针
-    delete[] pBufferList;
 }

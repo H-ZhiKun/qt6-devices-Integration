@@ -2,11 +2,12 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 
-GroupBox  {
-    x:0
-    y:0
+Window  {
+    //x:0
+    //y:0
     width: 1110  //Screen.desktopAvailableWidth
     height: 640  //Screen.desktopAvailableHeight
+    visible: true
 
 
     GroupBox {
@@ -17,10 +18,17 @@ GroupBox  {
         height: 197
         title: "定位相机"
         Image {
-            id: imageLocatinCamera
+            id: imageLocationCamera
             objectName: imageLocatinCamera
             anchors.fill: parent
         }
+        Connections {
+                target: cameraCtl0
+                // 收到信号刷新图片
+                onCallQmlRefeshImg: {
+                    imageLocationCamera.source = "image://QYCamera0/"+ Math.random()
+                }
+        }       
     }
 
     GroupBox {
@@ -30,6 +38,17 @@ GroupBox  {
         width: 295
         height: 197
         title: "定位复核相机"
+        Image {
+            id: imageLocationCheckCamera
+            anchors.fill: parent
+        }
+        Connections {
+                target: cameraCtl1
+                // 收到信号刷新图片
+                onCallQmlRefeshImg: {
+                    imageLocationCheckCamera.source = "image://QYCamera1/"+ Math.random()
+                }
+        }       
     }
 
     GroupBox {
@@ -39,6 +58,17 @@ GroupBox  {
         width: 295
         height: 197
         title: "打码复核相机"
+        Image {
+            id: imageCodeCheckCamera
+            anchors.fill: parent
+        }
+        Connections {
+                target: cameraCtl2
+                // 收到信号刷新图片
+                onCallQmlRefeshImg: {
+                    imageCodeCheckCamera.source = "image://QYCamera2/"+ Math.random()
+                }
+        }       
     }
 
     GroupBox {

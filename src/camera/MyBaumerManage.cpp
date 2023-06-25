@@ -1,18 +1,14 @@
-﻿#include "MyBaumerManage.h"
-
-MyBaumerManage *MyBaumerManage::GetInstance()
-{
-    return g_pMyBaumerManage;
-}
-
-void MyBaumerManage::deleteInstance()
-{
-    if (g_pMyBaumerManage)
-        {
-            delete g_pMyBaumerManage;
-            g_pMyBaumerManage = nullptr;
-    }
-}
+﻿/*
+ * @Author: A炼 834022125@qq.com
+ * @Date: 2023-06-15 14:56:55
+ * @LastEditors: A炼 834022125@qq.com
+ * @LastEditTime: 2023-06-21 09:49:11
+ * @FilePath: \DeviceIntegration\src\camera\MyBaumerManage.cpp
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved. 
+ */
+#include "MyBaumerManage.h"
 
 int MyBaumerManage::updateCameraList()
 {
@@ -39,4 +35,11 @@ int MyBaumerManage::updateCameraList()
         }
     }
     return res;
+}
+
+MyBaumerManage::~MyBaumerManage(){
+    for(int i = 0; i < cameraList.size(); i++){
+        delete cameraList[i];
+        cameraList[i] = nullptr;
+    }
 }

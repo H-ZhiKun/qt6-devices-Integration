@@ -19,26 +19,15 @@
 class MyBaumerCamera;
 class MyBaumerManage{
 public:
-    // 获取单实例
-    static MyBaumerManage* GetInstance();
-
-    // 释放单实例，进程退出时调用
-    static void deleteInstance();
     int updateCameraList();
     QVector<MyBaumerCamera*> cameraList;
     CSiSoGigE m_WorkSpace;
+    MyBaumerManage(){}
+    ~MyBaumerManage();
 
 private:
-    // 禁止外部构造和析构
-    MyBaumerManage(){}
-    ~MyBaumerManage(){}
-
     // 禁止外部拷贝和赋值
     MyBaumerManage(const MyBaumerManage &signal);
     const MyBaumerManage &operator=(const MyBaumerManage &signal);
-
-private:
-    // 唯一单实例对象指针
-    static MyBaumerManage *g_pMyBaumerManage;
 };
 #endif // MYBAUMERMANAGE_H
