@@ -104,6 +104,7 @@
         "stack": "cpp",
         "codecvt": "cpp",
         "qtimer": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "qquickimageprovider": "cpp"
     }
 }

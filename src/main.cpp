@@ -4,8 +4,12 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickStyle>
+#include "string.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
+#include "MyBaumerManage.h"
+#include "Logger.h"
 using namespace AppFrame;
 
 int main(int argc, char *argv[])
@@ -23,7 +27,26 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
     engine.rootContext()->setContextProperty("appMetaFlash", appFramework().getAppMetaFlash());
 
-    engine.loadFromModule("DeviceIntegration", "Main");
+    
+    // 设置资源路径
+    // if(cameraManage->cameraList.size() > 0){
+    //     for(int i = 0; i < cameraManage->cameraList.size(); i++){
+    //         cameraManage->cameraList[i]->Init_Parameter();
+    //         cameraManage->cameraList[i]->OpenCamera();
+
+    //         QString camName = "cameraCtl" + QString::number(i);
+    //         std::string IPName = "QYCamera" + std::to_string(i);
+    //         std::cout << "camName: " << camName.toStdString() << ",  IPName: " << IPName <<std::endl;
+    //         engine.rootContext()->setContextProperty(camName, cameraManage->cameraList[i]);
+    //         engine.addImageProvider(QLatin1String(IPName), cameraManage->cameraList[i]->getImageProvider());
+    //         cameraManage->cameraList[i]->start();
+    //     }        
+    // }
+    std::cout << "size of MyBaumerCamera: " << sizeof(MyBaumerCamera) << std::endl;
+    std::cout << "size of MyBaumerManage: " << sizeof(MyBaumerManage) << std::endl;
+
+    engine.loadFromModule("DeviceIntegration", "Master");
+
     appFramework().run();
     return app.exec();
 }

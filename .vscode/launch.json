@@ -5,7 +5,7 @@
             "name": "msvc-64-debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "D:\\code\\DeviceIntegration\\build\\Debug\\DeviceIntegration.exe",
+            "program": "F:\\workspace\\DeviceIntegration\\build\\Debug\\DeviceIntegration.exe",
             "cwd": "${workspaceRoot}",
             "console": "internalConsole",
             "logging": {
