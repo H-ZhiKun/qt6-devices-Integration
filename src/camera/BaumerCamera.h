@@ -2,7 +2,7 @@
  * @Author: A炼 834022125@qq.com
  * @Date: 2023-06-15 14:56:55
  * @LastEditors: A炼 834022125@qq.com
- * @LastEditTime: 2023-06-25 16:37:03
+ * @LastEditTime: 2023-06-26 10:16:32
  * @FilePath: \DeviceIntegration\src\camera\BaumerCamera.h
  * @Description: 单个相机的管理类，包括开启关闭和获取图像
  * 
@@ -26,15 +26,12 @@
 #include "Siso/sisoIo.h"
 #include "Mythread.h"
 #include "AppFramework.h"
-#include "ImageProvider.h"
+#include "CameraImageProvider.h"
 #define BUFF_SIZE 200
 
 class MyThread;
-
-
-class BaumerCamera: public QObject
+class BaumerCamera
 {
-    Q_OBJECT
 public:
     explicit BaumerCamera(QObject *parent = 0);
     ~BaumerCamera();
@@ -44,8 +41,6 @@ public:
     void GetWindowSize();
     void start();
     bool CameraProc0(int h, int w, void *pData);
-
-    inline ImageProvider *getImageProvider() { return m_imageProvider; }
 
     QString getCameraId()const{return cameraId;}
     void setCameraId(String cId){cameraId = cId;}
@@ -110,13 +105,6 @@ private:
     QString                  cameraId;
     QPixmap                  pixmap;
     QVector<QRgb>            vColorTable;
-    ImageProvider            *m_imageProvider;
-
-signals:
-    void callQmlRefeshImg();
-    
-private slots:
-    void timerEvent(QTimerEvent*e);
 };
 
 

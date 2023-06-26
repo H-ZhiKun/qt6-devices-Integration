@@ -15,7 +15,7 @@
 #include<QVector>
 #include "Baumer/pcamera.h"
 #include "BaumerCamera.h"
-
+#include "CameraImageProvider.h"
 class BaumerCamera;
 class BaumerManage{
 public:
@@ -24,7 +24,7 @@ public:
     CSiSoGigE m_WorkSpace;
     BaumerManage(){}
     ~BaumerManage();
-    QVector<ImageProvider*> imageProvider;
+    QVector<CameraImageProvider*> imageProvider;
 
 private:
     // 禁止外部拷贝和赋值

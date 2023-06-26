@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
             QString camName = "cameraCtl" + QString::number(i);
             std::string IPName = "QYCamera" + std::to_string(i);
             std::cout << "camName: " << camName.toStdString() << ",  IPName: " << IPName <<std::endl;
-            engine.rootContext()->setContextProperty(camName, cameraManage->cameraList[i]);
-            engine.addImageProvider(QLatin1String(IPName), cameraManage->cameraList[i]->getImageProvider());
+            //engine.rootContext()->setContextProperty(camName, cameraManage->cameraList[i]);
+            //engine.addImageProvider(QLatin1String(IPName), cameraManage->cameraList[i]->getImageProvider());
             cameraManage->cameraList[i]->start();
         }        
     }

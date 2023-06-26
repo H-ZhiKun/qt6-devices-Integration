@@ -2,8 +2,7 @@
 #include <QDebug>
 #include <functional>
 
-BaumerCamera::BaumerCamera(QObject *parent)
-        :QObject(parent){}
+BaumerCamera::BaumerCamera(QObject *parent){}
 
 /**
  * @description: 相机数据获取的回调函数
@@ -92,7 +91,6 @@ void BaumerCamera::Init_Parameter()
     memset(pBuff, 0, IMG_W*IMG_H*2);
     pShowBuff = new unsigned char[IMG_W*IMG_H];
     memset(pShowBuff, 0, IMG_W*IMG_H);
-    m_imageProvider = new ImageProvider();
 
     for(int i = 0 ; i < BUFF_SIZE;i++)
     {
@@ -139,6 +137,10 @@ void BaumerCamera::GetWindowSize()
  * @param {QTimerEvent} *e 获取图像数据的时间间隔
  * @return {*}
  */
+
+// TODO：
+// APP中重写事件循环
+/*
 void BaumerCamera::timerEvent(QTimerEvent *e)
 {
     if(e->timerId() == m_timeID)
@@ -162,6 +164,7 @@ void BaumerCamera::timerEvent(QTimerEvent *e)
         }
     }
 }
+*/
 
 /**
  * @description: 开启获取图像数据的线程
@@ -176,7 +179,9 @@ void BaumerCamera::start(){
     m_showW = 295;
     m_showH = 197;
     GetWindowSize();
-    m_timeID = startTimer(100);
+    // TODO:
+    // 开启获取图片的事件循环
+    // m_timeID = startTimer(100);
 }
 
 /**
@@ -193,14 +198,9 @@ BaumerCamera::~BaumerCamera()
     delete[] pShowBuff;
     pShowBuff = nullptr;
 
-    delete m_imageProvider;
-    m_imageProvider = nullptr;
-
     m_storeThread = nullptr;
 
     for (int i = 0; i < BUFF_SIZE; i++) {
         delete[] pBufferList[i];
     }
-
-    // 释放数组指针
 }

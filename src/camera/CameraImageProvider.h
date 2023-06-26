@@ -1,9 +1,10 @@
+#pragma once
 #include <QQuickImageProvider>
 
-class ImageProvider : public QQuickImageProvider
+class CameraImageProvider : public QQuickImageProvider
 {
 public:
-    ImageProvider();
+    CameraImageProvider();
 
     void updateImage(QImage &image);    // 更新图像
 

@@ -2,7 +2,7 @@
  * @Author: A炼 834022125@qq.com
  * @Date: 2023-06-15 14:56:55
  * @LastEditors: A炼 834022125@qq.com
- * @LastEditTime: 2023-06-25 17:15:57
+ * @LastEditTime: 2023-06-26 10:05:38
  * @FilePath: \DeviceIntegration\src\camera\BaumerManage.cpp
  * @Description: 
  * 
@@ -35,7 +35,7 @@ int BaumerManage::updateCameraList()
                 tempCamera->setCameraId(tempCamera->m_pCam->m_sDeviceID);
                 cameraList.push_back(tempCamera);
 
-                ImageProvider *tempIP = new ImageProvider();
+                CameraImageProvider *tempIP = new CameraImageProvider();
                 imageProvider.push_back(tempIP);
             }
             res = m_cameraCount;
