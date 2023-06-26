@@ -7,7 +7,7 @@
 		{
 			"type": "shell",
 			"label": "cmake",
-			"command": "F:\\Qt\\Tools\\CMake_64\\bin\\cmake.EXE --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -SF:/workspace/DeviceIntegration -Bf:/workspace/DeviceIntegration/build -G Visual Studio 17 2022 -T host=x64 -A x64 -DCMAKE_BUILD_TYPE=Debug"
+			"command": "D:\\Qt\\Tools\\CMake_64\\bin\\cmake.EXE --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -SD:/code/DeviceIntegration -Bd:/code/DeviceIntegration/build -G Visual Studio 17 2022 -T host=x64 -A x64 -DCMAKE_BUILD_TYPE=Debug"
 		},
 		{
 			"label": "build",

@@ -43,7 +43,6 @@ class AppFrameworkImpl final : public AppFramework
     AppMetaFlash *appMetaFlash_ = nullptr;
     Domino *domino_ = nullptr;
     SqlHelper *mysqlTool_ = nullptr;
-    ModbusClient *mbsPLC_ = nullptr;
 
   public:
     // 调用qml 对象函数工具

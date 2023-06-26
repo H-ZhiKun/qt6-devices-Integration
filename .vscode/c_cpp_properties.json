@@ -8,12 +8,10 @@
                 "${workspaceFolder}/src/sql",
                 "${workspaceFolder}/src/app",
                 "${workspaceFolder}/src/domino",
-                "${workspaceFolder}/src/camera",
-                "${workspaceFolder}/src/camera/Baumer",
                 "${workspaceFolder}/src/plc",
                 "${workspaceFolder}/third_party/include",
-                "F:/Qt/6.5.0/msvc2019_64/include",
-                "F:/Qt/6.5.0/msvc2019_64/include/QtQuick"
+                "D:/Qt/6.5.1/msvc2019_64/include",
+                "D:/Qt/6.5.1/msvc2019_64/include/**"
             ],
             "browse": {
                 "path": [
@@ -22,12 +20,10 @@
                     "${workspaceFolder}/src/sql",
                     "${workspaceFolder}/src/app",
                     "${workspaceFolder}/src/domino",
-                    "${workspaceFolder}/src/camera",
-                    "${workspaceFolder}/src/camera/Baumer",
                     "${workspaceFolder}/src/plc",
                     "${workspaceFolder}/third_party/include",
-                    "F:/Qt/6.5.0/msvc2019_64/include",
-                    "F:/Qt/6.5.0/msvc2019_64/include/QtQuick"
+                    "D:/Qt/6.5.1/msvc2019_64/include",
+                    "D:/Qt/6.5.1/msvc2019_64/include/**"
                 ]
             },
             "defines": [
@@ -36,7 +32,7 @@
                 "_UNICODE"
             ],
             "configurationProvider": "ms-vscode.cmake-tools",
-            "compilerPath": "F:/VS2022/VC/Tools/MSVC/14.35.32215/bin/Hostx64/x64/cl.exe",
+            "compilerPath": "D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/cl.exe",
             "cppStandard": "c++17",
             "cStandard": "c17",
             "intelliSenseMode": "${default}"

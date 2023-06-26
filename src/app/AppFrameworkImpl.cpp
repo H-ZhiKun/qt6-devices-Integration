@@ -1,9 +1,5 @@
 #include "AppFrameworkImpl.h"
 
-#include <QCoreApplication>
-#include <QObject>
-#include <QThread>
-
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
 #include "DBConnectionPool.h"
@@ -11,6 +7,11 @@
 #include "Logger.h"
 #include "MysqlConnectionPool.h"
 #include "Utils.h"
+#include <QBuffer>
+#include <QCoreApplication>
+#include <QImage>
+#include <QObject>
+#include <QThread>
 
 using namespace AppFrame;
 
@@ -73,21 +74,17 @@ void AppFrame::AppFrameworkImpl::runDomino()
     th->start();
     invokeCpp(domino_, domino_->invokeStartClient(), Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 11110));
     lvThread_.push_back(th);
+
+    Json::Value jsVal;
+    jsVal["image"] = Utils::imgToBase64("C:/Users/Administrator/Pictures/Camera Roll/123456.jpg");
+    jsVal["valve"] = 4;
+    jsVal["name"] = "123";
+    invokeCpp(appMetaFlash_, appMetaFlash_->invokeSetRealTimeValue(), Q_ARG(QString, appMetaFlash_->strMain),
+              Q_ARG(QString, Utils::jsonToString(jsVal).c_str()));
 }
 
 void AppFrame::AppFrameworkImpl::runPLC()
 {
-    mbsPLC_ = new ModbusClient("127.0.0.1", 502);
-    std::vector<ModbusReadArgument> args;
-    for (int i = 1; i < 6; i++)
-    {
-        ModbusReadArgument arg;
-        arg.addr = 32;
-        arg.offset = 1;
-        arg.clock = 500;
-        args.emplace_back(arg);
-    }
-    mbsPLC_->work(args);
 }
 
 void AppFrame::AppFrameworkImpl::initMysqlTool()
@@ -127,10 +124,5 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     {
         delete domino_;
         domino_ = nullptr;
-    }
-    if (mbsPLC_ != nullptr)
-    {
-        delete mbsPLC_;
-        mbsPLC_ = nullptr;
     }
 }
