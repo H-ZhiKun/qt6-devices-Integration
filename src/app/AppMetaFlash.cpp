@@ -11,10 +11,9 @@ void AppFrame::AppMetaFlash::setRealTimeValue(const QString &item, const QString
     if (item.isEmpty())
         return;
     std::string key = item.toStdString();
-    mapRealTimeData_[key] = std::move(value);
     auto signal = mapSignals_.find(key);
     if (signal != mapSignals_.end())
     {
-        signal->second();
+        signal->second(value);
     }
 }

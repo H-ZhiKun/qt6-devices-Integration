@@ -403,7 +403,8 @@ Window {
         onPageMainChange: {
             // 执行其他操作...
             var jsonData = JSON.parse(value);
-            console.log("Received mySignal from C++ with value:", jsonData.image);
+            var val = jsonData.valve;
+            console.log("Received mySignal from C++ with value:", val);
             produceStop.source = "data:image/png;base64," + jsonData.image;
         }
     }

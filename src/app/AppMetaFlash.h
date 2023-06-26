@@ -22,11 +22,11 @@ class AppMetaFlash : public QObject
   public:
     explicit AppMetaFlash(QObject *parent = nullptr) : QObject(parent)
     {
-        mapSignals_[strMain] = [this] { emit pageMainChange(mapRealTimeData_[strMain]); };
-        mapSignals_[strProduce] = [this] { emit pageMainChange(mapRealTimeData_[strProduce]); };
-        mapSignals_[strSensor] = [this] { emit pageMainChange(mapRealTimeData_[strSensor]); };
-        mapSignals_[strValve] = [this] { emit pageMainChange(mapRealTimeData_[strValve]); };
-        mapSignals_[strPower] = [this] { emit pageMainChange(mapRealTimeData_[strPower]); };
+        mapSignals_[strMain] = [this](const QString &value) { emit pageMainChange(value); };
+        mapSignals_[strProduce] = [this](const QString &value) { emit pageMainChange(value); };
+        mapSignals_[strSensor] = [this](const QString &value) { emit pageMainChange(value); };
+        mapSignals_[strValve] = [this](const QString &value) { emit pageMainChange(value); };
+        mapSignals_[strPower] = [this](const QString &value) { emit pageMainChange(value); };
     }
     virtual ~AppMetaFlash()
     {
@@ -50,8 +50,7 @@ class AppMetaFlash : public QObject
 
   private:
     // qml (5) Q_PROPERTY 中 属性类型 属性名称 必须一致
-    std::unordered_map<std::string, QString> mapRealTimeData_;
-    std::unordered_map<std::string, std::function<void(void)>> mapSignals_;
+    std::unordered_map<std::string, std::function<void(const QString &)>> mapSignals_;
     AppMetaFlash(const AppMetaFlash &) = delete;
     AppMetaFlash &operator=(const AppMetaFlash &) = delete;
     AppMetaFlash(AppMetaFlash &&) noexcept(true) = default;
