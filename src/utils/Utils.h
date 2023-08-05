@@ -1,4 +1,10 @@
 #pragma once
+#include "cryptopp/aes.h"
+#include "cryptopp/base64.h"
+#include "cryptopp/cryptlib.h"
+#include "cryptopp/filters.h"
+#include "cryptopp/modes.h"
+#include "cryptopp/osrng.h"
 #include <QBuffer>
 #include <QByteArray>
 #include <QImage>
@@ -8,6 +14,8 @@
 #include <fstream>
 #include <iomanip>
 #include <json/json.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -40,7 +48,9 @@ class Utils
      * @brief 获取当前系统时间并返回字符串表示
      * @return 当前系统时间的字符串表示
      */
-    static std::string getCurrentTime();
+    static std::string getCurrentTime(bool hasMillisecond = false);
+    static void getCurrentTime(std::string &year, std::string &month, std::string &day, std::string &hour,
+                               std::string &minute, std::string &second);
     /**
      * @brief 获取当前时间的任意前后秒数的时间点的字符串表示
      *
@@ -104,4 +114,34 @@ class Utils
      * @return bool 是否成功删除
      */
     static bool removeOutdatedFiles(const std::string &currentTime, const std::string &path, int offsetDay);
+
+    static void asyncTask(std::function<void(void)> &&task);
+
+    static void appExit(int exitCode = 0);
+
+    static QImage matToQImage(const cv::Mat &matData);
+
+    static std::string makeResponse(bool bOk = true, Json::Value &&details = {}, std::string &&description = "");
+    /**
+     * @description: 使用aes给字符串加密
+     * @param {string} &plain 需要加密的字符串
+     * @return {string} 返回加密的字符串
+     */
+    static std::string encrytByAES(const std::string &plain);
+    /**
+     * @description: 使用aes给字符串解密
+     * @param {string} &encode 需要解密的字符串
+     * @return {string} 返回解密的字符串
+     */
+    static std::string decrytByAES(const std::string &encode);
+
+    template <typename T> static T anyFromString(const std::string &str)
+    {
+        T value;
+        std::stringstream ss(str);
+        ss >> value;
+        return value;
+    }
+
+    static cv::Mat qImageToMat(QImage &qim);
 };

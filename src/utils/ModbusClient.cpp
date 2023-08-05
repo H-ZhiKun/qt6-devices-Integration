@@ -1,7 +1,6 @@
 #include "ModbusClient.h"
 
-ModbusClient::ModbusClient(const std::string &ip, uint16_t port)
-    : ip_(ip), port_(port)
+ModbusClient::ModbusClient(const std::string &ip, uint16_t port) : ip_(ip), port_(port)
 {
 }
 
@@ -14,7 +13,15 @@ ModbusClient::~ModbusClient()
     // 唤醒连接线程并等待所有任务线程结束
     cvConnector_.notify_all();
     for (auto &it : tasks_)
+    {
         it.join();
+    }
+    if (mbsContext_ != nullptr)
+    {
+        modbus_close(mbsContext_);
+        modbus_free(mbsContext_);
+        mbsContext_ = nullptr;
+    }
 }
 
 void ModbusClient::work(const std::vector<ModbusReadArgument> &startArgs)
@@ -22,11 +29,18 @@ void ModbusClient::work(const std::vector<ModbusReadArgument> &startArgs)
     // 启动连接线程
     keepConnection();
 
+    // 预留足够的缓存容量
+    size_t maxOffset = 0;
+    for (const auto &arg : startArgs)
+    {
+        maxOffset += arg.offset;
+    }
+    cache_.resize(maxOffset);
+
     // 根据启动参数列表创建任务线程
     for (const auto &arg : startArgs)
     {
-        tasks_.emplace_back(std::thread([arg, this]()
-                                        {
+        tasks_.emplace_back(std::thread([arg, this]() {
             std::vector<uint16_t> readBuffer;
             readBuffer.resize(arg.offset);
 
@@ -45,23 +59,25 @@ void ModbusClient::work(const std::vector<ModbusReadArgument> &startArgs)
                 {
                     std::this_thread::sleep_for(std::chrono::seconds(2));
                 }
-            } }));
+            }
+        }));
     }
 }
 
 std::vector<uint16_t> ModbusClient::readDatas(uint16_t address, uint16_t count)
 {
-    std::shared_lock<std::shared_mutex> lock(mtxCache_); // 加缓存读锁
-
     std::vector<uint16_t> res;
-    for (int i = 0; i < count; i++)
+    // 检查是否越界
+    if (address + count > cache_.size())
     {
-        auto iter = cache_.find(address + i);
-        if (iter != cache_.end())
-        {
-            res.emplace_back(iter->second);
-        }
+        // 如果请求的范围超过了缓存的容量，返回一个空的结果向量
+        return res;
     }
+    res.reserve(count);
+    // 使用std::copy进行批量读取
+    std::lock_guard lock(mtxCache_); // 加缓存读锁
+    std::copy(cache_.begin() + address, cache_.begin() + address + count, std::back_inserter(res));
+
     return res;
 }
 
@@ -80,7 +96,7 @@ void ModbusClient::readRegisters(uint16_t address, uint16_t count, std::vector<u
     std::lock_guard<std::mutex> lock(mtxMbs_);
     if (modbus_read_registers(mbsContext_, address, count, buffer.data()) == -1)
     {
-        LOGERROR("Failed to read registers");
+        LogError("Failed to read registers");
         bConnected_ = false;
         cvConnector_.notify_all();
     }
@@ -91,7 +107,7 @@ void ModbusClient::writeRegisters(uint16_t address, const std::vector<uint16_t> 
     std::lock_guard<std::mutex> lock(mtxMbs_);
     if (modbus_write_registers(mbsContext_, address, values.size(), values.data()) == -1)
     {
-        LOGERROR("Failed to write registers");
+        LogError("Failed to write registers");
         bConnected_ = false;
         cvConnector_.notify_all();
     }
@@ -99,26 +115,19 @@ void ModbusClient::writeRegisters(uint16_t address, const std::vector<uint16_t> 
 
 void ModbusClient::updateCache(uint16_t address, const std::vector<uint16_t> &values)
 {
-    std::unique_lock<std::shared_mutex> lock(mtxCache_); // 加缓存写锁
-    for (size_t i = 0; i < values.size(); ++i)
-    {
-        cache_[address] = values[i];
-        ++address;
-    }
+    std::lock_guard lock(mtxCache_); // 加缓存写锁
+    std::copy(values.begin(), values.end(), cache_.begin() + address);
 }
 
 void ModbusClient::keepConnection()
 {
-    tasks_.emplace_back(std::thread([this]()
-                                    {
+    tasks_.emplace_back(std::thread([this]() {
         while (bThreadHolder_)
         {
             std::unique_lock<std::mutex> lock(mtxMbs_);
 
             // 等待连接断开或者退出条件
-            cvConnector_.wait(lock, [this] {
-                return bConnected_ == false;
-            });
+            cvConnector_.wait(lock, [this] { return bConnected_ == false; });
 
             // 检查线程退出条件
             if (bThreadHolder_ == false)
@@ -150,5 +159,6 @@ void ModbusClient::keepConnection()
             tv.tv_usec = 2000000;
             modbus_set_response_timeout(mbsContext_, tv.tv_sec, tv.tv_usec);
             bConnected_ = true;
-        } }));
+        }
+    }));
 }

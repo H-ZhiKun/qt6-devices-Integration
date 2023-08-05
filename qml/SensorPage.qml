@@ -6,7 +6,6 @@ import QtQuick.Controls 6.2
 import QtQuick.Window
 import QtQuick.Layouts
 
-
 GroupBox {
     id: sensorControllWin
     objectName: "sensorControllWin"
@@ -20,6 +19,13 @@ GroupBox {
     */
     width: 1110  //Screen.desktopAvailableWidth
     height: 640  //Screen.desktopAvailableHeight
+    background: Rectangle {
+        anchors.fill: parent
+        border.color: "gray"
+        border.width: 1
+        radius: 10
+        color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+    }
 
     property string objName: "传感器"
     visible: true
@@ -53,7 +59,7 @@ GroupBox {
                 icon.height: 40
                 icon.width: 40
                 // 图标、文字随状态发生改变
-                icon.source: switchState === 0 ? "file:./ico/shoudong.png" : "file:./ico/zidong_1.png"
+                icon.source: switchState === 0 ? "file:///" + appdir + "/ico/shoudong.png" : "file:///" + appdir + "/ico/zidong_1.png"
                 text: switchState === 0 ? qsTr("手动模式中") : qsTr("自动模式中")
                 background: Rectangle {
                     id: backcolor
@@ -93,7 +99,7 @@ GroupBox {
                 text: switchState === 0 ? qsTr("已关闭") : qsTr("已开启")
                 icon.height: 40
                 icon.width: 40
-                icon.source: switchState === 0 ? "file:./ico/guanbi.png" : "file:./ico/kaiqi.png"
+                icon.source: switchState === 0 ? "file:///" + appdir + "/ico/guanbi.png" : "file:///" + appdir + "/ico/kaiqi.png"
                 background: Rectangle {
                     id: switchColor
                     color: buttonSwitch.switchState === 0 ? "#d6d7d7" : "#64fa32"
@@ -136,7 +142,7 @@ GroupBox {
                 height: 45
                 y:17
                 x:5
-                source: "file:./ico/zidong.png"
+                source: "file:///" + appdir + "/ico/zidong.png"
                 fillMode: Image.PreserveAspectFit
             }
 
@@ -167,7 +173,7 @@ GroupBox {
 
     }*/
 
-    GroupBox{
+    GroupBox {
         id: sensorDisplay
         objectName: "sensorDisplay"
         anchors.fill: parent
@@ -176,171 +182,304 @@ GroupBox {
         font.pointSize: 20
         anchors.bottomMargin: 40
         //anchors.rightMargin: 380
-
-        TabBar {    //点击相应的按钮实现切换
-                id: bar
-                objectName: "bar"
-                width: parent.width
-                TabButton {
-                    text: qsTr("1~20")
-                    font.pointSize: 18
-                    background: Rectangle { color: "#bc948e8e" }
-                }
-                TabButton {
-                    text: qsTr("21~40")
-                    font.pointSize: 18
-                    background: Rectangle { color: "#bc948e8e" }
-                }
-                TabButton {
-                    text: qsTr("41~60")
-                    font.pointSize: 18
-                    background: Rectangle { color: "#bc948e8e" }
-                }
-                TabButton {
-                    text: qsTr("61~80")
-                    font.pointSize: 18
-                    anchors.top: parent.top
-                    background: Rectangle { color: "#bc948e8e" }
-                }
+        background: Rectangle {
+            anchors.fill: parent
+            anchors.topMargin: 45
+            border.color: "gray"
+            border.width: 1
+            radius: 10
+            color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
         }
 
-        StackLayout {   //栈布局管理器
-            id:stacklaout
+        TabBar {
+            //点击相应的按钮实现切换
+            id: bar
+            objectName: "bar"
+            width: parent.width
+            TabButton {
+                id: sensorTab1
+                text: qsTr("1~20")
+                font.pointSize: 18
+                contentItem: IconLabel {
+                    spacing: sensorTab1.spacing
+                    mirrored: sensorTab1.mirrored
+                    display: sensorTab1.display
+
+                    icon: sensorTab1.icon
+                    text: sensorTab1.text
+                    font: sensorTab1.font
+                    color: sensorTab1.palette.windowText
+                }
+                background: Rectangle {
+                    id: sensorTab1Rec
+                    border.width: 2
+                    border.color: Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                    color: bar.currentIndex === 0 ? "lightblue" : Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        bar.currentIndex = 0;
+                    }
+                    onEntered: {
+                        sensorTab1Rec.border.color = "lightblue";
+                    }
+                    onExited: {
+                        sensorTab1Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
+                    }
+                }
+            }
+            TabButton {
+                id: sensorTab2
+                text: qsTr("21~40")
+                font.pointSize: 18
+                contentItem: IconLabel {
+                    spacing: sensorTab2.spacing
+                    mirrored: sensorTab2.mirrored
+                    display: sensorTab2.display
+
+                    icon: sensorTab2.icon
+                    text: sensorTab2.text
+                    font: sensorTab2.font
+                    color: sensorTab2.palette.windowText
+                }
+                background: Rectangle {
+                    id: sensorTab2Rec
+                    border.width: 2
+                    border.color: Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                    color: bar.currentIndex === 1 ? "lightblue" : Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        bar.currentIndex = 1;
+                    }
+                    onEntered: {
+                        sensorTab2Rec.border.color = "lightblue";
+                    }
+                    onExited: {
+                        sensorTab2Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
+                    }
+                }
+            }
+            TabButton {
+                id: sensorTab3
+                text: qsTr("41~60")
+                font.pointSize: 18
+                contentItem: IconLabel {
+                    spacing: sensorTab3.spacing
+                    mirrored: sensorTab3.mirrored
+                    display: sensorTab3.display
+
+                    icon: sensorTab3.icon
+                    text: sensorTab3.text
+                    font: sensorTab3.font
+                    color: sensorTab3.palette.windowText
+                }
+                background: Rectangle {
+                    id: sensorTab3Rec
+                    border.width: 2
+
+                    border.color: Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                    color: bar.currentIndex === 2 ? "lightblue" : Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        bar.currentIndex = 2;
+                    }
+                    onEntered: {
+                        sensorTab3Rec.border.color = "lightblue";
+                    }
+                    onExited: {
+                        sensorTab3Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
+                    }
+                }
+            }
+            TabButton {
+                id: sensorTab4
+                text: qsTr("61~80")
+                font.pointSize: 18
+                contentItem: IconLabel {
+                    spacing: sensorTab4.spacing
+                    mirrored: sensorTab4.mirrored
+                    display: sensorTab4.display
+
+                    icon: sensorTab4.icon
+                    text: sensorTab4.text
+                    font: sensorTab4.font
+                    color: sensorTab4.palette.windowText
+                }
+                background: Rectangle {
+                    id: sensorTab4Rec
+                    border.width: 2
+                    border.color: Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                    color: bar.currentIndex === 3 ? "lightblue" : Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        bar.currentIndex = 3;
+                    }
+                    onEntered: {
+                        sensorTab4Rec.border.color = "lightblue";
+                    }
+                    onExited: {
+                        sensorTab4Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
+                    }
+                }
+            }
+        }
+
+        StackLayout {
+            //栈布局管理器
+            id: stacklaout
             objectName: "stacklaout"
             width: parent.width
-            y:60
-            x:0
-            height: parent.height-100
+            y: 60
+            x: 0
+            height: parent.height - 50
             currentIndex: bar.currentIndex  //当前视图的索引
-            Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 100
+            Rectangle {
+                // anchors.fill: stacklaout
+                color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                ComponentList {
                     id: sensorListView1
+                    anchors.leftMargin: 100
                     objectName: "sensorListView1"
                     baseIndex: 1
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 300
+                ComponentList {
                     id: sensorListView2
+                    anchors.leftMargin: 300
                     objectName: "sensorListView2"
-                    baseIndex:6
+                    baseIndex: 6
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 500
+                ComponentList {
                     id: sensorListView3
+                    anchors.leftMargin: 500
                     objectName: "sensorListView3"
-                    baseIndex:11
+                    baseIndex: 11
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 700
+                ComponentList {
                     id: sensorListView4
+                    anchors.leftMargin: 700
                     objectName: "sensorListView4"
-                    baseIndex:16
+                    baseIndex: 16
                     listName: sensorControllWin.objName
                 }
             }
-            Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 100
+            Rectangle {
+                // anchors.fill: stacklaout
+                color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                ComponentList {
                     id: sensorListView5
+                    anchors.leftMargin: 100
                     objectName: "sensorListView5"
                     baseIndex: 21
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 300
+                ComponentList {
                     id: sensorListView6
+                    anchors.leftMargin: 300
                     objectName: "sensorListView6"
-                    baseIndex:26
+                    baseIndex: 26
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 500
+                ComponentList {
                     id: sensorListView7
+                    anchors.leftMargin: 500
                     objectName: "sensorListView7"
-                    baseIndex:31
+                    baseIndex: 31
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 700
+                ComponentList {
                     id: sensorListView8
+                    anchors.leftMargin: 700
                     objectName: "sensorListView8"
-                    baseIndex:36
+                    baseIndex: 36
                     listName: sensorControllWin.objName
                 }
             }
-            Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 100
+            Rectangle {
+                // anchors.fill: stacklaout
+                color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                ComponentList {
                     id: sensorListView9
+                    anchors.leftMargin: 100
                     objectName: "sensorListView9"
                     baseIndex: 41
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 300
+                ComponentList {
                     id: sensorListView10
+                    anchors.leftMargin: 300
                     objectName: "sensorListView10"
-                    baseIndex:46
+                    baseIndex: 46
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 500
+                ComponentList {
                     id: sensorListView11
+                    anchors.leftMargin: 500
                     objectName: "sensorListView11"
-                    baseIndex:51
+                    baseIndex: 51
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 700
+                ComponentList {
                     id: sensorListView12
+                    anchors.leftMargin: 700
                     objectName: "sensorListView12"
-                    baseIndex:56
+                    baseIndex: 56
                     listName: sensorControllWin.objName
                 }
             }
-            Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 100
+            Rectangle {
+                // anchors.fill: stacklaout
+                color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                ComponentList {
                     id: sensorListView13
+                    anchors.leftMargin: 100
                     objectName: "sensorListView13"
                     baseIndex: 61
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 300
+                ComponentList {
                     id: sensorListView14
+                    anchors.leftMargin: 300
                     objectName: "sensorListView14"
-                    baseIndex:66
+                    baseIndex: 66
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 500
+                ComponentList {
                     id: sensorListView15
+                    anchors.leftMargin: 500
                     objectName: "sensorListView15"
-                    baseIndex:71
+                    baseIndex: 71
                     listName: sensorControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 700
+                ComponentList {
                     id: sensorListView16
+                    anchors.leftMargin: 700
                     objectName: "sensorListView16"
-                    baseIndex:76
+                    baseIndex: 76
                     listName: sensorControllWin.objName
                 }
             }
         }
-
-
-
     }
-
-
+    Connections {
+        target: appMetaFlash // C++ 对象实例
+        function onPageSensorChange(value) {
+            // 执行其他操作...
+            var jsonData = JSON.parse(value);
+            var val = jsonData.valve;
+        }
+    }
 }

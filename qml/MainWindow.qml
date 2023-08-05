@@ -1,210 +1,79 @@
-// Copyright (C) 2021 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0
-
-import QtQuick 6.2
-import QtQuick.Controls 6.2
-import QtQuick.Window
-import QtQuick.Layouts
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Window {
+    width: 400
+    height: 360
     id: root
-    width: 1366
-    height: 768
     visible: true
+    color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+    screen: Qt.application.screens[0]
     title: "德图福思"
-
-    TabBar {
-        id: bar
-        width: cameraBtn.width
-        TabButton {
-            id: cameraBtn
-            text: qsTr("  相    机  ")
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            icon.source: "file:./ico/xiangji.png"
-            icon.height: 40
-            icon.width: 40
-            font.pointSize: 14
+    property int changeFlag: 0
+    enum ExpectedFunction {
+        DominoConnect,  //0 多米诺设备连接
+        DeleteFormula,  //1 删除某个配方数据
+        SelectFormula,  //2 查询某个配方数据
+        ModifyFormula,  //3 修改某个配方数据
+        InsertFormula,  //4 插入某个配方数据
+        GetCameraParam, //5 查询某个相机数据
+        SetCameraParam, //6 修改相机数据
+        GetCameraList,  //7 获取相机列表
+        InsertUser,     //8 新建用户
+        SelectUserID,   //9 查询用户ID
+        SelectUser,    //10 查询用户
+        DeleteUser,    //11 删除用户
+        ModifyUser     //12 修改用户
+    }
+    // Loader {
+    //     id: pageLoader
+    //     source: "Login.qml"
+    // }
+    Login{
+        id: loginPage
+    }
+    Master{
+        id: master
+        visible: false
+        states: [
+            // 将PageA的属性y赋值为0，opacity赋值为1以实现显示的效果
+            State {
+                name: "show"; PropertyChanges { target: master; y: 0; opacity: 1 }
+           },
+            // 将PageA的属性y赋值为-height，opaticy赋值为0以实现窗口向上移动并消失的效果
+            State {
+                name: "hide"; PropertyChanges { target: master; y: -height; opacity: 0.5 }
+           }
+        ]
+        state: "hide"
+        transitions: Transition {
+                   PropertyAnimation { properties: "y, opacity"; duration: 1000; easing.type: Easing.InOutBack }
         }
-        TabButton {
-            id: produceDataBtn
-            text: qsTr("生产数据")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: cameraBtn.bottom
-            icon.source: "file:./ico/shuju.png"
-            icon.height: 40
-            icon.width: 40
+    }
+    Timer {
+        id: timerCheckout;
+        interval: 600;//设置定时器定时时间为500ms,默认1000ms
+        repeat: false //是否重复定时,默认为false
+        running: false //是否开启定时，默认是false，当为true的时候，进入此界面就开始定时
+        triggeredOnStart: false // 是否开启定时就触发onTriggered，一些特殊用户可以用来设置初始值。
+        onTriggered: {
+            root.visible = true
+            if(master.state === "hide"){
+                master.state = "show"
+            }
         }
-        TabButton {
-            id: alarmBtn
-            text: qsTr("报警显示")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: produceDataBtn.bottom
-            icon.source: "file:./ico/alarm.png"
-            icon.height: 40
-            icon.width: 40
-        }
-        TabButton {
-            id: formulaBtn
-            text: qsTr("  配    方  ")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: alarmBtn.bottom
-            icon.source: "file:./ico/peifang.png"
-            icon.height: 40
-            icon.width: 40
-        }
-        TabButton {
-            id: sensorBtn
-            text: qsTr(" 传 感 器 ")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: formulaBtn.bottom
-            icon.source: "file:./ico/chuanganqi.png"
-            icon.height: 40
-            icon.width: 40
-        }
-        TabButton {
-            id: valveBtn
-            text: qsTr("  阀    门  ")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: sensorBtn.bottom
-            icon.source: "file:./ico/famen.png"
-            icon.height: 40
-            icon.width: 40
-        }
-        TabButton {
-            id: powerBtn
-            text: qsTr("  电    机  ")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: valveBtn.bottom
-            icon.source: "file:./ico/dianji.png"
-            icon.height: 40
-            icon.width: 40
-        }
-        TabButton {
-            id: thirdBtn
-            text: qsTr("用户管理")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: powerBtn.bottom
-            icon.source: "file:./ico/yonghuguanli.png"
-            icon.height: 40
-            icon.width: 40
-        }
-        TabButton {
-            id: operateBtn
-            text: qsTr("操作日志")
-            font.pointSize: 14
-            width: root.width/8
-            height: root.height/9
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: thirdBtn.bottom
-            icon.source: "file:./ico/caozuorizhi.png"
-            icon.height: 40
-            icon.width: 40
-        }
-
     }
 
-
-    StackLayout {
-        id: view
-        width: parent.width
-        currentIndex: bar.currentIndex
-        // 相机
-        Item {
-            id: cameraTab
-            Master{
-                x:190
-                y:50
-            }
+    onChangeFlagChanged: {
+//        loginPage.visible = false
+//        mainPage.visible = true
+        if(root.changeFlag === 1){
+            master.visible = true
+            root.height = 768
+            root.width = 1366
+            root.x = (Screen.width - root.width) / 2
+            root.y = (Screen.height - root.height) / 2        
+            timerCheckout.start()
         }
-        // 生产数据
-        Item {
-            id: produceDataTab
-            ProduceData{
-                x:190
-                y:50
-            }
-        }
-
-        // 报警显示
-        Item {
-            id: alarmTab
-            Alarm{
-                x:190
-                y:50
-            }
-        }
-        // 配方
-        Item {
-            id: formulaPageTab
-            FormulaPage{
-                x:190
-                y:50
-            }
-        }
-        // 传感器
-        Item {
-            id: sensorPageTab
-            SensorPage{
-                x:190
-                y:50
-            }
-        }
-        // 阀门
-        Item {
-            id: valvePageTab
-            ValvePage{
-                x:190
-                y:50
-            }
-        }
-        // 电机
-        Item {
-            id: powerPageTab
-            PowerPage{
-                x:190
-                y:50
-            }
-        }
-        // 用户管理
-        Item {
-            id: userPageTab
-            UserPage{
-                x:190
-                y:50
-            }
-        }
-        // 操作日志
-        Item {
-            id: nonepage
-            Text{
-                text:" "
-            }
-        }
-
     }
-
 }

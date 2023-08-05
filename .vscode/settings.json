@@ -104,6 +104,12 @@
         "stack": "cpp",
         "codecvt": "cpp",
         "qtimer": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "qvector": "cpp",
+        "qimage": "cpp",
+        "queue": "cpp",
+        "qguiapplication": "cpp",
+        "qapplication": "cpp",
+        "source_location": "cpp"
     }
 }

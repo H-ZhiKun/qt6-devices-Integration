@@ -28,22 +28,9 @@ class TCPClient : public QObject
 
   public:
     void cleanup();
+    const char *invokeStartClient = "startClient"; // invoke函数调用参数(const QString& host，quint16 port)
+    const char *invokeConnectToServer = "connectToServer"; // invoke函数调用参数(const QString& host，quint16 port)
 
-    // 获取方法名称系列函数
-    /**
-     * @brief invoke函数调用参数(const QString& host，quint16 port)
-     */
-    QString invokeStartClient()
-    {
-        return "startClient";
-    }
-    /**
-     * @brief invoke函数调用参数(const QString& host，quint16 port)
-     */
-    QString invokeConnectToServer()
-    {
-        return "connectToServer";
-    }
   private slots:
     void onConnected();
     void onDisconnected();

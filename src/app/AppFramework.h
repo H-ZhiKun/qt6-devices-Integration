@@ -1,28 +1,51 @@
 #pragma once
 #include "NonCopyable.h"
-#include <QObject>
-#include "AppMetaFlash.h"
+#include <functional>
+#include <string>
 
 namespace AppFrame
 {
-	class AppFramework : public NonCopyable
-	{
-	public:
-		virtual ~AppFramework() = default;
-		/**
-		 * @brief 获取应用程序框架的唯一实例
-		 * @details 该函数返回应用程序框架的唯一实例，是单例模式的实现。该函数不接收任何参数。
-		 * @return 返回AppFramework类型的引用，表示应用程序框架的唯一实例。
-		 */
-		static AppFramework &instance();
-		virtual int run() = 0;
-		virtual std::string getWorkPath() = 0;
-		virtual bool dominoConnect(const QString &ip = "", quint16 port = 0) = 0;
-		virtual AppMetaFlash *getAppMetaFlash() = 0;
-		virtual void asyncTask(const std::function<void(void)>& task) = 0;
-	};
-	inline AppFramework &appFramework()
-	{
-		return AppFramework::instance();
-	}
+enum class DisplayWindows
+{
+    LocationCamera = 0,
+    CodeCheckCamera = 1,
+    LocateCheckCamera = 2
+};
+
+enum class ExpectedFunction
+{
+    DominoConnect = 0,  // 多米诺设备连接
+    DeleteFormula = 1,  // 删除某个配方数据
+    SelectFormula = 2,  // 查询某个配方数据
+    ModifyFormula = 3,  // 修改某个配方数据
+    InsertFormula = 4,  // 插入某个配方数据
+    GetCameraParam = 5, // 查询某个相机数据
+    SetCameraParam = 6, // 修改相机数据
+    GetCameraList = 7,  // 获取相机列表
+    InsertUser = 8,     // 新建用户
+    SelectUserID = 9,   // 查询用户ID
+    SelectUser = 10,    // 查询用户
+    DeleteUser = 11,    // 删除用户
+    ModifyUser = 12     // 修改用户
+};
+class AppFramework : public NonCopyable
+{
+  public:
+    virtual ~AppFramework() = default;
+    /**
+     * @brief 获取应用程序框架的唯一实例
+     * @details 该函数返回应用程序框架的唯一实例，是单例模式的实现。该函数不接收任何参数。
+     * @return 返回AppFramework类型的引用，表示应用程序框架的唯一实例。
+     */
+    static AppFramework &instance();
+    virtual int run() = 0;
+    virtual std::string expected(const ExpectedFunction &expectedType, const std::string &jsValue) = 0;
+    virtual bool registerExpectation(const ExpectedFunction &expectedType,
+                                     std::function<std::string(const std::string &)> &&api) = 0;
+    virtual void storeImagePainter(const DisplayWindows &painterId, void *obj) = 0;
+};
+inline AppFramework &appFramework()
+{
+    return AppFramework::instance();
 }
+} // namespace AppFrame

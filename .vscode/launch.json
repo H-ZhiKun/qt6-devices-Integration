@@ -12,8 +12,7 @@
                 "moduleLoad": false,
                 "trace": true
             },
-            "preLaunchTask": "build",
-            "visualizerFile": "c:\\Users\\Administrator\\AppData\\Roaming\\Code\\User\\workspaceStorage\\e449329a9d9bb97140870a9f1ae9d472\\tonka3000.qtvsctools\\qt.natvis.xml"
+            "visualizerFile": "c:\\Users\\Administrator\\AppData\\Roaming\\Code\\User\\workspaceStorage\\c9b611da1f8e00f17bf6c27abb073468\\tonka3000.qtvsctools\\qt.natvis.xml"
         }
     ]
 }

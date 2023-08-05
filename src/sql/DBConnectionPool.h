@@ -1,27 +1,32 @@
 #pragma once
 
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QSqlDatabase>
+#include <QSqlError>
+#include <QSqlQuery>
 #include <QWaitCondition>
 
 class DBConnectionPool
 {
-public:
+  public:
     explicit DBConnectionPool(int maxConnections = 5, int idleTimeout = 5000);
     virtual ~DBConnectionPool();
 
-    QSqlDatabase* getConnection();
-    void releaseConnection(QSqlDatabase* db);
-public:
-    virtual QSqlDatabase* createConnection() = 0;
-protected:
-    QList<QSqlDatabase*> connectionPool_;
+    QSqlDatabase *getConnection();
+    void releaseConnection(QSqlDatabase *db);
+
+  public:
+    virtual QSqlDatabase *createConnection()
+    {
+        return nullptr;
+    };
+
+  protected:
+    QList<QSqlDatabase *> connectionPool_;
     QMutex mutex_;
-    QWaitCondition waitCondition_;
     int maxConnections_;
+    int count_ = 0;
     int idleTimeout_;
 
     void releaseAllConnections();

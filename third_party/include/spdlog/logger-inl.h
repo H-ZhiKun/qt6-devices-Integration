@@ -4,35 +4,36 @@
 #pragma once
 
 #ifndef SPDLOG_HEADER_ONLY
-#    include <spdlog/logger.h>
+#include <spdlog/logger.h>
 #endif
 
-#include <spdlog/sinks/sink.h>
 #include <spdlog/details/backtracer.h>
 #include <spdlog/pattern_formatter.h>
+#include <spdlog/sinks/sink.h>
 
 #include <cstdio>
 
-namespace spdlog {
+namespace spdlog
+{
 
 // public methods
 SPDLOG_INLINE logger::logger(const logger &other)
-    : name_(other.name_)
-    , sinks_(other.sinks_)
-    , level_(other.level_.load(std::memory_order_relaxed))
-    , flush_level_(other.flush_level_.load(std::memory_order_relaxed))
-    , custom_err_handler_(other.custom_err_handler_)
-    , tracer_(other.tracer_)
-{}
+    : name_(other.name_), sinks_(other.sinks_), level_(other.level_.load(std::memory_order_relaxed)),
+      flush_level_(other.flush_level_.load(std::memory_order_relaxed)), custom_err_handler_(other.custom_err_handler_),
+      tracer_(other.tracer_)
+{
+}
 
-SPDLOG_INLINE logger::logger(logger &&other) SPDLOG_NOEXCEPT : name_(std::move(other.name_)),
-                                                               sinks_(std::move(other.sinks_)),
-                                                               level_(other.level_.load(std::memory_order_relaxed)),
-                                                               flush_level_(other.flush_level_.load(std::memory_order_relaxed)),
-                                                               custom_err_handler_(std::move(other.custom_err_handler_)),
-                                                               tracer_(std::move(other.tracer_))
+SPDLOG_INLINE logger::logger(logger &&other) SPDLOG_NOEXCEPT
+    : name_(std::move(other.name_)),
+      sinks_(std::move(other.sinks_)),
+      level_(other.level_.load(std::memory_order_relaxed)),
+      flush_level_(other.flush_level_.load(std::memory_order_relaxed)),
+      custom_err_handler_(std::move(other.custom_err_handler_)),
+      tracer_(std::move(other.tracer_))
 
-{}
+{
+}
 
 SPDLOG_INLINE logger &logger::operator=(logger other) SPDLOG_NOEXCEPT
 {
@@ -250,7 +251,8 @@ SPDLOG_INLINE void logger::err_handler_(const std::string &msg)
 #if defined(USING_R) && defined(R_R_H) // if in R environment
         REprintf("[*** LOG ERROR #%04zu ***] [%s] [%s] {%s}\n", err_counter, date_buf, name().c_str(), msg.c_str());
 #else
-        std::fprintf(stderr, "[*** LOG ERROR #%04zu ***] [%s] [%s] {%s}\n", err_counter, date_buf, name().c_str(), msg.c_str());
+        std::fprintf(stderr, "[*** LOG ERROR #%04zu ***] [%s] [%s] {%s}\n", err_counter, date_buf, name().c_str(),
+                     msg.c_str());
 #endif
     }
 }

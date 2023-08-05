@@ -1,17 +1,24 @@
 #include "AppMetaFlash.h"
-#include "AppFramework.h"
+#include <QDebug>
 
-bool AppFrame::AppMetaFlash::qmlDominoConnect(const QString &ip, quint16 port)
+QString AppFrame::AppMetaFlash::qmlCallExpected(const ExpectedFunction &functionType, const QString &jsValue)
 {
-    return appFramework().dominoConnect(ip, port);
+    return appFramework().expected(functionType, jsValue.toStdString()).c_str();
 }
 
-void AppFrame::AppMetaFlash::setRealTimeValue(const QString &item, const QString &value)
+void AppFrame::AppMetaFlash::runtimeRoutine(PageIndex itemKey, const QString &value)
 {
-    if (item.isEmpty())
-        return;
-    std::string key = item.toStdString();
-    auto signal = mapSignals_.find(key);
+    static std::unordered_map<PageIndex, std::function<void(const QString &)>> mapSignals_{
+        {PageIndex::PageMain, [this](const QString &value) { emit pageMainChange(value); }},
+        {PageIndex::PageProduce, [this](const QString &value) { emit pageProduceChange(value); }},
+        {PageIndex::PageSensor, [this](const QString &value) { emit pageSensorChange(value); }},
+        {PageIndex::PageValve, [this](const QString &value) { emit pageValveChange(value); }},
+        {PageIndex::PagePower, [this](const QString &value) { emit pagePowerChange(value); }},
+        {PageIndex::PageAlarm, [this](const QString &value) { emit pageAlarmChange(value); }},
+        {PageIndex::PageCamera, [this](const QString &value) { emit pageCameraChange(value); }},
+        {PageIndex::PageFormula, [this](const QString &value) { emit pageFormulaChange(value); }},
+        {PageIndex::PageUser, [this](const QString &value) { emit pageUserChange(value); }}};
+    auto signal = mapSignals_.find(itemKey);
     if (signal != mapSignals_.end())
     {
         signal->second(value);

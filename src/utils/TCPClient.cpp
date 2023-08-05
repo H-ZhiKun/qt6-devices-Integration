@@ -10,6 +10,7 @@ TCPClient::TCPClient(QObject *parent) : QObject(parent)
 
 TCPClient::~TCPClient()
 {
+    cleanup();
 }
 
 void TCPClient::cleanup()
@@ -33,7 +34,6 @@ void TCPClient::cleanup()
 
 void TCPClient::startClient(const QString &host, quint16 port)
 {
-    qDebug() << "this thread= " << QThread::currentThreadId();
     serverHost = host;
     serverPort = port;
     tcpSocket = new QTcpSocket(this);
@@ -102,14 +102,14 @@ void TCPClient::reconnect()
     if (tcpSocket && tcpSocket->state() == QAbstractSocket::UnconnectedState)
     {
         // 断开连接后重新连接到服务器
-        LOGINFO("reconnect to {}", serverHost.toStdString());
+        LogInfo("reconnect to {}", serverHost.toStdString());
         connectToServer();
     }
 }
 
 void TCPClient::onConnected()
 {
-    LOGINFO("Connected to {}", serverHost.toStdString());
+    LogInfo("Connected to {}", serverHost.toStdString());
     // 连接成功后停止重连计时器
     if (reconnectTimer)
         reconnectTimer->stop();
@@ -118,7 +118,7 @@ void TCPClient::onConnected()
 
 void TCPClient::onDisconnected()
 {
-    LOGERROR("Disconnected from {}", serverHost.toStdString());
+    LogError("Disconnected from {}", serverHost.toStdString());
     // 断开连接后启动重连计时器
     if (reconnectTimer)
         reconnectTimer->start();
@@ -128,7 +128,7 @@ void TCPClient::onDisconnected()
 void TCPClient::onError(QAbstractSocket::SocketError errCode)
 {
     pingEnable(false);
-    LOGERROR("{} Socket error: {}", serverHost.toStdString(), socketErrorToString(errCode).toStdString());
+    LogError("{} Socket error: {}", serverHost.toStdString(), socketErrorToString(errCode).toStdString());
     // 发生错误后启动重连计时器
     if (reconnectTimer)
         reconnectTimer->start();

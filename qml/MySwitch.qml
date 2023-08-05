@@ -5,12 +5,13 @@ Switch {
     id: mySwitch
     objectName: "mySwitch"
     property color checkedColor: "#0ACF97"
+    property color activecolor: checked ? checkedColor : "#2a87d7"
 
     indicator: Rectangle {
         width: 70
         height: 25
         radius: height / 2
-        color: mySwitch.checked ? checkedColor : "#2a87d7"
+        color: mySwitch.enabled ? activecolor : "gray"
         border.width: 2
         border.color: mySwitch.checked ? checkedColor : "#E5E5E5"
 

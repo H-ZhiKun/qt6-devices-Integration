@@ -1,16 +1,19 @@
 #pragma once
 #include "AppFramework.h"
-#include "AppMetaFlash.h"
+#include "BaumerManager.h"
+#include "Cognex.h"
 #include "Domino.h"
+#include "HttpApiManager.h"
 #include "Logger.h"
-#include "ModbusClient.h"
 #include "SqlHelper.h"
-#include <QThreadPool>
+#include <QQmlApplicationEngine>
 #include <memory>
 #include <mutex>
+#include <opencv2/opencv.hpp>
 #include <thread>
 namespace AppFrame
 {
+
 class AppFrameworkImpl final : public AppFramework
 {
   public:
@@ -18,64 +21,104 @@ class AppFrameworkImpl final : public AppFramework
     ~AppFrameworkImpl() noexcept override;
     inline static AppFrameworkImpl &instance()
     {
+
         static AppFrameworkImpl instance;
         return instance;
     }
-    int run() override;
-    std::string getWorkPath() override;
-    bool dominoConnect(const QString &ip = "", quint16 port = 0) override;
-    AppMetaFlash *getAppMetaFlash() override;
-    void asyncTask(const std::function<void(void)> &task) override;
+    virtual int run() override;
+    virtual std::string expected(const ExpectedFunction &expectedType, const std::string &jsValue) override;
+    virtual bool registerExpectation(const ExpectedFunction &expectedType,
+                                     std::function<std::string(const std::string &)> &&api) override;
+    virtual void storeImagePainter(const DisplayWindows &painterId, void *obj) override;
 
-  private:
-    // 私有接口区域
+  protected:
+    // 统一调用 接口区域
+    std::string dominoConnect(const std::string &);
+    std::string deleteFormula(const std::string &);
+    std::string modifyFormula(const std::string &);
+    std::string insertFormula(const std::string &);
+    std::string selectFormula(const std::string &);
+    std::string getCameraList(const std::string &);
+    std::string getCameraParam(const std::string &);
+    std::string setCameraParam(const std::string &);
+    std::string insertUser(const std::string &);
+    std::string selectUserID(const std::string &);
+    std::string selectUser(const std::string &);
+    std::string deleteUser(const std::string &);
+    std::string modifyUser(const std::string &);
+    // 差异调用 接口区域
+    void initSqlHelper();
     void runDomino();
     void runPLC();
-    void initMysqlTool();
-    void timeToClean();
+    void runCognex();
     void memoryClean();
-    // 私有变量区域
-    std::string sWorkPath_{};
-    QThreadPool *taskPool_ = QThreadPool().globalInstance();
+    void initBaumerManager();
+    void initHttp();
+    void runHttp(const std::string &imageName, cv::Mat &matImage);
 
+    void bindDisplay(const std::string &snId, const DisplayWindows &painterId); // 绑定展示窗口和SN号
+    void updateRealData();                                                      // 主界面实时更新数据
+    void updateProduceRealData();                                               // 生产数据界面实时更新数据
+    void updateSensorRealData();                                                // 传感器界面实时更新数据
+    void updateValveRealData();                                                 // 阀门界面实时更新数据
+    void updatePowerRealData();                                                 // 电机界面实时更新数据
+    void updateAlarmData(const std::string &strAlram);                          // 更新报警信息
+    void updateFormulaData();                                                   // 初始化配方界面
+    void updateVideo();                                                         // 实时视频
+    void updateByMinute(const std::string &minute);                             // 每分钟更新
+    void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
+    void updateUserData();
+    void timerTask(); // 定时任务
+    void processPaddleOCR(QJsonDocument, cv::Mat);
+
+  private:
+    // 私有变量区域
     std::list<QThread *> lvThread_;
+    std::list<std::thread> lvFulltimeThread_;
+    std::atomic_bool bThreadHolder = true;
+    std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
     // Module 组装区域
-    AppMetaFlash *appMetaFlash_ = nullptr;
     Domino *domino_ = nullptr;
-    SqlHelper *mysqlTool_ = nullptr;
+    Cognex *cognex_ = nullptr;
+    HttpApiManager *http_ = nullptr;
+
+    BaumerManager *baumerManager_ = nullptr;
+    std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
+    std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
+    std::unordered_map<DisplayWindows, std::string> mapWndDisplay_; // 绑定好SN码的patinter, first=painterId,second=SN号
 
   public:
     // 调用qml 对象函数工具
 
     // 调用C++ 对象函数工具
-    bool invokeCpp(QObject *object, const QString &functionName, const QVariantList &args)
+    bool invokeCpp(QObject *object, const char *functionName, const QVariantList &args)
     {
         bool success = false;
         if (object)
         {
-            success = QMetaObject::invokeMethod(object, functionName.toUtf8().constData(), Qt::QueuedConnection, args);
+            success = QMetaObject::invokeMethod(object, functionName, Qt::AutoConnection, args);
             if (!success)
-                LOGERROR("method={} is called failed", functionName.toStdString());
+                LogError("method={} is called failed", functionName);
         }
         else
         {
-            LOGERROR("object is nullptr");
+            LogError("object is nullptr");
         }
         return success;
     }
-    template <typename... Args> bool invokeCpp(QObject *object, const QString &functionName, Args &&...arguments)
+    template <typename... Args> bool invokeCpp(QObject *object, const char *functionName, Args &&...arguments)
     {
         bool success = false;
         if (object)
         {
-            success = QMetaObject::invokeMethod(object, functionName.toUtf8().constData(), Qt::QueuedConnection,
-                                                std::forward<Args>(arguments)...);
+            success =
+                QMetaObject::invokeMethod(object, functionName, Qt::AutoConnection, std::forward<Args>(arguments)...);
             if (success == false)
-                LOGERROR("method={} is called failed", functionName.toStdString());
+                LogError("method={} is called failed", functionName);
         }
         else
         {
-            LOGERROR("object is nullptr");
+            LogError("object is nullptr");
         }
         return success;
     }

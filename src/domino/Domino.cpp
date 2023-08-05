@@ -1,6 +1,6 @@
 #include "Domino.h"
 #include "Logger.h"
-Domino::Domino(QObject *parent):TCPClient(parent)
+Domino::Domino(QObject *parent) : TCPClient(parent)
 {
 }
 
@@ -15,25 +15,22 @@ void Domino::dealing(std::vector<unsigned char> buffer)
     if (buffer[0] != 0x02 || buffer[1] != 0x05 || buffer[4] != 0x03)
         return;
     if (buffer[2] == 0x02)
-        LOGERROR("CodeError");
+        LogError("CodeError");
     if (buffer[2] == 0x01)
     {
         ResponseCode code = static_cast<ResponseCode>(buffer[3]);
         switch (code)
         {
-        case ResponseCode::CodeNomal:
-        {
-            LOGINFO("CodeNomal");
+        case ResponseCode::CodeNomal: {
+            LogInfo("CodeNomal");
             break;
         }
-        case ResponseCode::CodeDisconnect:
-        {
-            LOGINFO("CodeDisconnect");
+        case ResponseCode::CodeDisconnect: {
+            LogInfo("CodeDisconnect");
             break;
         }
-        case ResponseCode::CodePrinting:
-        {
-            LOGINFO("CodePrinting");
+        case ResponseCode::CodePrinting: {
+            LogInfo("CodePrinting");
             break;
         }
         default:

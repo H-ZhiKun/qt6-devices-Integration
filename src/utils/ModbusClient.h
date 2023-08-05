@@ -1,7 +1,6 @@
 #pragma once
 #include "Logger.h"
 #include <modbus/modbus.h>
-#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -14,7 +13,7 @@ class ModbusReadArgument
   public:
     uint16_t addr = 0;   /**< 寄存器起始地址 */
     uint16_t offset = 0; /**< 寄存器数量 */
-    uint8_t clock = 0;   /**< 读取间隔 */
+    uint8_t clock = 0;   /**< 读取间隔 ms*/
 };
 
 /**
@@ -83,16 +82,16 @@ class ModbusClient
     void writeRegisters(uint16_t address, const std::vector<uint16_t> &values);
 
   private:
-    modbus_t *mbsContext_ = nullptr;               /**< Modbus上下文指针 */
-    std::string ip_;                               /**< Modbus设备的IP地址 */
-    uint16_t port_;                                /**< Modbus设备的端口号 */
-    std::mutex mtxMbs_;                            /**< 互斥锁，用于保护Modbus访问 */
-    std::shared_mutex mtxCache_;                   // 缓存读写锁
-    std::unordered_map<uint16_t, uint16_t> cache_; /**< 寄存器值缓存 */
-    std::vector<std::thread> tasks_;               // 存储当前任务线程。
-    std::atomic_bool bThreadHolder_{true};         // 子线程保持者，在析构中退出。
-    std::condition_variable cvConnector_;          // 重连线程条件变量
-    std::atomic_bool bConnected_{false};           // 当前连接设备状态
+    modbus_t *mbsContext_ = nullptr;       /**< Modbus上下文指针 */
+    std::string ip_;                       /**< Modbus设备的IP地址 */
+    uint16_t port_;                        /**< Modbus设备的端口号 */
+    std::mutex mtxMbs_;                    /**< 互斥锁，用于保护Modbus访问 */
+    std::mutex mtxCache_;                  // 缓存读写锁
+    std::vector<uint16_t> cache_;          /**< 寄存器值缓存 */
+    std::vector<std::thread> tasks_;       // 存储当前任务线程。
+    std::atomic_bool bThreadHolder_{true}; // 子线程保持者，在析构中退出。
+    std::condition_variable cvConnector_;  // 重连线程条件变量
+    std::atomic_bool bConnected_{false};   // 当前连接设备状态
 
     /**
      * @brief 更新寄存器值缓存

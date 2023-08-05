@@ -6,7 +6,6 @@ import QtQuick.Controls 6.2
 import QtQuick.Window
 import QtQuick.Layouts
 
-
 GroupBox {
     id: valveControllWin
     objectName: "valveControllWin"
@@ -23,184 +22,242 @@ GroupBox {
 
     property string objName: "阀门"
     visible: true
+    background: Rectangle {
+        anchors.fill: parent
+        border.color: "gray"
+        border.width: 1
+        radius: 10
+        color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+    }
 
-    GroupBox{
+    GroupBox {
         id: valveControll
         objectName: "valveControll"
         anchors.fill: parent
-        anchors.margins: 30
+        anchors.margins: 10
         title: objName + "控制"
         font.pointSize: 20
-        anchors.leftMargin: 640
+        anchors.leftMargin: 610
         anchors.bottomMargin: 40
-
-        GroupBox{
-
+        background: Rectangle {
+            anchors.fill: parent
+            border.color: "gray"
+            border.width: 1
+            radius: 10
+            anchors.topMargin: 50
+            color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+        }
+        GroupBox {
             id: singalComponent
             objectName: "singalComponent"
-            y:20
-            x:0
+            y: 20
+            x: 0
             width: parent.width
-            height: parent.height-180
+            height: parent.height - 200
             title: "当前未选中" + valveControllWin.objName
             property int curentSensor: -1
-            font.pointSize: 15
-
-            Button {
-                // TODO:手动后一键自动按钮变色
-                id: buttonAuto
-                objectName: "buttonAuto"
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 52
-                width: 155
-                height: 30
-                property int switchState: 0 //0:自动 1:手动
-                icon.height: 30
-                icon.width: 30
-                font.pointSize: 15
-                // 图标、文字随状态发生改变
-                icon.source: switchState === 1 ? "file:./ico/shoudong.png" : "file:./ico/zidong_1.png"
-                text: switchState === 1 ? qsTr("手动模式中") : qsTr("自动模式中")
+            font.pointSize: 12
+            background: Rectangle {
+                anchors.fill: parent
+                border.color: "gray"
+                border.width: 1
+                radius: 10
+                anchors.topMargin: 30
+                color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+            }
+            GroupBox {
+                anchors.fill: parent
+                anchors.bottomMargin: 100
                 background: Rectangle {
-                    id: backcolor
-                    color: buttonAuto.switchState === 1 ? "#2a87d7" : "#64fa32"
+                    anchors.fill: parent
+                    border.color: "gray"
                     border.width: 1
-                    border.color: "black"
+                    radius: 10
+                    color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                }
+                Text {
+                    text: qsTr("模式选择")
+                    font.pointSize: 12
+                }
+                RadioButton {
+                    id: valveAuto
+                    x: 10
+                    y: 40
+                    text: qsTr("自动模式")
+                    focusPolicy: Qt.NoFocus
+                    enabled: singalComponent.curentSensor === -1 ? false : true
                 }
 
-
-
-                MouseArea{
-                    anchors.fill:buttonAuto
-                    hoverEnabled: true  // 检测鼠标的进出
-                    onEntered: {
-                        backcolor.color = "#dda4a4a4" // 进入变灰
-                    }
-
-                    onExited: {
-                        backcolor.color = buttonAuto.switchState === 1 ? "#2a87d7" : "#64fa32" // 退出变回本来颜色
-                    }
-
+                RadioButton {
+                    id: valveHandMove
+                    x: 200
+                    y: 40
+                    text: qsTr("手动模式")
+                    icon.height: 30
+                    icon.width: 30
+                    icon.source: "file:///" + appdir + "/ico/shoudong.png"
+                    focusPolicy: Qt.NoFocus
+                    enabled: singalComponent.curentSensor === -1 ? false : true
                     onClicked: {
-                        buttonAuto.switchState = !buttonAuto.switchState // 点击后状态反转
-                        //buttonAuto.switchState === 0 ? buttonSwitch.enabled = true : buttonSwitch.enabled = false  //自动状态开启后，关闭开启按钮不可选
-                        backcolor.color = buttonAuto.switchState === 1 ? "#2a87d7" : "#64fa32"  // 点击后变色
+                        if (checked) {
+                            allAutoColor.colorState = false;
+                            allAutoColor.color = Qt.rgba(204 / 255, 204 / 255, 204 / 255, 1);
+                            allAutoColor.border.width = 0;
+                            allAutoButton.text = "全部自动";
+                        }
                     }
                 }
-
             }
 
-
-            Button {
-                id: buttonSwitch
-                objectName: "buttonSwitch"
-                property int switchState: 0 //0:关闭 1:开启
+            Switch {
+                id: valveSwitch
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: 152
-                width: 155
-                height: 30
-                text: switchState === 0 ? qsTr("已关闭") : qsTr("已开启")
-                icon.height: 30
-                icon.width: 30
-                icon.source: switchState === 0 ? "file:./ico/guanbi.png" : "file:./ico/kaiqi.png"
-                font.pointSize: 15
-                background: Rectangle {
-                    id: switchColor
-                    color: buttonSwitch.switchState === 0 ? "#d6d7d7" : "#64fa32"
-                    border.width: 1
-                    border.color: "black"
-                }
-                MouseArea{
-                    anchors.fill:buttonSwitch
-                    hoverEnabled: true  // 检测鼠标的进出
-                    onEntered: {
-                        switchColor.color = "#dda4a4a4"  // 进入变灰色
-                    }
-
-                    onExited: {
-                        switchColor.color = buttonSwitch.switchState === 0 ? "#d6d7d7" : "#64fa32"
-                    }
-                    onClicked: {
-                        buttonSwitch.switchState = !buttonSwitch.switchState
-                        switchColor.color = buttonSwitch.switchState === 0 ? "#d6d7d7" : "#64fa32"  // 点击后灰色变色
-                    }
-                }
-
-
+                y: 180
+                text: checked ? "开启" : "关闭"
+                focusPolicy: Qt.NoFocus
+                enabled: valveHandMove.checked ? true : false
             }
         }
-        Button{
-            id: buttonAllAuto
-            objectName: "buttonAllAuto"
+
+        Button {
+            id: allAutoButton
             anchors.horizontalCenter: parent.horizontalCenter
-            y:400
-            width:155
-            height:30
-            text: "    全部自动"
-            highlighted: false
-            flat: false
-            font.pointSize: 15
-            property int allAutoState: 0  // 0:一键自动 1:未一键自动 2:自动中
-            Image {
-                width: 25
-                height: 25
-                y: 3
-                x: 5
-                source: "file:./ico/zidong.png"
-                fillMode: Image.PreserveAspectFit
-            }
+            y: 400
+            width: 150
+            height: 50
+            text: qsTr("全部自动")
+            font.pointSize: 12
+
+            property bool autoState: false
+            layer.mipmap: true
+            focusPolicy: Qt.StrongFocus
+            icon.height: 40
+            icon.width: 40
+            icon.source: "file:///" + appdir + "/ico/zidong.png"
 
             background: Rectangle {
                 id: allAutoColor
-                color: buttonAllAuto.allAutoState === 1 ? "#d6d7d7" : "#64fa32"
-                border.width: 1
-                border.color: "black"
+                anchors.fill: allAutoButton
+                property bool colorState: false
+                color: Qt.rgba(204 / 255, 204 / 255, 204 / 255, 1)
+                border.width: 0
+                border.color: "gray"
             }
 
-            MouseArea{
-                anchors.fill:buttonAllAuto
-                hoverEnabled: true  // 检测鼠标的进出
+            MouseArea {
+                id: mouseArea1
+                anchors.fill: parent
+                hoverEnabled: true
                 onEntered: {
-                    allAutoColor.color = "#dda4a4a4" // 进入变灰
+                    allAutoColor.border.width = 2;
                 }
-
                 onExited: {
-                    allAutoColor.color = buttonAllAuto.allAutoState === 1 ? "#d6d7d7" : "#64fa32" // 退出变回本来颜色
+                    allAutoColor.border.width = allAutoColor.colorState ? 2 : 0;
                 }
-
+                onPressed: {
+                    allAutoColor.color = Qt.rgba(153 / 255, 153 / 255, 153 / 255, 1);
+                }
                 onClicked: {
-                    buttonAllAuto.allAutoState = !buttonAllAuto.allAutoState // 点击后状态反转
-                    allAutoColor.color = buttonAllAuto.allAutoState === 1 ? "#d6d7d7" : "#64fa32"  // 点击后变色
+                    allAutoColor.color = Qt.rgba(153 / 255, 153 / 255, 153 / 255, 1);
+                    allAutoColor.colorState = true;
+                    allAutoColor.border.width = 2;
+                    valveAuto.checked = true;
+                    allAutoButton.text = "全部自动中";
+                    //plc逻辑
                 }
             }
         }
-
     }
-
-    GroupBox{
+    GroupBox {
         id: valveDisplay
         objectName: "valveDisplay"
         anchors.fill: parent
-        anchors.margins: 30
+        anchors.margins: 10
         title: valveControllWin.objName + "列表"
         font.pointSize: 20
         anchors.bottomMargin: 40
-        anchors.rightMargin: 480
+        anchors.rightMargin: 510
+        background: Rectangle {
+            anchors.fill: parent
+            border.color: "gray"
+            border.width: 1
+            radius: 10
+            anchors.topMargin: 50
+            color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+        }
+        TabBar {
+            //点击相应的按钮实现切换
+            id: bar
+            width: parent.width
+            TabButton {
+                id: volveTab1
+                text: qsTr("1~20")
+                font.pointSize: 18
+                contentItem: IconLabel {
+                    spacing: volveTab1.spacing
+                    mirrored: volveTab1.mirrored
+                    display: volveTab1.display
 
-        TabBar {    //点击相应的按钮实现切换
-                id: bar
-                width: parent.width
-                TabButton {
-                    text: qsTr("1~20")
-                    font.pointSize: 18
-                    background: Rectangle { color: "#bc948e8e" }
+                    icon: volveTab1.icon
+                    text: volveTab1.text
+                    font: volveTab1.font
+                    color: volveTab1.palette.windowText
                 }
-                TabButton {
-                    text: qsTr("21~40")
-                    font.pointSize: 18
-                    background: Rectangle { color: "#bc948e8e" }
+                background: Rectangle {
+                    id: volveTab1Rec
+                    border.width: 2
+                    border.color: Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                    color: bar.currentIndex === 0 ? "lightblue" : Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
                 }
-                /*TabButton {
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        bar.currentIndex = 0;
+                    }
+                    onEntered: {
+                        volveTab1Rec.border.color = "lightblue";
+                    }
+                    onExited: {
+                        volveTab1Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
+                    }
+                }
+            }
+            TabButton {
+                id: volveTab2
+                text: qsTr("21~40")
+                font.pointSize: 18
+                contentItem: IconLabel {
+                    spacing: volveTab2.spacing
+                    mirrored: volveTab2.mirrored
+                    display: volveTab2.display
+
+                    icon: volveTab2.icon
+                    text: volveTab2.text
+                    font: volveTab2.font
+                    color: volveTab2.palette.windowText
+                }
+                background: Rectangle {
+                    id: volveTab2Rec
+                    border.width: 2
+                    border.color: Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                    color: bar.currentIndex === 1 ? "lightblue" : Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        bar.currentIndex = 1;
+                    }
+                    onEntered: {
+                        volveTab2Rec.border.color = "lightblue";
+                    }
+                    onExited: {
+                        volveTab2Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
+                    }
+                }
+            }
+            /*TabButton {
                     text: qsTr("41~60")
                     font.pointSize: 18
                     background: Rectangle { color: "#bc948e8e" }
@@ -213,73 +270,76 @@ GroupBox {
                 }*/
         }
 
-        StackLayout {   //栈布局管理器
-            id:stacklaout
+        StackLayout {
+            //栈布局管理器
+            id: stacklaout
             objectName: "stacklaout"
             width: parent.width
-            y:60
-            x:0
-            height: parent.height-100
+            y: 60
+            x: 0
+            height: parent.height - 50
             currentIndex: bar.currentIndex  //当前视图的索引
-            Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 0
+            Rectangle {
+                // anchors.fill: stacklaout
+                color: Qt.rgba(248 / 255, 248 / 255, 248 / 255, 1)
+                ComponentList {
                     id: valveListView1
+                    anchors.leftMargin: 0
                     objectName: "valveListView1"
                     baseIndex: 1
                     listName: valveControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 140
+                ComponentList {
                     id: valveListView2
+                    anchors.leftMargin: 135
                     objectName: "valveListView2"
-                    baseIndex:6
+                    baseIndex: 6
                     listName: valveControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 280
+                ComponentList {
                     id: valveListView3
+                    anchors.leftMargin: 270
                     objectName: "valveListView3"
-                    baseIndex:11
+                    baseIndex: 11
                     listName: valveControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 420
+                ComponentList {
                     id: valveListView4
+                    anchors.leftMargin: 405
                     objectName: "valveListView4"
-                    baseIndex:16
+                    baseIndex: 16
                     listName: valveControllWin.objName
                 }
             }
-            Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 0
+            Rectangle {
+                // anchors.fill: stacklaout
+                color: Qt.rgba(248 / 255, 248 / 255, 248 / 255, 1)
+                ComponentList {
                     id: valveListView5
+                    anchors.leftMargin: 0
                     objectName: "valveListView5"
                     baseIndex: 21
                     listName: valveControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 140
+                ComponentList {
                     id: valveListView6
+                    anchors.leftMargin: 135
                     objectName: "valveListView6"
-                    baseIndex:26
+                    baseIndex: 26
                     listName: valveControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 280
+                ComponentList {
                     id: valveListView7
+                    anchors.leftMargin: 270
                     objectName: "valveListView7"
-                    baseIndex:31
+                    baseIndex: 31
                     listName: valveControllWin.objName
                 }
-                ComponentList{
-                    anchors.leftMargin: 420
+                ComponentList {
                     id: valveListView8
+                    anchors.leftMargin: 405
                     objectName: "valveListView8"
-                    baseIndex:36
+                    baseIndex: 36
                     listName: valveControllWin.objName
                 }
             }
@@ -338,10 +398,13 @@ GroupBox {
                 }
             }*/
         }
-
-
-
     }
-
-
+    Connections {
+        target: appMetaFlash // C++ 对象实例
+        function onPageValveChange(value) {
+            // 执行其他操作...
+            var jsonData = JSON.parse(value);
+            var val = jsonData.valve;
+        }
+    }
 }
