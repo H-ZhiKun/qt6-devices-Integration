@@ -50,17 +50,24 @@ GroupBox {
             x: -10
         }
 
-        Text {
-            text: "日期"
+        Text{
+            text:"开始时间"
             font.pointSize: 13
-            x: 135
+            x: 65
             y: -4
         }
 
-        Text {
-            text: "报警信息"
+        Text{
+            text:"结束时间"
             font.pointSize: 13
-            x: 615
+            x: 270
+            y: -4
+        }
+
+        Text{
+            text:"报警信息"
+            font.pointSize: 13
+            x: 670
             y: -4
         }
 
@@ -86,21 +93,70 @@ GroupBox {
             }
 
             model: TableModel {
-                TableModelColumn {
-                    display: "date"
-                }
-                TableModelColumn {
-                    display: "alarmText"
-                }
+                TableModelColumn { display: "startDate" }
+                TableModelColumn { display: "endDate" }
+                TableModelColumn { display: "alarmText" }
 
                 rows: [{
-                        "date": "2023-02-25 16:21:54",
+                        "startDate": "2023-02-25 16:21:54",
+                        "endDate": "2023-02-25 16:21:54",
                         "alarmText": "error: xxx"
-                    }, {
-                        "date": "2023-02-25 16:23:54",
+                    },
+                    {
+                        "startDate": "2023-02-25 16:23:54",
+                        "endDate": "2023-02-25 16:21:54",
                         "alarmText": "error: xxxx"
-                    }]
-
+                    },
+                    {
+                        "startDate": "2023-02-25 16:21:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:23:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:21:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:23:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:21:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:23:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxxx"
+                    },                    {
+                        "startDate": "2023-02-25 16:21:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:23:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:21:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxx"
+                    },
+                    {
+                        "startDate": "2023-02-25 16:23:54",
+                        "endDate": "2023-02-25 16:21:54",
+                        "alarmText": "error: xxxx"
+                    }
+                ]
                 //rowsInserted:
             }
 
@@ -118,6 +174,23 @@ GroupBox {
                     text: display
                     anchors.centerIn: parent
                 }
+            }
+        }
+
+        PageComponent{
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 411
+            height: 40
+            //width: parent.width-20
+            border.color: "gray"
+            radius: 4
+
+            pageCurrent: 1
+            itemCount: 360
+            //触发信号后去请求该页数据，并更新当前页码和总数等
+            onRequestPage: {
+               pageCurrent = page;
+               alarmTable.model.clear()
             }
         }
     }

@@ -8,6 +8,7 @@ Window {
     property var permissionArray: new Array
     modality: Qt.WindowModal
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+    title: "权限设置"
     GroupBox{
         title: "权限设置: " + userName
         anchors.fill: parent

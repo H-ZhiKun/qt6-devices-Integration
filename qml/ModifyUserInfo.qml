@@ -8,6 +8,7 @@ Window {
     property var permissionArray: new Array
     modality: Qt.WindowModal
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+    title: "信息修改"
     Label {
         id: label
         x: 110
