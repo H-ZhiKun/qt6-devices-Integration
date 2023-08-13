@@ -1,20 +1,32 @@
 {
 	"version": "2.0.0",
-	"options": {
-		"cwd": "${workspaceRoot}/build"
-	},
 	"tasks": [
 		{
+			"label": "Build Debug",
 			"type": "shell",
-			"label": "cmake",
-			"command": "D:\\Qt\\Tools\\CMake_64\\bin\\cmake.exe --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -SD:/code/DeviceIntegration -Bd:/code/DeviceIntegration/build -G Visual Studio 17 2022 -T host=x64 -A x64 -DCMAKE_BUILD_TYPE=Debug"
+			"command": "cmake",
+			"args": [
+				"--build",
+				"${workspaceFolder}/build",
+				"--config",
+				"Debug"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
 		},
 		{
-			"label": "build",
-			"dependsOrder": "sequence",
-			"dependsOn": [
-				"cmake"
-			]
+			"label": "Build Release",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"${workspaceFolder}/build",
+				"--config",
+				"Release"
+			],
+			"group": "build"
 		}
 	]
 }

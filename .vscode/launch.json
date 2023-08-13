@@ -5,14 +5,25 @@
             "name": "msvc-64-debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "D:\\code\\DeviceIntegration\\build\\Debug\\DeviceIntegration.exe",
-            "cwd": "${workspaceRoot}",
+            "program": "${workspaceFolder}/Debug/DeviceIntegration.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
             "console": "internalConsole",
-            "logging": {
-                "moduleLoad": false,
-                "trace": true
-            },
-            "visualizerFile": "c:\\Users\\Administrator\\AppData\\Roaming\\Code\\User\\workspaceStorage\\c9b611da1f8e00f17bf6c27abb073468\\tonka3000.qtvsctools\\qt.natvis.xml"
+            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\d4ab438668a4d841bb546bf6b739b335\\tonka3000.qtvsctools\\qt.natvis.xml",
+            "preLaunchTask": "Build Debug"
+        },
+        {
+            "name": "msvc-64-release",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Release/DeviceIntegration.exe", // 修改这里的路径
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\d4ab438668a4d841bb546bf6b739b335\\tonka3000.qtvsctools\\qt.natvis.xml",
+            "preLaunchTask": "Build Release" // 修改为你的构建 Release 任务名称
         }
     ]
 }

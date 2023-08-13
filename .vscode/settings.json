@@ -110,6 +110,7 @@
         "queue": "cpp",
         "qguiapplication": "cpp",
         "qapplication": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "random": "cpp"
     }
 }

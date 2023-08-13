@@ -11,8 +11,8 @@
                 "${workspaceFolder}/src/plc",
                 "${workspaceFolder}/src/camera",
                 "${workspaceFolder}/third_party/include",
-                "D:/Qt/6.5.1/msvc2019_64/include",
-                "D:/Qt/6.5.1/msvc2019_64/include/**"
+                "E:/Qt/6.5.2/msvc2019_64/include",
+                "E:/Qt/6.5.2/msvc2019_64/include/**"
             ],
             "browse": {
                 "path": [
@@ -24,8 +24,8 @@
                     "${workspaceFolder}/src/plc",
                     "${workspaceFolder}/src/camera",
                     "${workspaceFolder}/third_party/include",
-                    "D:/Qt/6.5.1/msvc2019_64/include",
-                    "D:/Qt/6.5.1/msvc2019_64/include/**"
+                    "E:/Qt/6.5.2/msvc2019_64/include",
+                    "E:/Qt/6.5.2/msvc2019_64/include/**"
                 ]
             },
             "defines": [
@@ -34,8 +34,8 @@
                 "_UNICODE"
             ],
             "configurationProvider": "ms-vscode.cmake-tools",
-            "compilerPath": "D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/cl.exe",
-            "cppStandard": "c++20",
+            "compilerPath": "D:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.37.32822/bin/Hostx64/x64/cl.exe",
+            "cppStandard": "c++17",
             "cStandard": "c17",
             "intelliSenseMode": "${default}"
         }
