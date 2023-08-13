@@ -24,10 +24,10 @@ class ConcurrentTaskQueue : public TaskQueue
         return "";
     };
     void stop();
-    ConcurrentTaskQueue();
     ~ConcurrentTaskQueue();
 
   private:
+    ConcurrentTaskQueue();
     size_t queueCount_{0};
 
     std::queue<std::function<void()>> taskQueue_;

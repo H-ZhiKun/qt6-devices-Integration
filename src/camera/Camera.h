@@ -4,6 +4,7 @@
 // 保持通信状态的线程，是实验多次后，较优的处理方式，为确保实时判断当前摄像头的图像采集是否正常
 // 相机参数设置中，与图像相关的一些参数，如果在采集过程中是处于锁定状态的，所以要修改参数需要停止采集，设置完成后继续采集
 
+#include "LockFreeQueue.h"
 #include "bgapi2_genicam/bgapi2_genicam.hpp"
 #include <QImage>
 #include <functional>
@@ -44,7 +45,7 @@ class Camera
 
     void storeImg(unsigned char *bayerRG8Data, const std::string &pixFormat, uint64_t width, uint64_t height,
                   uint64_t frameId);
-    cv::Mat getImage();
+    std::list<cv::Mat> getImage();
 
     bool setParams(CameraParams key, uint64_t value);
     uint64_t getParams(CameraParams key);
@@ -73,11 +74,7 @@ class Camera
     bool bActive_ = false;                 // 相机是否采集
     bool bInited_ = false;                 // 相机初始化完成
     bool bOpen_ = false;                   // 相机打开状态
-    std::mutex mtxBuffer_;                 // 缓冲区 互斥量
-    uint64_t frameId_ = 0;                 // 当前帧id
-    uint64_t frameIdPrevious_ = 0;         // 上一帧id
-    cv::Mat curImage_;                     // 当前最新采集图片
-    std::queue<QImage> lvBuffer_;          // 图像对象 缓冲区
+    LockFreeQueue<cv::Mat> matBuffers_;    // 图像对象 缓冲区
     BGAPI2::Device *cameraPtr_ = nullptr;  // BGAPI相机对象
     BGAPI2::DataStream *stream_ = nullptr; // 流对象
     bool chunk_was_active_ = false;        // 初始化时指示块模式是否处于活动状态的标志

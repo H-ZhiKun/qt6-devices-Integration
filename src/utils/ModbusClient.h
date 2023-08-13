@@ -13,7 +13,7 @@ class ModbusReadArgument
   public:
     uint16_t addr = 0;   /**< 寄存器起始地址 */
     uint16_t offset = 0; /**< 寄存器数量 */
-    uint8_t clock = 0;   /**< 读取间隔 ms*/
+    uint16_t clock = 0;  /**< 读取间隔 ms*/
 };
 
 /**
@@ -42,7 +42,7 @@ class ModbusClient
     ModbusClient &operator=(const ModbusClient &) = delete;
     ModbusClient(ModbusClient &&) noexcept(true) = default;
     ModbusClient &operator=(ModbusClient &&) noexcept(true) = default;
-    void work(const std::vector<ModbusReadArgument> &startArgs);
+    void work(ModbusReadArgument &&args);
 
     /**
      * @brief 读取寄存器数据
@@ -50,7 +50,7 @@ class ModbusClient
      * @param count 读取的寄存器数量
      * @return 读取的寄存器数据
      */
-    std::vector<uint16_t> readDatas(uint16_t address, uint16_t count = 1);
+    bool readDatas(uint16_t address, uint16_t count, std::vector<uint16_t> &outData);
 
     /**
      * @brief 写入寄存器数据
@@ -72,21 +72,20 @@ class ModbusClient
      * @param count 读取的寄存器数量
      * @param buffer 读取结果缓冲区
      */
-    void readRegisters(uint16_t address, uint16_t count, std::vector<uint16_t> &buffer);
+    bool readRegisters(uint16_t address, uint16_t count);
 
     /**
      * @brief 写入寄存器数据
      * @param address 寄存器起始地址
      * @param values 要写入的寄存器值
      */
-    void writeRegisters(uint16_t address, const std::vector<uint16_t> &values);
+    bool writeRegisters(uint16_t address, const std::vector<uint16_t> &values);
 
   private:
     modbus_t *mbsContext_ = nullptr;       /**< Modbus上下文指针 */
     std::string ip_;                       /**< Modbus设备的IP地址 */
     uint16_t port_;                        /**< Modbus设备的端口号 */
     std::mutex mtxMbs_;                    /**< 互斥锁，用于保护Modbus访问 */
-    std::mutex mtxCache_;                  // 缓存读写锁
     std::vector<uint16_t> cache_;          /**< 寄存器值缓存 */
     std::vector<std::thread> tasks_;       // 存储当前任务线程。
     std::atomic_bool bThreadHolder_{true}; // 子线程保持者，在析构中退出。

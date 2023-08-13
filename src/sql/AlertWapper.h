@@ -1,0 +1,78 @@
+#pragma once
+#include "SqlHelper.h"
+#include "Utils.h"
+#include "json/json.h"
+#include <QDebug>
+#include <map>
+#include <string>
+class AlertWapper
+{
+#define TABLE_ALARM_DATA "alarm_data"
+  public:
+    AlertWapper() = default;
+    ~AlertWapper() = default;
+    static Json::Value selectAlertData()
+    {
+        Json::Value json;
+        std::string condition = "state = " + std::to_string(1);
+        json = SqlHelper::getSqlHelper().selectData(TABLE_ALARM_DATA, std::move(condition));
+        return json;
+    }
+    static void insertAlert(std::map<std::string, std::string> &mapAlert)
+    {
+        if (mapAlert.size() == 0)
+            return;
+        Json::Value json;
+        for (auto &[key, value] : mapAlert)
+        {
+            Json::Value item;
+            item["register_address"] = key.c_str();
+            item["content"] = value.c_str();
+            item["state"] = 1;
+            json.append(item);
+        }
+        SqlHelper::getSqlHelper().insertData(TABLE_ALARM_DATA, std::move(json));
+    }
+    static void modifyAlert(std::map<std::string, std::string> &mapModify)
+    {
+        if (mapModify.size() == 0)
+            return;
+        for (auto &[key, value] : mapModify)
+        {
+            Json::Value item;
+            item["state"] = 0;
+            std::string condition = fmt::format("`register_address` = '{}'", key);
+            SqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
+        }
+    }
+
+    static void modifyAllStatus()
+    {
+        Json::Value item;
+        item["state"] = 0;
+        std::string condition = "state = 1";
+        SqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
+    }
+    static void updateRealtimeAlert(std::map<std::string, std::string> &mapAlert)
+    {
+        std::map<std::string, std::string> mapCurrent = mapAlert; // 正在报警的条目
+        static std::map<std::string, std::string> mapLast;        // 上次报警的条目
+        auto lastIter = mapLast.begin();
+        while (lastIter != mapLast.end())
+        {
+            auto curIter = mapCurrent.find(lastIter->first);
+            if (curIter != mapCurrent.end())
+            {
+                curIter = mapCurrent.erase(curIter);
+                lastIter = mapLast.erase(lastIter);
+            }
+            else
+            {
+                lastIter++;
+            }
+        }
+        insertAlert(mapCurrent);
+        modifyAlert(mapLast);
+        std::swap(mapLast, mapAlert);
+    }
+};

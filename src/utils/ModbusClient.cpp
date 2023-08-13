@@ -1,4 +1,5 @@
 #include "ModbusClient.h"
+#include <QDebug>
 
 ModbusClient::ModbusClient(const std::string &ip, uint16_t port) : ip_(ip), port_(port)
 {
@@ -24,61 +25,67 @@ ModbusClient::~ModbusClient()
     }
 }
 
-void ModbusClient::work(const std::vector<ModbusReadArgument> &startArgs)
+void ModbusClient::work(ModbusReadArgument &&args)
 {
     // 启动连接线程
     keepConnection();
 
     // 预留足够的缓存容量
-    size_t maxOffset = 0;
-    for (const auto &arg : startArgs)
-    {
-        maxOffset += arg.offset;
-    }
-    cache_.resize(maxOffset);
-
+    cache_.resize(args.offset);
     // 根据启动参数列表创建任务线程
-    for (const auto &arg : startArgs)
-    {
-        tasks_.emplace_back(std::thread([arg, this]() {
-            std::vector<uint16_t> readBuffer;
-            readBuffer.resize(arg.offset);
 
-            while (bThreadHolder_)
+    tasks_.emplace_back(std::thread([args, this]() {
+        uint16_t count = args.offset / 100;
+        uint16_t remainder = args.offset % 100;
+        if (remainder > 0)
+        {
+            count++;
+        }
+        std::vector<uint16_t> readBuffer;
+        readBuffer.resize(100);
+        uint16_t currentAddr = 0;
+        uint16_t currentOffset = 0;
+        while (bThreadHolder_)
+        {
+            if (bConnected_)
             {
-                if (bThreadHolder_ == false)
-                    break;
-
-                if (bConnected_)
+                currentAddr = args.addr;
+                for (uint8_t i = 0; i < count; i++)
                 {
-                    readRegisters(arg.addr, arg.offset, readBuffer);
-                    updateCache(arg.addr, readBuffer);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(arg.clock));
+                    if (i == count - 1)
+                    {
+                        currentOffset = remainder;
+                    }
+                    else
+                    {
+                        currentOffset = 100;
+                    }
+                    readRegisters(currentAddr, currentOffset);
+                    currentAddr += 100;
                 }
-                else
-                {
-                    std::this_thread::sleep_for(std::chrono::seconds(2));
-                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
-        }));
-    }
+            else
+            {
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+            }
+        }
+    }));
 }
 
-std::vector<uint16_t> ModbusClient::readDatas(uint16_t address, uint16_t count)
+bool ModbusClient::readDatas(uint16_t address, uint16_t count, std::vector<uint16_t> &outData)
 {
-    std::vector<uint16_t> res;
     // 检查是否越界
     if (address + count > cache_.size())
     {
         // 如果请求的范围超过了缓存的容量，返回一个空的结果向量
-        return res;
+        return false;
     }
-    res.reserve(count);
     // 使用std::copy进行批量读取
-    std::lock_guard lock(mtxCache_); // 加缓存读锁
-    std::copy(cache_.begin() + address, cache_.begin() + address + count, std::back_inserter(res));
+    std::lock_guard lock(mtxMbs_); // 加缓存读锁
+    std::copy(cache_.begin() + address, cache_.begin() + address + count, std::back_inserter(outData));
 
-    return res;
+    return true;
 }
 
 void ModbusClient::writeDatas(uint16_t address, const std::vector<uint16_t> &values)
@@ -91,31 +98,46 @@ bool ModbusClient::getConnection()
     return bConnected_;
 }
 
-void ModbusClient::readRegisters(uint16_t address, uint16_t count, std::vector<uint16_t> &buffer)
+bool ModbusClient::readRegisters(uint16_t address, uint16_t count)
 {
+    bool ret = true;
     std::lock_guard<std::mutex> lock(mtxMbs_);
-    if (modbus_read_registers(mbsContext_, address, count, buffer.data()) == -1)
+    int result = modbus_read_registers(mbsContext_, address, count, cache_.data() + address);
+    if (result == -1)
     {
         LogError("Failed to read registers");
         bConnected_ = false;
         cvConnector_.notify_all();
+        ret = false;
     }
+    else
+    {
+        qDebug() << fmt::format("updated by addr = {}, size = {}", address, result);
+    }
+    return ret;
 }
 
-void ModbusClient::writeRegisters(uint16_t address, const std::vector<uint16_t> &values)
+bool ModbusClient::writeRegisters(uint16_t address, const std::vector<uint16_t> &values)
 {
+    bool ret = true;
     std::lock_guard<std::mutex> lock(mtxMbs_);
     if (modbus_write_registers(mbsContext_, address, values.size(), values.data()) == -1)
     {
         LogError("Failed to write registers");
         bConnected_ = false;
         cvConnector_.notify_all();
+        ret = false;
     }
+    return ret;
 }
 
 void ModbusClient::updateCache(uint16_t address, const std::vector<uint16_t> &values)
 {
-    std::lock_guard lock(mtxCache_); // 加缓存写锁
+    std::lock_guard lock(mtxMbs_); // 加缓存写锁
+    if (address + values.size() > cache_.size())
+    {
+        cache_.resize(values.size() + cache_.size());
+    }
     std::copy(values.begin(), values.end(), cache_.begin() + address);
 }
 

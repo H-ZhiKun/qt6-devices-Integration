@@ -342,39 +342,31 @@ std::string Utils::imgToBase64(const QImage &img)
 
 std::string Utils::encrytByAES(const std::string &plain)
 {
-    std::string key("kungegeinijiami");
-    std::string iv("danzongshusihua");
+    std::string key("kungege!n!j!@m!");
+    std::string iv("d@nzongshus!hua");
     std::string cipher;
     try
     {
         CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption e;
         e.SetKeyWithIV((CryptoPP::byte *)key.c_str(), 16, (CryptoPP::byte *)iv.c_str());
 
-        // The StreamTransformationFilter removes
-        //  padding as required.
-        CryptoPP::StringSource s(
-            plain, true,
-            new CryptoPP::StreamTransformationFilter(e,
-                                                     new CryptoPP::StringSink(cipher)) // StreamTransformationFilter
-        );                                                                             // StringSource
+        CryptoPP::StringSource s(plain, true,
+                                 new CryptoPP::StreamTransformationFilter(e, new CryptoPP::StringSink(cipher)));
     }
     catch (const CryptoPP::Exception &e)
     {
         LogError(e.what());
     }
 
-    // Pretty print
     std::string encoded;
-    CryptoPP::StringSource(cipher, true,
-                           new CryptoPP::Base64Encoder(new CryptoPP::StringSink(encoded)) // HexEncoder
-    );                                                                                    // StringSource
+    CryptoPP::StringSource(cipher, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(encoded)));
     return encoded;
 }
 
 std::string Utils::decrytByAES(const std::string &encode)
 {
-    std::string key("kungegeinijiami");
-    std::string iv("danzongshusihua");
+    std::string key("kungege!n!j!@m!");
+    std::string iv("d@nzongshus!hua");
     std::string encodeByte;
     CryptoPP::StringSource(encode, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(encodeByte)));
 
@@ -384,13 +376,8 @@ std::string Utils::decrytByAES(const std::string &encode)
         CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption d;
         d.SetKeyWithIV((CryptoPP::byte *)key.c_str(), 16, (CryptoPP::byte *)iv.c_str());
 
-        // The StreamTransformationFilter removes
-        //  padding as required.
-        CryptoPP::StringSource s(
-            encodeByte, true,
-            new CryptoPP::StreamTransformationFilter(d,
-                                                     new CryptoPP::StringSink(recovered)) // StreamTransformationFilter
-        );                                                                                // StringSource
+        CryptoPP::StringSource s(encodeByte, true,
+                                 new CryptoPP::StreamTransformationFilter(d, new CryptoPP::StringSink(recovered)));
     }
     catch (const CryptoPP::Exception &e)
     {

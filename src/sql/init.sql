@@ -128,4 +128,18 @@ CREATE TABLE IF NOT EXISTS `formula_data`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = DYNAMIC;
 
 
+-- ----------------------------
+-- Table structure for alarm_data
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `alarm_data`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type` varchar(16) CHARACTER SET utf8 COLLATE utf8_bin,
+  `content` varchar(64) CHARACTER SET utf8 COLLATE utf8_bin,
+	`register_address` varchar(10) CHARACTER SET utf8 COLLATE utf8_bin,
+  `state` boolean DEFAULT TRUE,
+	`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = DYNAMIC;
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -18,10 +18,11 @@ class BaumerManager
     explicit BaumerManager(Json::Value jsParam);
     virtual ~BaumerManager();
     void start();
+    void searchCamera(); // 搜索相机
     bool setCameraParam(const Json::Value &param);
-    Json::Value getCameraParam(const std::string &SN); // 根据sn号获取对应相机的参数列表
-    cv::Mat getImageBySN(const std::string &SN);       // 根据sn号获取对应相机的图片
-    std::list<std::string> getCameraList();            // 返回相机列表sn号
+    Json::Value getCameraParam(const std::string &SN);      // 根据sn号获取对应相机的参数列表
+    std::list<cv::Mat> getImageBySN(const std::string &SN); // 根据sn号获取对应相机的图片
+    std::list<std::string> getCameraList();                 // 返回相机列表sn号
     void removeCamera(const std::string &snNumber);
 
   protected:

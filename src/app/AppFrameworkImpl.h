@@ -5,6 +5,7 @@
 #include "Domino.h"
 #include "HttpApiManager.h"
 #include "Logger.h"
+#include "PLCDevice.h"
 #include "SqlHelper.h"
 #include <QQmlApplicationEngine>
 #include <memory>
@@ -54,7 +55,7 @@ class AppFrameworkImpl final : public AppFramework
     void memoryClean();
     void initBaumerManager();
     void initHttp();
-    void runHttp(const std::string &imageName, cv::Mat &matImage);
+    void runHttp(const std::string &&modelName, const std::string &imageName, cv::Mat &matImage);
 
     void bindDisplay(const std::string &snId, const DisplayWindows &painterId); // 绑定展示窗口和SN号
     void updateRealData();                                                      // 主界面实时更新数据
@@ -68,8 +69,9 @@ class AppFrameworkImpl final : public AppFramework
     void updateByMinute(const std::string &minute);                             // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();
-    void timerTask(); // 定时任务
-    void processPaddleOCR(QJsonDocument, cv::Mat);
+    void timerTask();                                   // 定时任务
+    void processPaddleOCR(QJsonDocument, cv::Mat);      // 处理检测算法
+    void processYoloTangle(QJsonDocument &, cv::Mat &); // 处理角度预测算法
 
   private:
     // 私有变量区域
@@ -81,7 +83,7 @@ class AppFrameworkImpl final : public AppFramework
     Domino *domino_ = nullptr;
     Cognex *cognex_ = nullptr;
     HttpApiManager *http_ = nullptr;
-
+    PLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
     std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
     std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁

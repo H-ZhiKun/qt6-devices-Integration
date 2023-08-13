@@ -16,10 +16,10 @@ class FormulaWapper
         return jsonVec;
     }
 
-    static QString selectOneFormula(const QString &name)
+    static QString selectOneFormula(const std::string &name)
     {
-        QString selectStr = "name = '" + name + "'";
-        Json::Value value = SqlHelper::getSqlHelper().selectData("formula_data", selectStr, "");
+        std::string selectStr = "name = '" + name + "'";
+        Json::Value value = SqlHelper::getSqlHelper().selectData("formula_data", std::move(selectStr), "");
         Json::Value jsonSingleValue;
         for (const Json::Value &jsonValue : value)
         {
@@ -30,28 +30,23 @@ class FormulaWapper
 
     static bool insertFormula(const QString &jsonString)
     {
-        QList<QVariantMap> dataList;
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonString.toUtf8());
-        QVariantMap insertData = jsonDocument.toVariant().toMap();
-
-        dataList.append(insertData);
-        bool res = SqlHelper::getSqlHelper().insertData("formula_data", dataList);
+        Json::Value jsonValue = Utils::stringToJson(jsonString.toStdString());
+        bool res = SqlHelper::getSqlHelper().insertData("formula_data", std::move(jsonValue));
         return res;
     }
 
     static bool modifyFormula(const QString &jsonString)
     {
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonString.toUtf8());
-        QVariantMap updateData = jsonDocument.toVariant().toMap();
+        Json::Value updateData = Utils::stringToJson(jsonString.toStdString());
         // updateData["code_x_position"] = jsonres["code_x_position"];
         // updateData["code_y_position"] = jsonres["code_y_position"];
         // updateData["impurity_locate"] = jsonres["impurity_locate"];
         // updateData["speed_produce"] = jsonres["speed_produce"];
         // updateData["acceleration_produce"] = jsonres["acceleration_produce"];
         // updateData["deceleration_produce"] = jsonres["deceleration_produce"];
-        QString selectStr = "name = '" + updateData["name"].toString() + "'";
-        updateData.remove("name");
-        if (SqlHelper::getSqlHelper().updateData("formula_data", updateData, selectStr))
+        std::string selectStr = fmt::format("name = '{}'", updateData["name"].asString().c_str());
+        updateData.removeMember("name");
+        if (SqlHelper::getSqlHelper().updateData("formula_data", std::move(updateData), std::move(selectStr)))
         {
             qDebug() << "Data updated successfully";
             return true;
@@ -65,7 +60,7 @@ class FormulaWapper
 
     static bool deleteFormula(const QString &name)
     {
-        QString selectStr = "name = '" + name + "'";
+        std::string selectStr = "name = '" + name.toStdString() + "'";
         if (SqlHelper::getSqlHelper().deleteData("formula_data", selectStr))
         {
             qDebug() << "Data deleted successfully";

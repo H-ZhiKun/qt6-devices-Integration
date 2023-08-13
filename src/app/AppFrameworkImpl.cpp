@@ -65,16 +65,18 @@ int AppFrame::AppFrameworkImpl::run()
 {
     // 初始化日志记录器
     CLogger::GetLogger().initLogger(qApp->applicationDirPath().toStdString() + "/logs/log_.html", spdlog::level::info,
-                                    10, 10);
+                                    10, 5);
 
     LogInfo("AppFrame Run");
     initSqlHelper();
-    // initHttp();
+    initHttp();
     // cv::Mat test = cv::imread("F:/deviceintegration/build/Debug/algorimTest.jpg");
-    // runHttp("algorimTest", test);
+    // cv::Mat nesseTest = cv::imread("F:/deviceintegration/build/Debug/3.jpg");
+    // cv::Mat tangleTest = cv::imread("F:/deviceintegration/build/Debug/tangleTest.jpg");
+    // runHttp("tangle", "algorimTest", tangleTest);
     initBaumerManager();
     runDomino();
-    // runPLC();
+    runPLC();
     // runCognex();
     timerTask();
     return 0;
@@ -223,7 +225,7 @@ std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
         auto rs1 = baumerManager_->setCameraParam(jsParams);
         auto jsStore = baumerManager_->getCameraParam(snNum);
         jsStore["qml_window"] = window;
-        auto rs2 = CameraWapper::modifyCamera(Utils::jsonToString(jsStore).c_str());
+        auto rs2 = CameraWapper::modifyCamera(jsStore);
         ret = rs1 && rs2;
     }
     return Utils::makeResponse(ret);
@@ -323,6 +325,8 @@ void AppFrame::AppFrameworkImpl::runDomino()
 
 void AppFrame::AppFrameworkImpl::runPLC()
 {
+    plcDev_ = new PLCDevice;
+    plcDev_->init();
 }
 
 void AppFrame::AppFrameworkImpl::runCognex()
@@ -405,19 +409,22 @@ void AppFrame::AppFrameworkImpl::updateVideo()
     {
         auto camId = key;
         std::string sn = value;
-        Utils::asyncTask([this, sn, camId] {
-            if (sn.empty())
+        if (sn.empty())
+        {
+            invokeCpp(mapStorePainter_[camId], "stopPainting");
+            continue;
+        }
+        std::list<cv::Mat> matData = baumerManager_->getImageBySN(sn);
+        if (matData.size() == 0)
+        {
+            continue;
+        }
+        cv::Mat temp = matData.back();
+        Utils::asyncTask([this, camId, target = std::move(temp)] {
+            QImage img = Utils::matToQImage(target);
+            if (img.isNull() == false)
             {
-                invokeCpp(mapStorePainter_[camId], "stopPainting");
-            }
-            else
-            {
-                cv::Mat matData = baumerManager_->getImageBySN(sn);
-                QImage img = Utils::matToQImage(matData);
-                if (img.isNull() == false)
-                {
-                    invokeCpp(mapStorePainter_[camId], "updateImage", Q_ARG(QImage, img));
-                }
+                invokeCpp(mapStorePainter_[camId], "updateImage", Q_ARG(QImage, img));
             }
         });
     }
@@ -427,7 +434,7 @@ void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
 {
     // 每分钟更新电能数据
     QList<QVariantMap> dataList;
-    QVariantMap dataEle;
+    Json::Value dataEle;
     // 与PLC通信得到数据
     float num = atoi(minute.c_str());
     dataEle["id"] = 0;
@@ -446,8 +453,7 @@ void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
     dataEle["c_direction_current"] = 43.77;
     dataEle["humidity"] = 43;
 
-    dataList.append(dataEle);
-    SqlHelper::getSqlHelper().insertData("electric_data", dataList);
+    SqlHelper::getSqlHelper().insertData("electric_data", std::move(dataEle));
     updateAlarmData("test"); // TODO：有报错才发送
 }
 
@@ -456,22 +462,21 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
     // 每日创建当月份数据表和下月份数据表做冗余
     // 动态创建月份数据库表
     std::string monthSingleBoottleTB = year + month + "single_bottle";
-    QStringList fields;
-    fields << "`id` int UNSIGNED NOT NULL AUTO_INCREMENT"
-           << "`qr_code_reslut` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`logistics_code_gt` char(24) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`locate_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`locate_res` float"
-           << "`locate_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`locate_check_res` boolean"
-           << "`code_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`logistics_code` char(24) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`logistics_code_res` boolean"
-           << "`batch_num` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin"
-           << "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE"
-           << "PRIMARY KEY (`id`) USING BTREE";
-    if (SqlHelper::getSqlHelper().createTable(QString::fromStdString(monthSingleBoottleTB), fields))
+    std::list<std::string> fields{"`id` int UNSIGNED NOT NULL AUTO_INCREMENT",
+                                  "`qr_code_reslut` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`logistics_code_gt` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`locate_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`locate_res` float",
+                                  "`locate_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`locate_check_res` boolean",
+                                  "`code_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`logistics_code` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`logistics_code_res` boolean",
+                                  "`batch_num` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin",
+                                  "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE",
+                                  "PRIMARY KEY (`id`) USING BTREE"};
+    if (SqlHelper::getSqlHelper().createTable(monthSingleBoottleTB, std::move(fields)))
     {
         LogInfo("This month table created successfully");
     }
@@ -490,22 +495,21 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
 
     // 动态创建下月份数据库表
     std::string lastMonthSingle = year + lastMonth + "single_bottle";
-    QStringList lastFields;
-    lastFields << "`id` int UNSIGNED NOT NULL AUTO_INCREMENT"
-               << "`qr_code_reslut` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`logistics_code_gt` char(24) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`locate_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`locate_res` float"
-               << "`locate_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`locate_check_res` boolean"
-               << "`code_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`logistics_code` char(24) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`logistics_code_res` boolean"
-               << "`batch_num` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin"
-               << "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE"
-               << "PRIMARY KEY (`id`) USING BTREE";
-    if (SqlHelper::getSqlHelper().createTable(QString::fromStdString(lastMonthSingle), lastFields))
+    std::list<std::string> lastFields{"`id` int UNSIGNED NOT NULL AUTO_INCREMENT",
+                                      "`qr_code_reslut` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`logistics_code_gt` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`locate_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`locate_res` float",
+                                      "`locate_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`locate_check_res` boolean",
+                                      "`code_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`logistics_code` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`logistics_code_res` boolean",
+                                      "`batch_num` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin",
+                                      "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE",
+                                      "PRIMARY KEY (`id`) USING BTREE"};
+    if (SqlHelper::getSqlHelper().createTable(lastMonthSingle, std::move(lastFields)))
     {
         LogInfo("Last month table created successfully");
     }
@@ -561,20 +565,36 @@ void AppFrame::AppFrameworkImpl::initHttp()
         //  检查是否解析成功
         if (!jsonDocument.isNull())
         {
-            if (jsonDocument["model"].toString() == "ocr")
+            if (jsonDocument["model"].toString() == "ocr" || jsonDocument["model"].toString() == "yolov5")
             {
                 Utils::asyncTask([this, jsonDocument = std::move(jsonDocument), matImage = std::move(matImage)]() {
                     processPaddleOCR(std::move(jsonDocument), std::move(matImage));
                 });
             }
+            else if (jsonDocument["model"].toString() == "yolov5_tangle")
+            {
+                processYoloTangle(jsonDocument, matImage);
+            }
         }
     });
 }
 
-void AppFrame::AppFrameworkImpl::runHttp(const std::string &imageName, cv::Mat &matImage)
+void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const std::string &imageName,
+                                         cv::Mat &matImage)
 {
-    // 大约耗时480ms
-    std::string apiUrl = "http://192.168.101.32:5001/paddleOCR";
+    std::string apiUrl;
+    if (modeleName == "paddleOCR")
+    {
+        apiUrl = "http://192.168.101.8:5001/paddleOCR";
+    }
+    else if (modeleName == "nesse")
+    {
+        apiUrl = "http://192.168.101.8:5002/predict_neisai";
+    }
+    else if (modeleName == "tangle")
+    {
+        apiUrl = "http://192.168.101.8:5000/predict_tangle";
+    }
     if (matImage.empty())
     {
         LogWarn("Failed to read the image.");
@@ -615,7 +635,7 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     bThreadHolder = false;
     mapWndDisplay_.clear();
     mapStorePainter_.clear();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // 等到子线程回收资源
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // 等到子线程回收资源
     for (auto &ptr : lvFulltimeThread_)
     {
         ptr.join();
@@ -633,7 +653,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     }
     lvThread_.clear();
     // 对象清理区域
-
+    if (plcDev_ != nullptr)
+    {
+        delete plcDev_;
+        plcDev_ = nullptr;
+    }
     if (domino_ != nullptr)
     {
         delete domino_;
@@ -695,7 +719,7 @@ void AppFrame::AppFrameworkImpl::timerTask()
                 // invokeCpp(cognex_, cognex_->scanOnce()); // cognex调用方法
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     }));
 
@@ -704,9 +728,40 @@ void AppFrame::AppFrameworkImpl::timerTask()
         while (bThreadHolder)
         {
             updateVideo();
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }));
+}
+
+void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument, cv::Mat &matImage)
+{
+    // 转换为QJsonObject
+    QJsonObject jsonObject = jsonDocument.object();
+    // qDebug() << jsonObject["imageName"];
+    // 检查是否含有键box
+    if (jsonObject.contains("box"))
+    {
+        QString boxJsonString = jsonObject["box"].toString();
+        QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
+
+        // 遍历json array
+        foreach (const QJsonValue &boxValue, boxJsonArray)
+        {
+            QJsonObject boxObject = boxValue.toObject();
+            QString result = boxObject["result"].toString().toUtf8();
+
+            QString resstr = "tangle; " + result + "; ";
+            cv::putText(matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
+                        cv::Scalar(0, 0, 255), 2, 8); // 输出文字
+        }
+        cv::imshow("algorithm result", matImage);
+        cv::waitKey(10);
+        // 1 图像操作：显示在界面、保存
+    }
+    else
+    {
+        // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
+    }
 }
 
 void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv::Mat matImage)
@@ -767,7 +822,7 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv
 
             colorIndex = (colorIndex + 1) % 6; // 颜色轮转
         }
-        cv::imshow("111", matImage);
+        cv::imshow("algorithm result", matImage);
         cv::waitKey(10);
 
         // 1 图像操作：显示在界面、保存

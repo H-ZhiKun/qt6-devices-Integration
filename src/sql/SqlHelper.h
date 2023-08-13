@@ -9,6 +9,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
+#include <list>
 class SqlHelper : public AppFrame::NonCopyable
 {
   public:
@@ -36,7 +37,7 @@ class SqlHelper : public AppFrame::NonCopyable
         }
         return init;
     }
-    bool createTable(const QString &tableName, const QStringList &fields)
+    bool createTable(const std::string &tableName, std::list<std::string> &&fields)
     {
         bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
@@ -47,10 +48,10 @@ class SqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建创建表的SQL语句
-        QString sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (";
-        for (const QString &field : fields)
+        QString sql = fmt::format("CREATE TABLE IF NOT EXISTS `{}` (", tableName.c_str()).c_str();
+        for (const auto &field : fields)
         {
-            sql += field + ", ";
+            sql += field.c_str() + QString(", ");
         }
         sql.chop(2); // 去除最后的逗号和空格
         sql += ")";
@@ -66,80 +67,156 @@ class SqlHelper : public AppFrame::NonCopyable
         return ret;
     }
 
-    bool insertData(const QString &tableName, const QList<QVariantMap> &dataList)
+    bool insertData(const std::string &tableName, const Json::Value &&jsValue)
     {
         bool ret = true;
-        if (dataList.isEmpty())
+
+        if (jsValue.isNull())
         {
-            // 数据列表为空，无需处理
+            // 如果 jsValue 是空，无需处理
             return false;
         }
 
         QSqlDatabase *connect = pool_->getConnection();
         if (connect == nullptr)
+        {
             return false;
+        }
 
         QSqlQuery query(*connect);
-
-        // 构建插入数据的SQL语句
-        QString sql = "INSERT INTO " + tableName + " (";
-        QString values;
-        QVariantList params;
-
-        for (const QVariantMap &data : dataList)
+        // 判断 jsValue 是数组还是对象
+        if (jsValue.isArray())
         {
-            if (data.isEmpty())
+            // 构建批量插入数据的SQL语句
+            QString sql = fmt::format("INSERT INTO `{}` (", tableName.c_str()).c_str();
+            QString values;
+            QVariantList params;
+            bool bAddfield = false;
+
+            for (const Json::Value &data : jsValue)
             {
-                // 数据项为空，跳过该项
-                continue;
+                if (!data.isObject())
+                {
+                    // 跳过非对象类型
+                    continue;
+                }
+                QString valuePlaceholders;
+                for (auto iter = data.begin(); iter != data.end(); ++iter)
+                {
+                    if (!bAddfield)
+                    {
+                        sql += QString("`") + iter.name().c_str() + "`, ";
+                    }
+                    valuePlaceholders += "?, ";
+                    QVariant curVal;
+                    if (iter->isBool())
+                        curVal = iter->asBool();
+                    if (iter->isInt())
+                        curVal = iter->asInt();
+                    if (iter->isDouble())
+                        curVal = iter->asFloat();
+                    if (iter->isString())
+                        curVal = iter->asCString();
+                    params << curVal;
+                }
+                bAddfield = true;
+                valuePlaceholders.chop(2); // 去除最后的逗号和空格
+                values += "(" + valuePlaceholders + "), ";
             }
-            QString valuePlaceholders;
-            for (auto iter = data.begin(); iter != data.end(); ++iter)
+            sql.chop(2);    // 去除最后的逗号和空格
+            values.chop(2); // 去除最后的逗号和空格
+            sql += ") VALUES " + values;
+            query.prepare(sql);
+
+            for (int i = 0; i < params.size(); ++i)
             {
-                sql += iter.key() + ", ";
+                query.addBindValue(params[i].toString());
+            }
+        }
+        else if (jsValue.isObject())
+        {
+            // 直接插入单个对象
+            QString sql = "INSERT INTO " + QString::fromStdString(tableName) + " (";
+            QString values;
+            QVariantList params;
+
+            QString valuePlaceholders;
+            for (auto iter = jsValue.begin(); iter != jsValue.end(); ++iter)
+            {
+                sql += QString("`") + iter.name().c_str() + "`, ";
                 valuePlaceholders += "?, ";
-                // params << QString::number(iter.value().toDouble());
-                params << iter.value();
+                QVariant curVal;
+                if (iter->isBool())
+                    curVal = iter->asBool();
+                if (iter->isInt())
+                    curVal = iter->asInt();
+                if (iter->isDouble())
+                    curVal = iter->asFloat();
+                if (iter->isString())
+                    curVal = iter->asCString();
+                params << curVal;
             }
             valuePlaceholders.chop(2); // 去除最后的逗号和空格
-            values += "(" + valuePlaceholders + "), ";
+            values += "(" + valuePlaceholders + ")";
+            sql.chop(2); // 去除最后的逗号和空格
+            sql += ") VALUES " + values;
+            query.prepare(sql);
+
+            for (int i = 0; i < params.size(); ++i)
+            {
+                query.addBindValue(params[i].toString());
+            }
         }
-        sql.chop(2);    // 去除最后的逗号和空格
-        values.chop(2); // 去除最后的逗号和空格
-        sql += ") VALUES " + values;
-        query.prepare(sql);
-        for (int i = 0; i < params.size(); ++i)
-        {
-            query.addBindValue(params[i].toString());
-        }
+
         if (!query.exec())
         {
             LogError("Failed to insert data: {}", query.lastError().text().toStdString());
             ret = false;
         }
+
         pool_->releaseConnection(connect);
         return ret;
     }
 
-    bool updateData(const QString &tableName, const QVariantMap &data, const QString &condition)
+    bool updateData(const std::string &tableName, Json::Value &&jsValue, const std::string &&condition)
     {
         bool ret = true;
+
+        if (jsValue.isNull())
+        {
+            // 如果 jsValue 是空，无需处理
+            return false;
+        }
+
         QSqlDatabase *connect = pool_->getConnection();
         if (connect == nullptr)
+        {
             return false;
+        }
 
         QSqlQuery query(*connect);
         QVariantList params;
 
         // 构建更新数据的SQL语句
-        QString sql = "UPDATE " + tableName + " SET ";
-        for (auto it = data.begin(); it != data.end(); ++it)
+        QString sql = "UPDATE " + QString::fromStdString(tableName) + " SET ";
+        for (auto it = jsValue.begin(); it != jsValue.end(); ++it)
         {
-            sql += it.key() + " = ?, ";
-            params << it.value();
+            sql += QString::fromStdString(it.key().asString()) + " = ?, ";
+            QVariant curVal;
+            if (it->isBool())
+                curVal = it->asBool();
+            if (it->isInt())
+                curVal = it->asInt();
+            if (it->isDouble())
+                curVal = it->asFloat();
+            if (it->isString())
+                curVal = it->asCString();
+
+            params << curVal;
         }
+
         sql.chop(2); // 去除最后的逗号和空格
-        sql += " WHERE " + condition;
+        sql += QString(" WHERE ") + condition.c_str();
         query.prepare(sql);
         qDebug() << "sql update: " << sql;
         for (int i = 0; i < params.size(); ++i)
@@ -156,7 +233,7 @@ class SqlHelper : public AppFrame::NonCopyable
         return ret;
     }
 
-    bool upsertData(const QString &tableName, const QVariantMap &data)
+    bool upsertData(const std::string &tableName, const Json::Value &&data)
     {
         bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
@@ -167,20 +244,29 @@ class SqlHelper : public AppFrame::NonCopyable
         QVariantList params;
 
         // 构建UPSERT语句
-        QString upsertSql = "INSERT INTO " + tableName + " (";
+        QString upsertSql = fmt::format("INSERT INTO `{}` (", tableName.c_str()).c_str();
         QString updateSql = ") VALUES (";
         for (auto it = data.begin(); it != data.end(); ++it)
         {
-            upsertSql += it.key() + ", ";
+            upsertSql += it.name() + ", ";
             updateSql += "?, ";
-            params << it.value();
+            QVariant curVal;
+            if (it->isBool())
+                curVal = it->asBool();
+            if (it->isInt())
+                curVal = it->asInt();
+            if (it->isDouble())
+                curVal = it->asFloat();
+            if (it->isString())
+                curVal = it->asCString();
+            params << curVal;
         }
         upsertSql.chop(2); // 去除最后的逗号和空格
         updateSql.chop(2); // 去除最后的逗号和空格
         upsertSql += updateSql + ") ON DUPLICATE KEY UPDATE ";
         for (auto it = data.begin(); it != data.end(); ++it)
         {
-            upsertSql += it.key() + " = VALUES(" + it.key() + "), ";
+            upsertSql += it.name() + " = VALUES(" + it.name() + "), ";
         }
         upsertSql.chop(2); // 去除最后的逗号和空格
         query.prepare(upsertSql);
@@ -200,7 +286,7 @@ class SqlHelper : public AppFrame::NonCopyable
         return ret;
     }
 
-    bool deleteData(const QString &tableName, const QString &condition)
+    bool deleteData(const std::string &tableName, const std::string &condition)
     {
         bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
@@ -210,7 +296,7 @@ class SqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建删除数据的SQL语句
-        QString sql = "DELETE FROM " + tableName + " WHERE " + condition;
+        QString sql = "DELETE FROM " + QString::fromStdString(tableName) + " WHERE " + condition.c_str();
 
         query.prepare(sql);
         qDebug() << "delete user sql" << sql;
@@ -223,7 +309,8 @@ class SqlHelper : public AppFrame::NonCopyable
         return ret;
     }
 
-    Json::Value selectData(const QString &tableName, const QString &condition, const QString &orderBy = "")
+    Json::Value selectData(const std::string &tableName, const std::string &&condition,
+                           const std::string &&orderBy = "")
     {
         Json::Value jsVal;
         QSqlDatabase *connect = pool_->getConnection();
@@ -235,16 +322,16 @@ class SqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建查询数据的SQL语句
-        QString sql = "SELECT * FROM " + tableName;
-        if (!condition.isEmpty())
+        QString sql = QString("SELECT * FROM ") + tableName.c_str();
+        if (!condition.empty())
         {
             sql += " WHERE " + condition;
         }
-        if (!orderBy.isEmpty())
+        if (!orderBy.empty())
         {
             sql += " ORDER BY " + orderBy;
         }
-        qDebug() << "sql statement: " << sql;
+        // qDebug() << "sql statement: " << sql;
         query.prepare(sql);
         if (query.exec())
         {
@@ -270,7 +357,7 @@ class SqlHelper : public AppFrame::NonCopyable
         return jsVal;
     }
 
-    bool checkRecordExist(const QString &tableName, const QString &columnName, const QVariant &columnValue)
+    bool checkRecordExist(const std::string &tableName, const std::string &columnName, const std::string &columnValue)
     {
         QSqlDatabase *connect = pool_->getConnection();
         if (connect == nullptr)
@@ -279,9 +366,11 @@ class SqlHelper : public AppFrame::NonCopyable
             return false;
         };
         QSqlQuery query(*connect);
-        QString sqlQuery = QString("SELECT COUNT(*) AS count FROM %1 WHERE %2 = :value").arg(tableName).arg(columnName);
+        QString sqlQuery = QString("SELECT COUNT(*) AS count FROM %1 WHERE %2 = :value")
+                               .arg(QString::fromStdString(tableName))
+                               .arg(QString::fromStdString(columnName));
         query.prepare(sqlQuery);
-        query.bindValue(":value", columnValue);
+        query.bindValue(":value", QString::fromStdString(columnValue));
 
         if (query.exec())
         {
@@ -301,8 +390,8 @@ class SqlHelper : public AppFrame::NonCopyable
         return false;
     }
 
-    QString selectOneData(const QString &tableName, const QString &selectItem, const QString &condition,
-                          const QString &orderBy = "")
+    QString selectOneData(const std::string &tableName, const std::string &selectItem, const std::string &condition,
+                          const std::string &orderBy = "")
     {
         Json::Value jsVal;
         QString fieldName = "";
@@ -315,12 +404,12 @@ class SqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建查询数据的SQL语句
-        QString sql = "SELECT " + selectItem + " FROM " + tableName;
-        if (!condition.isEmpty())
+        QString sql = "SELECT " + QString::fromStdString(selectItem) + " FROM " + QString::fromStdString(tableName);
+        if (!condition.empty())
         {
             sql += " WHERE " + condition;
         }
-        if (!orderBy.isEmpty())
+        if (!orderBy.empty())
         {
             sql += " ORDER BY " + orderBy;
         }

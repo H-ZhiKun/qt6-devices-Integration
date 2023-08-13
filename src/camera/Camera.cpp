@@ -155,7 +155,7 @@ bool Camera::addBuffersToStream()
         cameraPtr_->GetDataStreams()->Refresh();
         stream_->Open();
         BGAPI2::BufferList *bufferList = stream_->GetBufferList();
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 5; i++)
         {
             BGAPI2::Buffer *buffer = new BGAPI2::Buffer();
             bufferList->Add(buffer);
@@ -215,17 +215,6 @@ void Camera::keepCaptureRunning()
         while (bHolder_)
         {
             std::this_thread::sleep_for(std::chrono::seconds(5));
-            if (bActive_ == true)
-            {
-                if (frame == frameId_)
-                {
-                    bInited_ = false;
-                }
-                else
-                {
-                    frame = frameId_;
-                }
-            }
         }
     });
 }
@@ -369,21 +358,22 @@ void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint6
     {
         mat = mono8ToMat(buffer, width, height);
     }
-    std::lock_guard<std::mutex> lock(mtxBuffer_);
-    curImage_ = mat.clone();
-    frameId_ = frameId;
+    matBuffers_.enqueue(std::move(mat));
 }
 
-cv::Mat Camera::getImage()
+std::list<cv::Mat> Camera::getImage()
 {
-    cv::Mat img;
-    if (frameId_ != frameIdPrevious_)
+    std::list<cv::Mat> list;
+    while (!matBuffers_.empty())
     {
-        std::lock_guard<std::mutex> lock(mtxBuffer_);
-        frameIdPrevious_ = frameId_;
-        img = curImage_.clone();
+        cv::Mat mat;
+        matBuffers_.dequeue(mat);
+        if (!mat.empty())
+        {
+            list.emplace_back(std::move(mat));
+        }
     }
-    return img;
+    return list;
 }
 
 cv::Mat Camera::mono8ToMat(unsigned char *buffer, uint64_t width, uint64_t height)
