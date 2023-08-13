@@ -9,9 +9,16 @@ cmake_minimum_required(VERSION 3.16)
 # endif()
 
 # 设置默认构建类型为 Debug
-set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build.")
+# set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
 # 输出当前的编译类型
 message("build type: ${CMAKE_BUILD_TYPE}")
+
+# 根据 CMAKE_BUILD_TYPE 设置输出目录
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../Debug)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../Release)
+endif()
 
 set(PROJECT_NAME DeviceIntegration)
 
@@ -52,6 +59,7 @@ aux_source_directory (./src/camera SRC_CAMERA)
 aux_source_directory (./src/cognex SRC_COGNEX)
 aux_source_directory (./src/http SRC_HTTP)
 
+
 qt_add_executable(${PROJECT_NAME}
         src/main.cpp
         ${SRC_SQL}
@@ -62,6 +70,7 @@ qt_add_executable(${PROJECT_NAME}
         ${SRC_APP}
         ${SRC_COGNEX}
         ${SRC_HTTP}
+        logo.rc
 )
 
 qt_add_resources(${CMAKE_PROJECT_NAME} "configuration"
@@ -88,6 +97,8 @@ qt_add_qml_module(${PROJECT_NAME}
         qml/ModifyUser.qml
         qml/ModifyUserInfo.qml
         qml/MySwitch.qml
+        qml/PageButton.qml
+        qml/PageComponent.qml
         qml/PowerPage.qml
         qml/ProduceData.qml
         qml/SensorPage.qml
