@@ -34,8 +34,6 @@
 
 # 忽略build目录
 build
-*.editorconfig
-.vscode
 Debug
 Release
 
