@@ -6,7 +6,7 @@
 #include <chrono>
 using namespace BGAPI2;
 
-BOOL BGAPI2CALL PnPEventHandler(void *callBackOwner, BGAPI2::Events::PnPEvent *pPnPEvent)
+void BGAPI2CALL PnPEventHandler(void *callBackOwner, BGAPI2::Events::PnPEvent *pPnPEvent)
 {
     if (NULL != pPnPEvent)
     {
@@ -25,10 +25,7 @@ BOOL BGAPI2CALL PnPEventHandler(void *callBackOwner, BGAPI2::Events::PnPEvent *p
             // qDebug() << "camera add  singal" << SNNumber;
             // pManager->searchCamera();
         }
-
-        return TRUE;
     }
-    return FALSE;
 }
 
 BaumerManager::BaumerManager(Json::Value jsParam)
