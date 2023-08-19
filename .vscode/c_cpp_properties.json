@@ -3,7 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
+                "${workspaceFolder}/src/**",
                 "${workspaceFolder}/src/utils",
                 "${workspaceFolder}/src/sql",
                 "${workspaceFolder}/src/app",
@@ -11,12 +11,12 @@
                 "${workspaceFolder}/src/plc",
                 "${workspaceFolder}/src/camera",
                 "${workspaceFolder}/third_party/include",
-                "E:/Qt/6.5.2/msvc2019_64/include",
-                "E:/Qt/6.5.2/msvc2019_64/include/**"
+                "E:/Qt/6.5.1/msvc2019_64/include",
+                "E:/Qt/6.5.1/msvc2019_64/include/**"
             ],
             "browse": {
                 "path": [
-                    "${workspaceFolder}/**",
+                    "${workspaceFolder}/src/**",
                     "${workspaceFolder}/src/utils",
                     "${workspaceFolder}/src/sql",
                     "${workspaceFolder}/src/app",
@@ -24,8 +24,8 @@
                     "${workspaceFolder}/src/plc",
                     "${workspaceFolder}/src/camera",
                     "${workspaceFolder}/third_party/include",
-                    "E:/Qt/6.5.2/msvc2019_64/include",
-                    "E:/Qt/6.5.2/msvc2019_64/include/**"
+                    "E:/Qt/6.5.1/msvc2019_64/include",
+                    "E:/Qt/6.5.1/msvc2019_64/include/**"
                 ]
             },
             "defines": [

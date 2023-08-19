@@ -111,6 +111,7 @@
         "qguiapplication": "cpp",
         "qapplication": "cpp",
         "source_location": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "stdfloat": "cpp"
     }
 }
