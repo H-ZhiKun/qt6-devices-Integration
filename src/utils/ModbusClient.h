@@ -1,6 +1,6 @@
 #pragma once
 #include "Logger.h"
-#include <modbus/modbus.h>
+#include <modbus.h>
 #include <string>
 #include <unordered_map>
 #include <vector>

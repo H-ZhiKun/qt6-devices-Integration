@@ -355,7 +355,7 @@ std::string Utils::encrytByAES(const std::string &plain)
     }
     catch (const CryptoPP::Exception &e)
     {
-        LogError(e.what());
+        LogError("{}", e.what());
     }
 
     std::string encoded;
@@ -381,7 +381,7 @@ std::string Utils::decrytByAES(const std::string &encode)
     }
     catch (const CryptoPP::Exception &e)
     {
-        LogError(e.what());
+        LogError("{}", e.what());
     }
 
     return recovered;
