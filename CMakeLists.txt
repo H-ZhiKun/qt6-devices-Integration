@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.16)
 #   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
 #     "MinSizeRel" "RelWithDebInfo")
 # endif()
-
+include(e:/vcpkg/scripts/buildsystems/vcpkg.cmake)
 # 设置默认构建类型为 Debug
 # set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
 # 输出当前的编译类型
@@ -28,7 +28,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
@@ -46,6 +46,16 @@ include_directories(${3RD_ROOT_DIR}/include/
                     ${CMAKE_SOURCE_DIR}/src/http)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Quick Multimedia Network Sql QuickControls2 Widgets)
+
+find_package(jsoncpp CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(OpenCV CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(cryptopp CONFIG REQUIRED)
+find_package(Xlnt CONFIG REQUIRED)
+find_package(libmodbus CONFIG REQUIRED)
+
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -111,61 +121,43 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Qt6::Core
+    Qt6::Quick
+    Qt6::Network
+    Qt6::Sql
+    Qt6::QuickControls2
+    Qt6::Widgets
+    Qt6::Multimedia
+    JsonCpp::JsonCpp
+    ZLIB::ZLIB
+    fmt::fmt
+    spdlog::spdlog
+    cryptopp::cryptopp
+    xlnt::xlnt
+    modbus
+    ${OpenCV_LIBS}
+    ${3RD_ROOT_DIR}/lib/bgapi2_ext_sc.lib
+    ${3RD_ROOT_DIR}/lib/bgapi2_genicam.lib
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${QML_DIR}/ico $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
+)
+
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # debug 版本使用
     message("target link Debug")
     target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Core
-    Qt6::Quick
-    Qt6::Network
-    Qt6::Sql
-    Qt6::QuickControls2
-    Qt6::Widgets
-    Qt6::Multimedia
     ${3RD_ROOT_DIR}/lib/vld.lib
-    ${3RD_ROOT_DIR}/lib/zlibd.lib
-    ${3RD_ROOT_DIR}/lib/jsoncppd.lib
-    ${3RD_ROOT_DIR}/lib/fmtd.lib
-    ${3RD_ROOT_DIR}/lib/spdlogd.lib
-    ${3RD_ROOT_DIR}/lib/modbusd.lib
-    ${3RD_ROOT_DIR}/lib/bgapi2_ext_sc.lib
-    ${3RD_ROOT_DIR}/lib/bgapi2_genicam.lib
-    ${3RD_ROOT_DIR}/lib/xlntd.lib
-    ${3RD_ROOT_DIR}/lib/opencv_world453d.lib
-    ${3RD_ROOT_DIR}/lib/cryptlibd.lib
     )
-
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${3RD_ROOT_DIR}/bin/debug $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${QML_DIR}/ico $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
     )
 else()
-    # release 版本使用
-    message("target link Release")
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Core
-    Qt6::Quick
-    Qt6::Network
-    Qt6::Sql
-    Qt6::QuickControls2
-    Qt6::Widgets
-    Qt6::Multimedia
-    ${3RD_ROOT_DIR}/lib/zlib.lib
-    ${3RD_ROOT_DIR}/lib/jsoncpp.lib
-    ${3RD_ROOT_DIR}/lib/fmt.lib
-    ${3RD_ROOT_DIR}/lib/spdlog.lib
-    ${3RD_ROOT_DIR}/lib/modbus.lib
-    ${3RD_ROOT_DIR}/lib/bgapi2_ext_sc.lib
-    ${3RD_ROOT_DIR}/lib/bgapi2_genicam.lib
-    ${3RD_ROOT_DIR}/lib/xlnt.lib
-    ${3RD_ROOT_DIR}/lib/opencv_world453.lib
-    ${3RD_ROOT_DIR}/lib/cryptlib.lib
-    )
-
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${3RD_ROOT_DIR}/bin/release $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${QML_DIR}/ico $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
     )
 endif()
