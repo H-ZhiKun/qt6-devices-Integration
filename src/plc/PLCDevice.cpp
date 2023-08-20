@@ -8,24 +8,25 @@ PLCDevice::PLCDevice()
 
 PLCDevice::~PLCDevice()
 {
-    updateHolder_ = false;
-    thUpdate_.join();
     if (client_)
     {
         delete client_;
         client_ = nullptr;
     }
+    updateHolder_ = false;
+    thUpdate_.join();
 }
 
 void PLCDevice::init()
 {
-    client_ = new ModbusClient("127.0.0.1", 502);
-    ModbusReadArgument args;
-    args.addr = 0;
-    args.offset = 401;
-    args.clock = 500;
-
-    client_->work(std::move(args));
+    ModbusInitArguments args;
+    args.ip = "127.0.0.1";
+    args.port = 502;
+    args.rStartAddr = 12288;
+    args.rSize = 400;
+    args.rClock = 500;
+    client_ = new ModbusClient(std::move(args));
+    client_->work();
     updateData();
 }
 
@@ -37,11 +38,14 @@ void PLCDevice::updateData()
         AlertWapper::modifyAllStatus();
         while (updateHolder_)
         {
-            readCache.clear();
-            if (client_->readDatas(0, 400, readCache))
+            if (client_->getConnection())
             {
-                // local index: 0~21 => 对应plc地址: 12289~12310
-                alertParsing(readCache.data(), 22, 12289);
+                readCache.clear();
+                if (client_->readDatas(0, 400, readCache))
+                {
+                    // local index: 0~21 => 对应plc地址: 12289~12310
+                    alertParsing(readCache.data(), 22, 12289);
+                }
             }
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
