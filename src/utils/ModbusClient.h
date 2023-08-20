@@ -1,4 +1,5 @@
 #pragma once
+#include "LockFreeQueue.h"
 #include "Logger.h"
 #include <modbus.h>
 #include <string>
@@ -6,14 +7,29 @@
 #include <vector>
 
 /**
- * @brief Modbus读取参数
+ * @brief Modbus初始化参数
  */
-class ModbusReadArgument
+struct ModbusInitArguments
 {
-  public:
-    uint16_t addr = 0;   /**< 寄存器起始地址 */
-    uint16_t offset = 0; /**< 寄存器数量 */
-    uint16_t clock = 0;  /**< 读取间隔 ms*/
+    std::string ip;          // plc ip地址
+    uint16_t port;           // plc 端口号
+    uint16_t rStartAddr = 0; /**< 读寄存器起始地址 */
+    uint16_t rSize = 0;      /**< 读寄存器数量 */
+    uint16_t rClock = 0;     /**< 读取间隔 ms*/
+    uint16_t wStartAddr = 0; /**< 写寄存器起始地址 */
+    uint16_t wSize = 0;      /**< 写寄存器数量 */
+};
+
+struct RegisterWriteData
+{
+    uint16_t wStartAddr = 0;     /**< 写寄存器头地址 */
+    std::vector<uint16_t> wData; // 写入数据
+};
+
+struct RegisterReadData
+{
+    uint16_t rStartAddr = 0; /**< 读寄存器头地址 */
+    uint16_t rSize = 0;      /**< 读寄存器数量 */
 };
 
 /**
@@ -27,7 +43,7 @@ class ModbusClient
      * @param ip Modbus设备的IP地址
      * @param port Modbus设备的端口号
      */
-    explicit ModbusClient(const std::string &ip, uint16_t port);
+    explicit ModbusClient(const ModbusInitArguments &args);
 
     /**
      * @brief 析构函数，释放Modbus上下文
@@ -42,7 +58,7 @@ class ModbusClient
     ModbusClient &operator=(const ModbusClient &) = delete;
     ModbusClient(ModbusClient &&) noexcept(true) = default;
     ModbusClient &operator=(ModbusClient &&) noexcept(true) = default;
-    void work(ModbusReadArgument &&args);
+    void work();
 
     /**
      * @brief 读取寄存器数据
@@ -82,22 +98,18 @@ class ModbusClient
     bool writeRegisters(uint16_t address, const std::vector<uint16_t> &values);
 
   private:
-    modbus_t *mbsContext_ = nullptr;       /**< Modbus上下文指针 */
-    std::string ip_;                       /**< Modbus设备的IP地址 */
-    uint16_t port_;                        /**< Modbus设备的端口号 */
-    std::mutex mtxMbs_;                    /**< 互斥锁，用于保护Modbus访问 */
-    std::vector<uint16_t> cache_;          /**< 寄存器值缓存 */
-    std::vector<std::thread> tasks_;       // 存储当前任务线程。
-    std::atomic_bool bThreadHolder_{true}; // 子线程保持者，在析构中退出。
-    std::condition_variable cvConnector_;  // 重连线程条件变量
-    std::atomic_bool bConnected_{false};   // 当前连接设备状态
-
-    /**
-     * @brief 更新寄存器值缓存
-     * @param address 要更新的寄存器地址
-     * @param values 对应的寄存器值列表
-     */
-    void updateCache(uint16_t address, const std::vector<uint16_t> &values);
+    modbus_t *mbsContext_ = nullptr;              /**< Modbus上下文指针 */
+    std::mutex mtxMbs_;                           /**< 互斥锁，用于保护Modbus访问 */
+    std::mutex mtxRCache_;                        // 读缓存锁
+    std::vector<uint16_t> rCaches_;               /**< 寄存器读缓存 */
+    std::vector<uint16_t> wCaches_;               /**< 寄存器写缓存 */
+    std::vector<std::thread> tasks_;              // 存储当前任务线程。
+    std::atomic_bool bThreadHolder_{true};        // 子线程保持者，在析构中退出。
+    std::condition_variable cvConnector_;         // 重连线程条件变量
+    std::atomic_bool bConnected_{false};          // 当前连接设备状态
+    ModbusInitArguments args_;                    // 初始化参数 只读
+    std::vector<RegisterReadData> vReadData;      // 读寄存器执行数组
+    LockFreeQueue<RegisterWriteData> qWriteData_; // 写寄存器执行队列
 
     /**
      * @brief 自动重连到Modbus设备
