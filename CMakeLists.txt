@@ -137,27 +137,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     xlnt::xlnt
     modbus
     ${OpenCV_LIBS}
+    ${3RD_ROOT_DIR}/lib/vld.lib
     ${3RD_ROOT_DIR}/lib/bgapi2_ext_sc.lib
     ${3RD_ROOT_DIR}/lib/bgapi2_genicam.lib
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${3RD_ROOT_DIR}/bin $<TARGET_FILE_DIR:${PROJECT_NAME}>
     COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${QML_DIR}/ico $<TARGET_FILE_DIR:${PROJECT_NAME}>/ico
 )
-
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # debug 版本使用
-    message("target link Debug")
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-    ${3RD_ROOT_DIR}/lib/vld.lib
-    )
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${3RD_ROOT_DIR}/bin/debug $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    )
-else()
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${3RD_ROOT_DIR}/bin/release $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    )
-endif()
