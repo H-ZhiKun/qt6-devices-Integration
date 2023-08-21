@@ -7,17 +7,18 @@ cmake_minimum_required(VERSION 3.16)
 #   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
 #     "MinSizeRel" "RelWithDebInfo")
 # endif()
-include(e:/vcpkg/scripts/buildsystems/vcpkg.cmake)
+set(CMAKE_BUILD_TYPE Debug)
+include(F:/workspace/vcpkg/scripts/buildsystems/vcpkg.cmake)
 # 设置默认构建类型为 Debug
 # set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
 # 输出当前的编译类型
 message("build type: ${CMAKE_BUILD_TYPE}")
-
+add_definitions(-DNOMINMAX)
 # 根据 CMAKE_BUILD_TYPE 设置输出目录
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../Debug)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Debug)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../Release)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
 endif()
 
 set(PROJECT_NAME DeviceIntegration)

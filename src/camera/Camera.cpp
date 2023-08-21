@@ -547,7 +547,7 @@ cv::Mat Camera::mono10ToMat(unsigned char *buffer, uint64_t width, uint64_t heig
 
 void Camera::initParams()
 {
-    mapCameraParams_[CameraParams::TriggerMode] = switchParams(SFNC_TRIGGERMODE, 0, false);
+    mapCameraParams_[CameraParams::TriggerMode] = switchParams(SFNC_TRIGGERMODE, 1, false); // 1 硬触发 0 软触发
     mapCameraParams_[CameraParams::ExposureTime] = switchParams(SFNC_EXPOSURETIME);
     mapCameraParams_[CameraParams::Gain] = switchParams(SFNC_GAIN);
     mapCameraParams_[CameraParams::RoiWidth] = switchParams(SFNC_WIDTH);

@@ -10,7 +10,7 @@
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole",
-            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\7311f732386a4a122e615bf9d2c85279\\tonka3000.qtvsctools\\qt.natvis.xml",
+            "visualizerFile": "c:\\Users\\admin1\\AppData\\Roaming\\Code\\User\\workspaceStorage\\d857a38fddbada1a61e8ec21f5d14aab\\tonka3000.qtvsctools\\qt.natvis.xml",
             "preLaunchTask": "Build Debug"
         },
         {
@@ -22,7 +22,7 @@
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole",
-            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\7311f732386a4a122e615bf9d2c85279\\tonka3000.qtvsctools\\qt.natvis.xml",
+            "visualizerFile": "c:\\Users\\admin1\\AppData\\Roaming\\Code\\User\\workspaceStorage\\d857a38fddbada1a61e8ec21f5d14aab\\tonka3000.qtvsctools\\qt.natvis.xml",
             "preLaunchTask": "Build Release"
         }
     ]
