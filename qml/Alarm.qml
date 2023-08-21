@@ -83,7 +83,7 @@ GroupBox {
             objectName: "alarmTable"
 
             // 设置列的宽
-            property var columnWidths: [300, 700]
+            property var columnWidths: [300, 500, 200]
             columnWidthProvider: function (column) {
                 return columnWidths[column];
             }
@@ -243,7 +243,8 @@ GroupBox {
             // 执行其他操作...
             var jsonData = JSON.parse(value);
             var dataAlarm = {
-                "date": jsonData.date,
+                "startDate": jsonData.date,
+                "endDate": jsonData.date,
                 "alarmText": jsonData.alarmText
             };
             alarmTable.model.appendRow(dataAlarm);

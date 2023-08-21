@@ -7,6 +7,7 @@
 #include "Logger.h"
 #include "PLCDevice.h"
 #include "SqlHelper.h"
+#include <QDir>
 #include <QQmlApplicationEngine>
 #include <memory>
 #include <mutex>
@@ -55,6 +56,8 @@ class AppFrameworkImpl final : public AppFramework
     void memoryClean();
     void initBaumerManager();
     void initHttp();
+    void initProduct();
+
     void runHttp(const std::string &&modelName, const std::string &imageName, cv::Mat &matImage);
 
     void bindDisplay(const std::string &snId, const DisplayWindows &painterId); // 绑定展示窗口和SN号
@@ -72,22 +75,28 @@ class AppFrameworkImpl final : public AppFramework
     void timerTask();                                   // 定时任务
     void processPaddleOCR(QJsonDocument, cv::Mat);      // 处理检测算法
     void processYoloTangle(QJsonDocument &, cv::Mat &); // 处理角度预测算法
+    void saveImage_(QImage &imgSave, const DisplayWindows &camId);
+
+    void runMainProcess();
 
   private:
     // 私有变量区域
     std::list<QThread *> lvThread_;
     std::list<std::thread> lvFulltimeThread_;
     std::atomic_bool bThreadHolder = true;
+    QString saveImageDir;
+    bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
     // Module 组装区域
     Domino *domino_ = nullptr;
     Cognex *cognex_ = nullptr;
-    HttpApiManager *http_ = nullptr;
     PLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
+    std::vector<HttpApiManager *> http_;
     std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
     std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
     std::unordered_map<DisplayWindows, std::string> mapWndDisplay_; // 绑定好SN码的patinter, first=painterId,second=SN号
+    std::unordered_map<DisplayWindows, uint16_t> mapSaveImage_; // 图片保存数量控制
 
   public:
     // 调用qml 对象函数工具

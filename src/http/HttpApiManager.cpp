@@ -7,6 +7,7 @@ HttpApiManager::HttpApiManager(QObject *parent) : QObject(parent)
 
 void HttpApiManager::post(const QString &url, const QString &data, cv::Mat &matImage)
 {
+    QNetworkAccessManager m_networkManager;
     QUrl qurl(url);
     QNetworkRequest request(qurl);
 
