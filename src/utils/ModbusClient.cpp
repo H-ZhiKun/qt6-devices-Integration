@@ -90,11 +90,11 @@ bool ModbusClient::readDatas(uint16_t address, uint16_t count, std::vector<uint1
 
 bool ModbusClient::writeDatas(uint16_t address, WriteRegisterType type, const uint16_t *data)
 {
-    bool ret = false;
+    bool ret = true;
     uint16_t cacheIndex = address - args_.wStartAddr;
     if (cacheIndex >= wCaches_.size())
     {
-        return ret;
+        return false;
     }
     switch (type)
     {
@@ -121,6 +121,7 @@ bool ModbusClient::writeDatas(uint16_t address, WriteRegisterType type, const ui
     default:
         break;
     }
+    return ret;
 }
 
 bool ModbusClient::getConnection()
@@ -203,6 +204,6 @@ void ModbusClient::keepConnection()
             tv.tv_usec = 2000000;
             modbus_set_response_timeout(mbsContext_, tv.tv_sec, tv.tv_usec);
             bConnected_ = true;
-                }
+        }
     }));
 }

@@ -142,4 +142,16 @@ CREATE TABLE IF NOT EXISTS `alarm_data`  (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = DYNAMIC;
 
+-- ----------------------------
+-- Table structure for plc_register_rw
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `plc_register_rw`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `plc_address` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin UNIQUE,
+  `value` varchar(16) CHARACTER SET utf8 COLLATE utf8_bin,
+	`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = DYNAMIC;
+
 SET FOREIGN_KEY_CHECKS = 1;

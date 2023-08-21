@@ -9,7 +9,7 @@ import QtQuick.Layouts
 Rectangle {
     id: master
     width: 1366
-    height: 768
+    height: 705
     visible: true
     //title: "德图福思"
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
@@ -29,7 +29,7 @@ Rectangle {
         id: bar
         width: master.width / 8
         x: 10
-        y: 50
+        y: 30
         background: Rectangle {
             color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
         }
@@ -476,7 +476,7 @@ Rectangle {
             id: cameraTab
             Camera {
                 x: 190
-                y: 50
+                y: 30
             }
         }
         // 生产数据
@@ -484,7 +484,7 @@ Rectangle {
             id: produceDataTab
             ProduceData {
                 x: 190
-                y: 50
+                y: 30
             }
         }
 
@@ -493,7 +493,7 @@ Rectangle {
             id: alarmTab
             Alarm {
                 x: 190
-                y: 50
+                y: 30
             }
         }
         // 配方
@@ -501,7 +501,7 @@ Rectangle {
             id: formulaPageTab
             FormulaPage {
                 x: 190
-                y: 50
+                y: 30
             }
         }
         // 传感器
@@ -509,7 +509,7 @@ Rectangle {
             id: sensorPageTab
             SensorPage {
                 x: 190
-                y: 50
+                y: 30
             }
         }
         // 阀门
@@ -517,7 +517,7 @@ Rectangle {
             id: valvePageTab
             ValvePage {
                 x: 190
-                y: 50
+                y: 30
             }
         }
         // 电机
@@ -525,7 +525,7 @@ Rectangle {
             id: powerPageTab
             PowerPage {
                 x: 190
-                y: 50
+                y: 30
             }
         }
         // 用户管理
@@ -533,18 +533,19 @@ Rectangle {
             id: userPageTab
             UserPage {
                 x: 190
-                y: 50
+                y: 30
             }
         }
         // 操作日志
         Item {
             id: nonepage
-            Text {
-                text: " "
-            }
+            // PlcTest {
+            //     x: 190
+            //     y: 30
+            // }
         }
     }
     onVisibleChanged: {
-        root.visible = true
+        root.visible = true;
     }
 }

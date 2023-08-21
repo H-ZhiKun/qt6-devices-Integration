@@ -52,6 +52,11 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::deleteUser, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::ModifyUser,
                         std::bind(&AppFrameworkImpl::modifyUser, this, std::placeholders::_1));
+    QDir qdir_;
+    saveImageDir = qdir_.currentPath() + "/" + "saveImageDir";
+    mapSaveImage_[DisplayWindows::CodeCheckCamera] = 0;
+    mapSaveImage_[DisplayWindows::LocateCheckCamera] = 0;
+    mapSaveImage_[DisplayWindows::LocationCamera] = 0;
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -319,7 +324,8 @@ void AppFrame::AppFrameworkImpl::runDomino()
     domino_->moveToThread(th);
 
     th->start();
-    invokeCpp(domino_, domino_->invokeStartClient, Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 11110));
+    invokeCpp(domino_, domino_->invokeStartClient, Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 20001));
+    domino_->sendData("");
     lvThread_.push_back(th);
 }
 
@@ -327,6 +333,19 @@ void AppFrame::AppFrameworkImpl::runPLC()
 {
     plcDev_ = new PLCDevice;
     plcDev_->init();
+    // QObject::connect(plcDev_, &PLCDevice::bottomMove, [this]() {
+    //     // 瓶位移信号逻辑
+    //     Product *productNew = new Product();
+    //     // 检测是否空瓶
+    //     if (1)
+    //     {
+    //     }
+    //     else
+    //     {
+    //         productNew->setHasBottom(false);
+    //     }
+    //     productManager_->qrCodeQueue.push(productNew);
+    // });
 }
 
 void AppFrame::AppFrameworkImpl::runCognex()
@@ -421,6 +440,19 @@ void AppFrame::AppFrameworkImpl::updateVideo()
         }
         cv::Mat temp = matData.back();
         Utils::asyncTask([this, camId, target = std::move(temp)] {
+            cv::Mat algoImage = target.clone();
+            if (camId == DisplayWindows::CodeCheckCamera)
+            {
+                runHttp("paddleOCR", "Utils::getCurrentTime(true)", algoImage);
+            }
+            else if (camId == DisplayWindows::LocationCamera)
+            {
+                runHttp("tangle", "Utils::getCurrentTime(true)", algoImage);
+            }
+            else if (camId == DisplayWindows::CodeCheckCamera)
+            {
+                runHttp("tangleCheck", "Utils::getCurrentTime(true)", algoImage);
+            }
             QImage img = Utils::matToQImage(target);
             if (img.isNull() == false)
             {
@@ -454,7 +486,7 @@ void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
     dataEle["humidity"] = 43;
 
     SqlHelper::getSqlHelper().insertData("electric_data", std::move(dataEle));
-    updateAlarmData("test"); // TODO：有报错才发送
+    // updateAlarmData("test"); // TODO：有报错才发送
 }
 
 void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std::string &month, const std::string &day)
@@ -552,29 +584,56 @@ void AppFrame::AppFrameworkImpl::initBaumerManager()
 
 void AppFrame::AppFrameworkImpl::initHttp()
 {
-    http_ = new HttpApiManager();
-    QObject::connect(http_, &HttpApiManager::requestFinished, [this](QString resJs, cv::Mat matImage) {
-        if (resJs.isEmpty())
+    HttpApiManager *httpLogistics = new HttpApiManager();
+    HttpApiManager *httpLocate = new HttpApiManager();
+    HttpApiManager *httpLocateCheck = new HttpApiManager();
+    http_.emplace_back(httpLogistics);
+    http_.emplace_back(httpLocate);
+    http_.emplace_back(httpLocateCheck);
+    QObject::connect(http_[0], &HttpApiManager::requestFinished, [this](const QString &response, cv::Mat matImage) {
+        if (response.isEmpty())
         {
             return;
         }
-        qDebug() << "resJS" << resJs;
+        qDebug() << "resJS" << response;
         // 1 获取方框位置，绘制
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(resJs.toUtf8());
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
         // QVariantMap dataMap = jsonDocumentData.toVariant().toMap();
+        // ocr:识别物流码  yolovn5_tagle：定位  yolov5：定位复核
         //  检查是否解析成功
         if (!jsonDocument.isNull())
         {
-            if (jsonDocument["model"].toString() == "ocr" || jsonDocument["model"].toString() == "yolov5")
-            {
-                Utils::asyncTask([this, jsonDocument = std::move(jsonDocument), matImage = std::move(matImage)]() {
-                    processPaddleOCR(std::move(jsonDocument), std::move(matImage));
-                });
-            }
-            else if (jsonDocument["model"].toString() == "yolov5_tangle")
-            {
-                processYoloTangle(jsonDocument, matImage);
-            }
+            Utils::asyncTask([this, jsonDocument = std::move(jsonDocument), matImage = std::move(matImage)]() {
+                processPaddleOCR(std::move(jsonDocument), std::move(matImage));
+            });
+        }
+    });
+    QObject::connect(http_[1], &HttpApiManager::requestFinished, [this](const QString &response, cv::Mat matImage) {
+        if (response.isEmpty())
+        {
+            return;
+        }
+        qDebug() << "resJS" << response;
+        // 1 获取方框位置，绘制
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
+        //  检查是否解析成功
+        if (!jsonDocument.isNull())
+        {
+            Utils::asyncTask([this, jsonDocument = std::move(jsonDocument), matImage = std::move(matImage)]() {
+                processPaddleOCR(std::move(jsonDocument), std::move(matImage));
+            });
+        }
+    });
+    QObject::connect(http_[2], &HttpApiManager::requestFinished, [this](const QString &response, cv::Mat matImage) {
+        if (response.isEmpty())
+        {
+            return;
+        }
+        qDebug() << "resJS" << response;
+        QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
+        if (!jsonDocument.isNull())
+        {
+            processYoloTangle(jsonDocument, matImage);
         }
     });
 }
@@ -583,35 +642,50 @@ void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const s
                                          cv::Mat &matImage)
 {
     std::string apiUrl;
-    if (modeleName == "paddleOCR")
-    {
-        apiUrl = "http://192.168.101.8:5001/paddleOCR";
-    }
-    else if (modeleName == "nesse")
-    {
-        apiUrl = "http://192.168.101.8:5002/predict_neisai";
-    }
-    else if (modeleName == "tangle")
-    {
-        apiUrl = "http://192.168.101.8:5000/predict_tangle";
-    }
     if (matImage.empty())
     {
         LogWarn("Failed to read the image.");
         return;
     }
-    // 将图像转换为QByteArray
-    std::vector<uchar> buffer;
-    cv::imencode(".jpg", matImage, buffer);
-    QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
+    QImage saveImage = Utils::matToQImage(matImage);
+    saveImage_(saveImage, DisplayWindows::CodeCheckCamera);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    if (modeleName == "paddleOCR")
+    {
+        apiUrl = "http://192.168.101.8:5001/paddleOCR";
+        // 将图像转换为QByteArray
+        std::vector<uchar> buffer;
+        cv::imencode(".jpg", matImage, buffer);
+        QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
 
-    Json::Value jsVal;
-    jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
-    jsVal["imageName"] = imageName;
-    jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
-    jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
-    std::string strJS = jsVal.toStyledString();
-    http_->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage);
+        Json::Value jsVal;
+        jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
+        jsVal["imageName"] = imageName;
+        jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
+        jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
+        std::string strJS = jsVal.toStyledString();
+        http_[0]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage);
+        std::string imagePath = "D:/deviceintegration/build/Debug/image/test.jpg";
+    }
+    else if (modeleName == "tangle" || modeleName == "tangleCheck")
+    {
+        apiUrl = "http://192.168.101.8:5000/predict_tangle";
+        // 将图像转换为QByteArray
+        std::vector<uchar> buffer;
+        cv::imencode(".jpg", matImage, buffer);
+        QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
+
+        Json::Value jsVal;
+        jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
+        jsVal["imageName"] = imageName;
+        jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
+        jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
+        std::string strJS = jsVal.toStyledString();
+        if (modeleName == "tangle")
+            http_[1]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage);
+        else if (modeleName == "tangleCheck")
+            http_[2]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage);
+    }
     return;
 }
 
@@ -673,10 +747,13 @@ void AppFrame::AppFrameworkImpl::memoryClean()
         delete cognex_;
         cognex_ = nullptr;
     }
-    if (http_ != nullptr)
+    for (auto &httpPtr : http_)
     {
-        delete http_;
-        http_ = nullptr;
+        if (httpPtr != nullptr)
+        {
+            delete httpPtr;
+            httpPtr = nullptr;
+        }
     }
 }
 
@@ -717,8 +794,9 @@ void AppFrame::AppFrameworkImpl::timerTask()
             { // 更新每秒数据
                 recSecond = second;
                 // invokeCpp(cognex_, cognex_->scanOnce()); // cognex调用方法
+                // invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, year + month + day + second + "A"),
+                //           Q_ARG(std::string, year + month + day + second + "B")); // 打码机调用方法
             }
-
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     }));
@@ -754,14 +832,40 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument, 
             cv::putText(matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
                         cv::Scalar(0, 0, 255), 2, 8); // 输出文字
         }
-        cv::imshow("algorithm result", matImage);
-        cv::waitKey(10);
         // 1 图像操作：显示在界面、保存
+        invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage",
+                  Q_ARG(QImage, Utils::matToQImage(matImage)));
+        // cv::imwrite("Utils::getCurrentTime(true)", matImage);
     }
     else
     {
         // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
     }
+}
+
+void AppFrame::AppFrameworkImpl::runMainProcess()
+{
+    // while (1 == plcDev_->shift.load())
+    // {
+    //     if (productManager_->qrCodeQueue.size() > ProductManager::getQRCodeMaxSize())
+    //     {
+    //         // 二维码队列满，取出一个进行打码
+    //         Product *qrProduct = productManager_->qrCodeQueue.front();
+    //         productManager_->qrCodeQueue.pop();
+    //         // 定位检测点队列
+    //         productManager_->locateQueue.push(qrProduct);
+    //         // 以下异步执行
+    //         // 是否有瓶
+    //         if (qrProduct->getHasBottom())
+    //         {
+    //             // 发送二维码读取信号并于防伪系统做比较
+    //         }
+    //         else
+    //         {
+    //             // 不发送二维码读取信号
+    //         }
+    //     }
+    // }
 }
 
 void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv::Mat matImage)
@@ -822,13 +926,42 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv
 
             colorIndex = (colorIndex + 1) % 6; // 颜色轮转
         }
-        cv::imshow("algorithm result", matImage);
-        cv::waitKey(10);
 
         // 1 图像操作：显示在界面、保存
+        std::string imagePath = "D:/deviceintegration/build/Debug/image/test2.jpg";
+        QImage saveImage = Utils::matToQImage(matImage);
+        saveImage_(saveImage, DisplayWindows::LocateCheckCamera);
+        if (jsonObject["model"] == "paddleOCR")
+            invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
+                      Q_ARG(QImage, Utils::matToQImage(matImage)));
+        else if (jsonObject["model"] == "predict_tangle")
+            invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage",
+                      Q_ARG(QImage, Utils::matToQImage(matImage)));
     }
     else
     {
         // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
     }
+}
+
+void AppFrame::AppFrameworkImpl::saveImage_(QImage &imgSave, const DisplayWindows &camId)
+{
+    Utils::asyncTask([this, imgSave, camId] {
+        static std::mutex mtx;
+        std::lock_guard lock(mtx);
+
+        QDir qdir;
+        QDateTime currentDateTime = QDateTime::currentDateTime();
+        QString currentDateTimeStr = currentDateTime.toString("yyyyMMdd_hhmmss_zzz");
+        QString saveImageSubDir = saveImageDir + "/" + QString::number(static_cast<int>(camId));
+        if (!qdir.exists(saveImageSubDir))
+        {
+            qdir.mkdir(saveImageSubDir);
+        }
+        QString imagePath = saveImageSubDir + "/" + currentDateTimeStr + ".jpg";
+        if (!imgSave.save(imagePath, "JPG"))
+        {
+            qDebug() << "save image failed : " + currentDateTimeStr;
+        }
+    });
 }

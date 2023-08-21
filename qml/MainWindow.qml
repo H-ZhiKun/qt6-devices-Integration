@@ -8,6 +8,7 @@ Window {
     visible: true
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     screen: Qt.application.screens[0]
+    maximumHeight: 705
     title: "德图福思"
     property int changeFlag: 0
     enum ExpectedFunction {
@@ -38,12 +39,22 @@ Window {
         states: [
             // 将PageA的属性y赋值为0，opacity赋值为1以实现显示的效果
             State {
-                name: "show"; PropertyChanges { target: master; y: 0; opacity: 1 }
-           },
+                name: "show"
+                PropertyChanges {
+                    target: master
+                    y: 0
+                    opacity: 1
+                }
+            },
             // 将PageA的属性y赋值为-height，opaticy赋值为0以实现窗口向上移动并消失的效果
             State {
-                name: "hide"; PropertyChanges { target: master; y: -height; opacity: 0.5 }
-           }
+                name: "hide"
+                PropertyChanges {
+                    target: master
+                    y: -height
+                    opacity: 0.5
+                }
+            }
         ]
         state: "hide"
         transitions: Transition {
