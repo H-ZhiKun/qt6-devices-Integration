@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.16)
 #     "MinSizeRel" "RelWithDebInfo")
 # endif()
 set(CMAKE_BUILD_TYPE Debug)
-include(F:/workspace/vcpkg/scripts/buildsystems/vcpkg.cmake)
+include(E:/vcpkg/scripts/buildsystems/vcpkg.cmake)
 # 设置默认构建类型为 Debug
 # set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build.")
 # 输出当前的编译类型

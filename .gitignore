@@ -36,7 +36,6 @@
 build
 Debug
 Release
-
 .vscode
 CMakeLists.txt
 
