@@ -10,8 +10,7 @@
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole",
-            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\7311f732386a4a122e615bf9d2c85279\\tonka3000.qtvsctools\\qt.natvis.xml",
-            "preLaunchTask": "Build Debug"
+            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\e75329edff65ca9b032dd0457b259d50\\tonka3000.qtvsctools\\qt.natvis.xml"
         },
         {
             "name": "msvc-64-release",
@@ -22,8 +21,7 @@
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole",
-            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\7311f732386a4a122e615bf9d2c85279\\tonka3000.qtvsctools\\qt.natvis.xml",
-            "preLaunchTask": "Build Release"
+            "visualizerFile": "c:\\Users\\45217\\AppData\\Roaming\\Code\\User\\workspaceStorage\\e75329edff65ca9b032dd0457b259d50\\tonka3000.qtvsctools\\qt.natvis.xml"
         }
     ]
 }
