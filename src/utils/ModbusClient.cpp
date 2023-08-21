@@ -1,5 +1,6 @@
 #include "ModbusClient.h"
 #include <QDebug>
+#include <bitset>
 
 ModbusClient::ModbusClient(const ModbusInitArguments &args) : args_(args)
 {
@@ -49,6 +50,14 @@ void ModbusClient::work()
         {
             if (bConnected_)
             {
+                // 缓存写
+                while (!qWriteData_.empty())
+                {
+                    RegisterWriteData wData;
+                    qWriteData_.dequeue(wData);
+                    writeRegisters(wData.wStartAddr, wData.wSize, wData.wData);
+                }
+                // 读缓存
                 for (auto const &readOne : vReadData)
                 {
                     readRegisters(readOne.rStartAddr, readOne.rSize);
@@ -60,28 +69,58 @@ void ModbusClient::work()
                 std::this_thread::sleep_for(std::chrono::seconds(2));
             }
         }
-        int n = 0;
     }));
 }
 
 bool ModbusClient::readDatas(uint16_t address, uint16_t count, std::vector<uint16_t> &outData)
 {
     // 检查是否越界
-    if (address + count > rCaches_.size())
+    uint16_t addr = address - args_.rStartAddr;
+    if (addr + count > rCaches_.size())
     {
         // 如果请求的范围超过了缓存的容量，返回一个空的结果向量
         return false;
     }
     // 使用std::copy进行批量读取
     std::lock_guard lock(mtxRCache_); // 加缓存读锁
-    std::copy(rCaches_.begin() + address, rCaches_.begin() + address + count, std::back_inserter(outData));
+    std::copy(rCaches_.begin() + addr, rCaches_.begin() + addr + count, std::back_inserter(outData));
 
     return true;
 }
 
-void ModbusClient::writeDatas(uint16_t address, const std::vector<uint16_t> &values)
+bool ModbusClient::writeDatas(uint16_t address, WriteRegisterType type, const uint16_t *data)
 {
-    writeRegisters(address, values);
+    bool ret = false;
+    uint16_t cacheIndex = address - args_.wStartAddr;
+    if (cacheIndex >= wCaches_.size())
+    {
+        return ret;
+    }
+    switch (type)
+    {
+    case WriteRegisterType::RegBool: {
+        auto tempVal = std::bitset<16>(wCaches_[cacheIndex]);
+        tempVal.set(data[0], data[1]);
+        uint16_t uint16Val = tempVal.to_ulong();
+        wCaches_[cacheIndex] = uint16Val;
+        qWriteData_.enqueue(RegisterWriteData(address - 1, uint16Val));
+        break;
+    }
+    case WriteRegisterType::RegInt: {
+        wCaches_[cacheIndex] = data[0];
+        qWriteData_.enqueue(RegisterWriteData(address - 1, data[0]));
+        break;
+    }
+    case WriteRegisterType::RegReal: {
+        wCaches_[cacheIndex] = data[0];
+        wCaches_[cacheIndex + 1] = data[1];
+        qWriteData_.enqueue(RegisterWriteData(address - 1, data));
+        break;
+    }
+
+    default:
+        break;
+    }
 }
 
 bool ModbusClient::getConnection()
@@ -111,10 +150,10 @@ bool ModbusClient::readRegisters(uint16_t address, uint16_t count)
     return ret;
 }
 
-bool ModbusClient::writeRegisters(uint16_t address, const std::vector<uint16_t> &values)
+bool ModbusClient::writeRegisters(uint16_t address, uint16_t size, const uint16_t *values)
 {
     bool ret = true;
-    if (modbus_write_registers(mbsContext_, address, values.size(), values.data()) == -1)
+    if (modbus_write_registers(mbsContext_, address, size, values) == -1)
     {
         LogError("Failed to write registers");
         bConnected_ = false;
@@ -164,7 +203,6 @@ void ModbusClient::keepConnection()
             tv.tv_usec = 2000000;
             modbus_set_response_timeout(mbsContext_, tv.tv_sec, tv.tv_usec);
             bConnected_ = true;
-        }
-        int n = 0;
+                }
     }));
 }

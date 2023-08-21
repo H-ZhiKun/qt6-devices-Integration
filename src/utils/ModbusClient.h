@@ -9,8 +9,9 @@
 /**
  * @brief Modbus初始化参数
  */
-struct ModbusInitArguments
+class ModbusInitArguments
 {
+  public:
     std::string ip;          // plc ip地址
     uint16_t port;           // plc 端口号
     uint16_t rStartAddr = 0; /**< 读寄存器起始地址 */
@@ -20,16 +21,41 @@ struct ModbusInitArguments
     uint16_t wSize = 0;      /**< 写寄存器数量 */
 };
 
-struct RegisterWriteData
+class RegisterWriteData
 {
-    uint16_t wStartAddr = 0;     /**< 写寄存器头地址 */
-    std::vector<uint16_t> wData; // 写入数据
+  public:
+    RegisterWriteData()
+    {
+    }
+    RegisterWriteData(uint16_t addr, const uint16_t data)
+    {
+        wStartAddr = addr;
+        wData[0] = data;
+    }
+    RegisterWriteData(uint16_t addr, const uint16_t *data)
+    {
+        wStartAddr = addr;
+        wData[0] = data[0];
+        wData[1] = data[1];
+        wSize = 2;
+    }
+    uint16_t wStartAddr = 0; /**< 写寄存器头地址 */
+    uint16_t wSize = 1;      // 写入长度
+    uint16_t wData[2]{0};    // 写入数据
 };
 
-struct RegisterReadData
+class RegisterReadData
 {
+  public:
     uint16_t rStartAddr = 0; /**< 读寄存器头地址 */
     uint16_t rSize = 0;      /**< 读寄存器数量 */
+};
+
+enum class WriteRegisterType
+{
+    RegBool,
+    RegInt,
+    RegReal
 };
 
 /**
@@ -73,7 +99,7 @@ class ModbusClient
      * @param address 寄存器起始地址
      * @param values 要写入的寄存器值
      */
-    void writeDatas(uint16_t address, const std::vector<uint16_t> &values);
+    bool writeDatas(uint16_t address, WriteRegisterType type, const uint16_t *data);
 
     /**
      * @brief 获取当前连接状态
@@ -95,7 +121,7 @@ class ModbusClient
      * @param address 寄存器起始地址
      * @param values 要写入的寄存器值
      */
-    bool writeRegisters(uint16_t address, const std::vector<uint16_t> &values);
+    bool writeRegisters(uint16_t address, uint16_t size, const uint16_t *values);
 
   private:
     modbus_t *mbsContext_ = nullptr;              /**< Modbus上下文指针 */
