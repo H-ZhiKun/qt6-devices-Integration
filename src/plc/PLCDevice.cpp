@@ -30,9 +30,50 @@ void PLCDevice::init()
     updateData();
 }
 
+bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::string value)
+{
+    bool ret = false;
+    if (!addr.empty() && !type.empty() && !value.empty())
+    {
+        if (type == "bool")
+        {
+            if (addr.find('_') == std::string::npos)
+            {
+                return ret;
+            }
+            std::string subAddr = addr.substr(0, addr.find_first_of('_'));
+            std::string bitAddr = addr.substr(addr.find_first_of('_') + 1);
+            uint16_t data[2] = {};
+            uint16_t plcAddr = Utils::anyFromString<uint16_t>(subAddr);
+            data[0] = Utils::anyFromString<uint16_t>(bitAddr);
+            data[1] = Utils::anyFromString<uint16_t>(value);
+            client_->writeDatas(plcAddr, WriteRegisterType::RegBool, data);
+        }
+        else if (type == "int")
+        {
+            uint16_t data[2] = {};
+            uint16_t plcAddr = Utils::anyFromString<uint16_t>(addr);
+            data[0] = Utils::anyFromString<uint16_t>(value);
+            client_->writeDatas(plcAddr, WriteRegisterType::RegInt, data);
+        }
+        else if (type == "real")
+        {
+            uint16_t data[2] = {};
+            uint16_t plcAddr = Utils::anyFromString<uint16_t>(addr);
+            uint32_t uint32Val = Utils::anyFromString<float>(value) * 100;
+            data[0] = (uint16_t)uint32Val;
+            data[1] = (uint16_t)(uint32Val >> 16);
+
+            client_->writeDatas(plcAddr, WriteRegisterType::RegReal, data);
+        }
+    }
+    return ret;
+}
+
 void PLCDevice::updateData()
 {
     thUpdate_ = std::thread([this] {
+        uint16_t addrRead = 12288;
         std::vector<uint16_t> readCache;
         readCache.resize(400);
         AlertWapper::modifyAllStatus();
@@ -41,10 +82,10 @@ void PLCDevice::updateData()
             if (client_->getConnection())
             {
                 readCache.clear();
-                if (client_->readDatas(0, 400, readCache))
+                if (client_->readDatas(addrRead, 400, readCache))
                 {
                     // local index: 0~21 => 对应plc地址: 12289~12310
-                    alertParsing(readCache.data(), 22, 12289);
+                    alertParsing(readCache.data(), 22, addrRead + 1);
                 }
             }
             std::this_thread::sleep_for(std::chrono::seconds(1));

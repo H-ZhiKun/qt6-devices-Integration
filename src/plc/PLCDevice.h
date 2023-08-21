@@ -11,6 +11,7 @@ class PLCDevice
     explicit PLCDevice();
     ~PLCDevice();
     void init();
+    bool writeDataToDevice(std::string addr, std::string type, std::string value);
 
   protected:
     PLCDevice(const PLCDevice &) = delete;
