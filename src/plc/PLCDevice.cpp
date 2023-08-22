@@ -67,7 +67,7 @@ bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::strin
             data[1] = (uint16_t)(uint32Val >> 16);
             regType = WriteRegisterType::RegReal;
         }
-        client_->writeDatas(plcAddr, WriteRegisterType::RegReal, data);
+        client_->writeDatas(plcAddr, regType, data);
         // 加wapper 更新写缓存表
         ret = true;
     }
