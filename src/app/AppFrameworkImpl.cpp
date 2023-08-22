@@ -1,4 +1,5 @@
 #include "AppFrameworkImpl.h"
+#include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
 #include "CameraWapper.h"
@@ -52,6 +53,8 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::deleteUser, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::ModifyUser,
                         std::bind(&AppFrameworkImpl::modifyUser, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::SelectAlert,
+                        std::bind(&AppFrameworkImpl::selectAlert, this, std::placeholders::_1));
     QDir qdir_;
     saveImageDir = qdir_.currentPath() + "/" + "saveImageDir";
     mapSaveImage_[DisplayWindows::CodeCheckCamera] = 0;
@@ -292,6 +295,61 @@ std::string AppFrame::AppFrameworkImpl::modifyUser(const std::string &value)
     return Utils::makeResponse(ret);
 }
 
+std::string AppFrame::AppFrameworkImpl::selectAlert(const std::string &value)
+{
+    bool ret = false;
+    Json::Value jsParams = Utils::stringToJson(value);
+    Json::Value jsAlertVal =
+        AlertWapper::selectAlertDataPaged(jsParams["pageSize"].asInt(), jsParams["pageNumber"].asInt(), "", "id desc");
+    int num = AlertWapper::alertNum();
+    if (!jsAlertVal.empty() && num != 0)
+    {
+        ret = true;
+    }
+    Json::Value jsRet;
+    jsRet["num"] = num;
+    for (Json::Value &jsonSingleValue : jsAlertVal)
+    {
+        std::string datetimeStr = jsonSingleValue["created_time"].asString();
+        // 替换T为空格
+        size_t pos = datetimeStr.find('T');
+        if (pos != std::string::npos)
+        {
+            datetimeStr.replace(pos, 1, " ");
+        }
+
+        // 去除末尾的毫秒部分
+        pos = datetimeStr.find('.');
+        if (pos != std::string::npos)
+        {
+            datetimeStr.erase(pos);
+        }
+        jsonSingleValue["created_time"] = datetimeStr;
+        if (!jsonSingleValue["updated_time"].empty())
+        {
+            std::string datetimeStrUp = jsonSingleValue["updated_time"].asString();
+            // 替换T为空格
+            size_t posUp = datetimeStrUp.find('T');
+            if (posUp != std::string::npos)
+            {
+                datetimeStrUp.replace(posUp, 1, " ");
+            }
+
+            // 去除末尾的毫秒部分
+            posUp = datetimeStrUp.find('.');
+            if (posUp != std::string::npos)
+            {
+                datetimeStrUp.erase(posUp);
+            }
+            jsonSingleValue["updated_time"] = datetimeStrUp;
+        }
+
+        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
+                  Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
+    }
+    return Utils::makeResponse(ret, std::move(jsRet));
+}
+
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
     if (!SqlHelper::getSqlHelper().initSqlHelper())
@@ -398,16 +456,14 @@ void AppFrame::AppFrameworkImpl::updateProduceRealData()
               Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
 }
 
-void AppFrame::AppFrameworkImpl::updateAlarmData(const std::string &strAlram)
+void AppFrame::AppFrameworkImpl::updateAlertData()
 {
-    Json::Value jsAlarmVal;
-
-    /*生产数据界面实时更新数据*/
-    jsAlarmVal["date"] = Utils::getCurrentTime(false);
-    jsAlarmVal["alarmText"] = strAlram;
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsAlarmVal).c_str()));
+    Json::Value jsAlertVal = AlertWapper::selectAlertDataPaged(7, 1);
+    for (Json::Value &jsonSingleValue : jsAlertVal)
+    {
+        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
+                  Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
+    }
 }
 
 void AppFrame::AppFrameworkImpl::updateFormulaData()

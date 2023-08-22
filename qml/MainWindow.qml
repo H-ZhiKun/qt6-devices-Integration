@@ -2,9 +2,9 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 Window {
+    id: root
     width: 400
     height: 360
-    id: root
     visible: true
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     screen: Qt.application.screens[0]
@@ -22,18 +22,19 @@ Window {
         GetCameraList,  //7 获取相机列表
         InsertUser,     //8 新建用户
         SelectUserID,   //9 查询用户ID
-        SelectUser,    //10 查询用户
-        DeleteUser,    //11 删除用户
-        ModifyUser     //12 修改用户
+        SelectUser,     //10 查询用户
+        DeleteUser,     //11 删除用户
+        ModifyUser,     //12 修改用户
+        SelectAlert     //13 选择报警信息
     }
     // Loader {
     //     id: pageLoader
     //     source: "Login.qml"
     // }
-    Login{
+    Login {
         id: loginPage
     }
-    Master{
+    Master {
         id: master
         visible: false
         states: [
@@ -58,33 +59,37 @@ Window {
         ]
         state: "hide"
         transitions: Transition {
-                   PropertyAnimation { properties: "y, opacity"; duration: 1000; easing.type: Easing.InOutBack }
+            PropertyAnimation {
+                properties: "y, opacity"
+                duration: 1000
+                easing.type: Easing.InOutBack
+            }
         }
     }
     Timer {
-        id: timerCheckout;
-        interval: 600;//设置定时器定时时间为500ms,默认1000ms
+        id: timerCheckout
+        interval: 600//设置定时器定时时间为500ms,默认1000ms
         repeat: false //是否重复定时,默认为false
         running: false //是否开启定时，默认是false，当为true的时候，进入此界面就开始定时
         triggeredOnStart: false // 是否开启定时就触发onTriggered，一些特殊用户可以用来设置初始值。
         onTriggered: {
-            root.visible = true
-            if(master.state === "hide"){
-                master.state = "show"
+            root.visible = true;
+            if (master.state === "hide") {
+                master.state = "show";
             }
         }
     }
 
     onChangeFlagChanged: {
-//        loginPage.visible = false
-//        mainPage.visible = true
-        if(root.changeFlag === 1){
-            master.visible = true
-            root.height = 768
-            root.width = 1366
-            root.x = (Screen.width - root.width) / 2
-            root.y = (Screen.height - root.height) / 2        
-            timerCheckout.start()
+        //        loginPage.visible = false
+        //        mainPage.visible = true
+        if (root.changeFlag === 1) {
+            master.visible = true;
+            root.height = 768;
+            root.width = 1366;
+            root.x = (Screen.width - root.width) / 2;
+            root.y = (Screen.height - root.height) / 2;
+            timerCheckout.start();
         }
     }
 }

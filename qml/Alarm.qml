@@ -5,7 +5,7 @@ import Qt.labs.qmlmodels 1.0
 GroupBox {
     id: alarmWin
     objectName: "alarmWin"
-
+    property alias itemCount: pageCompo.itemCount
     /*
     modality: Qt.WindowModal
     //固定窗口大小
@@ -50,22 +50,22 @@ GroupBox {
             x: -10
         }
 
-        Text{
-            text:"开始时间"
+        Text {
+            text: "开始时间"
             font.pointSize: 13
             x: 65
             y: -4
         }
 
-        Text{
-            text:"结束时间"
+        Text {
+            text: "结束时间"
             font.pointSize: 13
             x: 270
             y: -4
         }
 
-        Text{
-            text:"报警信息"
+        Text {
+            text: "报警信息"
             font.pointSize: 13
             x: 670
             y: -4
@@ -83,7 +83,7 @@ GroupBox {
             objectName: "alarmTable"
 
             // 设置列的宽
-            property var columnWidths: [300, 500, 200]
+            property var columnWidths: [200, 200, 600]
             columnWidthProvider: function (column) {
                 return columnWidths[column];
             }
@@ -93,70 +93,15 @@ GroupBox {
             }
 
             model: TableModel {
-                TableModelColumn { display: "startDate" }
-                TableModelColumn { display: "endDate" }
-                TableModelColumn { display: "alarmText" }
-
-                rows: [{
-                        "startDate": "2023-02-25 16:21:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:23:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:21:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:23:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:21:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:23:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:21:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:23:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxxx"
-                    },                    {
-                        "startDate": "2023-02-25 16:21:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:23:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:21:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxx"
-                    },
-                    {
-                        "startDate": "2023-02-25 16:23:54",
-                        "endDate": "2023-02-25 16:21:54",
-                        "alarmText": "error: xxxx"
-                    }
-                ]
+                TableModelColumn {
+                    display: "startDate"
+                }
+                TableModelColumn {
+                    display: "endDate"
+                }
+                TableModelColumn {
+                    display: "alarmText"
+                }
                 //rowsInserted:
             }
 
@@ -177,7 +122,8 @@ GroupBox {
             }
         }
 
-        PageComponent{
+        PageComponent {
+            id: pageCompo
             anchors.horizontalCenter: parent.horizontalCenter
             y: 411
             height: 40
@@ -189,8 +135,20 @@ GroupBox {
             itemCount: 360
             //触发信号后去请求该页数据，并更新当前页码和总数等
             onRequestPage: {
-               pageCurrent = page;
-               alarmTable.model.clear()
+                pageCurrent = page;
+                alarmTable.model.clear();
+                var json = {
+                    "pageSize": 12,
+                    "pageNumber": page
+                };
+                var strSend = JSON.stringify(json);
+                var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SelectAlert, strSend);
+                var result = JSON.parse(jsRet);
+                if (result.ok === true) {
+                    itemCount = result.details.num;
+                } else {
+                    console.log("require alarm faile");
+                }
             }
         }
     }
@@ -240,12 +198,12 @@ GroupBox {
     Connections {
         target: appMetaFlash // C++ 对象实例
         function onPageAlarmChange(value) {
-            // 执行其他操作...
             var jsonData = JSON.parse(value);
+            var num = jsonData.num;
             var dataAlarm = {
-                "startDate": jsonData.date,
-                "endDate": jsonData.date,
-                "alarmText": jsonData.alarmText
+                "startDate": jsonData.created_time,
+                "endDate": jsonData.updated_time,
+                "alarmText": jsonData.content
             };
             alarmTable.model.appendRow(dataAlarm);
         }

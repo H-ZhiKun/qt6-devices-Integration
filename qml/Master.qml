@@ -168,6 +168,18 @@ Rectangle {
                 hoverEnabled: true
                 onClicked: {
                     bar.currentIndex = 2;
+                    var json = {
+                        "pageSize": 12,
+                        "pageNumber": 1
+                    };
+                    var strSend = JSON.stringify(json);
+                    var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SelectAlert, strSend);
+                    var result = JSON.parse(jsRet);
+                    if (result.ok === true) {
+                        alarmItem.itemCount = result.details.num;
+                    } else {
+                        console.log("require alarm faile");
+                    }
                 }
                 onEntered: {
                     alarmRec.border.color = "lightblue";
@@ -492,6 +504,7 @@ Rectangle {
         Item {
             id: alarmTab
             Alarm {
+                id: alarmItem
                 x: 190
                 y: 30
             }

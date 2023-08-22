@@ -357,6 +357,59 @@ class SqlHelper : public AppFrame::NonCopyable
         return jsVal;
     }
 
+    Json::Value selectDataPaged(const std::string &tableName, const int pageSize, const int pageNumber,
+                                const std::string &&condition = "", const std::string &&orderBy = "")
+    {
+        Json::Value jsVal;
+
+        // 计算要查询的起始行和偏移量
+        int offset = (pageNumber - 1) * pageSize;
+
+        QSqlDatabase *connect = pool_->getConnection();
+        if (connect == nullptr)
+        {
+            LogError("Sql pool init failed!");
+            return jsVal;
+        }
+        QSqlQuery query(*connect);
+
+        // 构建查询数据的SQL语句，包括分页信息
+        QString sql = QString("SELECT * FROM %1").arg(tableName.c_str());
+        if (!condition.empty())
+        {
+            sql += " WHERE " + condition;
+        }
+        if (!orderBy.empty())
+        {
+            sql += " ORDER BY " + orderBy;
+        }
+        // 添加分页限制
+        sql += QString(" LIMIT %1 OFFSET %2").arg(pageSize).arg(offset);
+
+        query.prepare(sql);
+        if (query.exec())
+        {
+            while (query.next())
+            {
+                QSqlRecord record = query.record();
+                Json::Value jsItem;
+                for (int i = 0; i < record.count(); ++i)
+                {
+                    QString fieldName = record.fieldName(i);
+                    jsItem[fieldName.toStdString()] = std::move(query.value(i).toString().toStdString());
+                }
+                jsVal.append(jsItem);
+            }
+        }
+        else
+        {
+            LogError("Failed to select data: {}", query.lastError().text().toStdString());
+        }
+
+        pool_->releaseConnection(connect);
+        return jsVal;
+    }
+
     bool checkRecordExist(const std::string &tableName, const std::string &columnName, const std::string &columnValue)
     {
         QSqlDatabase *connect = pool_->getConnection();
@@ -390,8 +443,8 @@ class SqlHelper : public AppFrame::NonCopyable
         return false;
     }
 
-    QString selectOneData(const std::string &tableName, const std::string &selectItem, const std::string &condition,
-                          const std::string &orderBy = "")
+    QString selectOneData(const std::string &tableName, const std::string &selectItem,
+                          const std::string &condition = "", const std::string &orderBy = "")
     {
         Json::Value jsVal;
         QString fieldName = "";

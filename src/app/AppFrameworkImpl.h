@@ -48,6 +48,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string selectUser(const std::string &);
     std::string deleteUser(const std::string &);
     std::string modifyUser(const std::string &);
+    std::string selectAlert(const std::string &);
     // 差异调用 接口区域
     void initSqlHelper();
     void runDomino();
@@ -66,7 +67,7 @@ class AppFrameworkImpl final : public AppFramework
     void updateSensorRealData();                                                // 传感器界面实时更新数据
     void updateValveRealData();                                                 // 阀门界面实时更新数据
     void updatePowerRealData();                                                 // 电机界面实时更新数据
-    void updateAlarmData(const std::string &strAlram);                          // 更新报警信息
+    void updateAlertData();                                                     // 更新报警信息
     void updateFormulaData();                                                   // 初始化配方界面
     void updateVideo();                                                         // 实时视频
     void updateByMinute(const std::string &minute);                             // 每分钟更新
