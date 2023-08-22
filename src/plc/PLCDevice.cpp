@@ -27,6 +27,7 @@ void PLCDevice::init()
     args.rClock = 500;
     client_ = new ModbusClient(std::move(args));
     client_->work();
+    plcAddr = 12288;
     updateData();
 }
 

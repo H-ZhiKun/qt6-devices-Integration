@@ -45,4 +45,5 @@ class PLCDevice
     std::atomic_bool updateHolder_{true};
     std::thread thUpdate_;
     ModbusClient *client_ = nullptr;
+    uint16_t addrStartPLC_ = 0;
 };
