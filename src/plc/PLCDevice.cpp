@@ -15,6 +15,7 @@ PLCDevice::~PLCDevice()
     }
     updateHolder_ = false;
     thUpdate_.join();
+    // 加wapper 清除写缓存表
 }
 
 void PLCDevice::init()
@@ -23,10 +24,11 @@ void PLCDevice::init()
     args.ip = "127.0.0.1";
     args.port = 502;
     args.rStartAddr = 12288;
-    args.rSize = 400;
+    args.rSize = 353;
     args.rClock = 500;
     client_ = new ModbusClient(std::move(args));
     client_->work();
+    addrStartPLC_ = 12288;
     updateData();
 }
 
@@ -35,6 +37,9 @@ bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::strin
     bool ret = false;
     if (!addr.empty() && !type.empty() && !value.empty())
     {
+        uint16_t data[2] = {};
+        uint16_t plcAddr = 0;
+        WriteRegisterType regType;
         if (type == "bool")
         {
             if (addr.find('_') == std::string::npos)
@@ -43,29 +48,28 @@ bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::strin
             }
             std::string subAddr = addr.substr(0, addr.find_first_of('_'));
             std::string bitAddr = addr.substr(addr.find_first_of('_') + 1);
-            uint16_t data[2] = {};
-            uint16_t plcAddr = Utils::anyFromString<uint16_t>(subAddr);
+            plcAddr = Utils::anyFromString<uint16_t>(subAddr);
             data[0] = Utils::anyFromString<uint16_t>(bitAddr);
             data[1] = Utils::anyFromString<uint16_t>(value);
-            client_->writeDatas(plcAddr, WriteRegisterType::RegBool, data);
+            regType = WriteRegisterType::RegBool;
         }
         else if (type == "int")
         {
-            uint16_t data[2] = {};
-            uint16_t plcAddr = Utils::anyFromString<uint16_t>(addr);
+            plcAddr = Utils::anyFromString<uint16_t>(addr);
             data[0] = Utils::anyFromString<uint16_t>(value);
-            client_->writeDatas(plcAddr, WriteRegisterType::RegInt, data);
+            regType = WriteRegisterType::RegInt;
         }
         else if (type == "real")
         {
-            uint16_t data[2] = {};
-            uint16_t plcAddr = Utils::anyFromString<uint16_t>(addr);
+            plcAddr = Utils::anyFromString<uint16_t>(addr);
             uint32_t uint32Val = Utils::anyFromString<float>(value) * 100;
             data[0] = (uint16_t)uint32Val;
             data[1] = (uint16_t)(uint32Val >> 16);
-
-            client_->writeDatas(plcAddr, WriteRegisterType::RegReal, data);
+            regType = WriteRegisterType::RegReal;
         }
+        client_->writeDatas(plcAddr, regType, data);
+        // 加wapper 更新写缓存表
+        ret = true;
     }
     return ret;
 }
@@ -73,7 +77,6 @@ bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::strin
 void PLCDevice::updateData()
 {
     thUpdate_ = std::thread([this] {
-        uint16_t addrRead = 12288;
         std::vector<uint16_t> readCache;
         readCache.resize(400);
         AlertWapper::modifyAllStatus();
@@ -82,19 +85,18 @@ void PLCDevice::updateData()
             if (client_->getConnection())
             {
                 readCache.clear();
-                if (client_->readDatas(addrRead, 400, readCache))
+                if (client_->readDatas(addrStartPLC_, 400, readCache))
                 {
-                    // local index: 0~21 => 对应plc地址: 12289~12310
-                    alertParsing(readCache.data(), 0, addrRead + 1);
-                    motorBoolParsing(readCache.data(), 26, 12289);
-                    motorRealParsing(readCache.data(), 33, 12289);
-                    sensorParsing(readCache.data(), 269, 12289);
-                    volveParsing(readCache.data(), 277, 12289);
-                    produceRealParsing(readCache.data(), 281, 12289);
-                    produceIntParsing(readCache.data(), 323, 12289);
-                    produceWordParsing(readCache.data(), 325, 12289);
-                    fifoBoolParsing(readCache.data(), 353, 12289);
-                    fifoIntParsing(readCache.data(), 354, 12289);
+                    alertParsing(readCache.data(), 0);
+                    motorBoolParsing(readCache.data(), 26);
+                    motorRealParsing(readCache.data(), 33);
+                    sensorParsing(readCache.data(), 269);
+                    volveParsing(readCache.data(), 277);
+                    produceRealParsing(readCache.data(), 281);
+                    produceIntParsing(readCache.data(), 323);
+                    produceWordParsing(readCache.data(), 325);
+                    fifoBoolParsing(readCache.data(), 353);
+                    fifoIntParsing(readCache.data(), 354);
                 }
             }
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -102,7 +104,7 @@ void PLCDevice::updateData()
     });
 }
 
-void PLCDevice::alertParsing(const uint16_t *alertGoup, uint16_t start, uint16_t plcAddr)
+void PLCDevice::alertParsing(const uint16_t *alertGoup, uint16_t start)
 {
     static std::map<std::string, std::string> mapRealAlertInfo; // 需要默认排序，所以采用红黑树结构
     mapRealAlertInfo.clear();
@@ -118,7 +120,7 @@ void PLCDevice::alertParsing(const uint16_t *alertGoup, uint16_t start, uint16_t
                 if (temp.test(j))
                 {
                     // 首编号4 是PLC保持寄存器类型号
-                    std::string key = fmt::format("4{}_{}", plcAddr + i, j);
+                    std::string key = fmt::format("4{}_{}", addrStartPLC_ + i, j);
                     std::cout << "plc addr: " << key << std::endl;
                     auto finder = regWapper_.mapAlertInfo.find(key);
                     if (finder != regWapper_.mapAlertInfo.end())
@@ -133,7 +135,7 @@ void PLCDevice::alertParsing(const uint16_t *alertGoup, uint16_t start, uint16_t
     AlertWapper::updateRealtimeAlert(mapRealAlertInfo);
 }
 
-void PLCDevice::motorBoolParsing(const uint16_t *alertGoup, uint16_t start, uint16_t plcAddr)
+void PLCDevice::motorBoolParsing(const uint16_t *alertGoup, uint16_t start)
 {
     // 读bool数据 电机状态、电机手动模式、一键自动、所有轴回0
     // 12315 ~ 12321
