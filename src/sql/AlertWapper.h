@@ -75,4 +75,17 @@ class AlertWapper
         modifyAlert(mapLast);
         std::swap(mapLast, mapAlert);
     }
+
+    static int alertNum()
+    {
+        QString res = SqlHelper::getSqlHelper().selectOneData(TABLE_ALARM_DATA, "count(*)");
+        return res.toInt();
+    }
+
+    static Json::Value selectAlertDataPaged(const int pageSize, const int pageNumber,
+                                            const std::string &&condition = "", const std::string &&orderBy = "")
+    {
+        return SqlHelper::getSqlHelper().selectDataPaged(TABLE_ALARM_DATA, pageSize, pageNumber, std::move(condition),
+                                                         std::move(orderBy));
+    }
 };

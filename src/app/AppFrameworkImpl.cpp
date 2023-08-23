@@ -1,4 +1,5 @@
 #include "AppFrameworkImpl.h"
+#include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
 #include "CameraWapper.h"
@@ -52,11 +53,10 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::deleteUser, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::ModifyUser,
                         std::bind(&AppFrameworkImpl::modifyUser, this, std::placeholders::_1));
-    QDir qdir_;
-    saveImageDir = qdir_.currentPath() + "/" + "saveImageDir";
-    mapSaveImage_[DisplayWindows::CodeCheckCamera] = 0;
-    mapSaveImage_[DisplayWindows::LocateCheckCamera] = 0;
-    mapSaveImage_[DisplayWindows::LocationCamera] = 0;
+    registerExpectation(ExpectedFunction::SelectAlert,
+                        std::bind(&AppFrameworkImpl::selectAlert, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::CollectImage,
+                        std::bind(&AppFrameworkImpl::collectImage, this, std::placeholders::_1));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -72,6 +72,7 @@ int AppFrame::AppFrameworkImpl::run()
                                     10, 5);
 
     LogInfo("AppFrame Run");
+    initFile();
     initSqlHelper();
     initHttp();
     // cv::Mat test = cv::imread("F:/deviceintegration/build/Debug/algorimTest.jpg");
@@ -291,6 +292,69 @@ std::string AppFrame::AppFrameworkImpl::modifyUser(const std::string &value)
     return Utils::makeResponse(ret);
 }
 
+std::string AppFrame::AppFrameworkImpl::selectAlert(const std::string &value)
+{
+    bool ret = false;
+    Json::Value jsParams = Utils::stringToJson(value);
+    Json::Value jsAlertVal =
+        AlertWapper::selectAlertDataPaged(jsParams["pageSize"].asInt(), jsParams["pageNumber"].asInt(), "", "id desc");
+    int num = AlertWapper::alertNum();
+    if (!jsAlertVal.empty() && num != 0)
+    {
+        ret = true;
+    }
+    Json::Value jsRet;
+    jsRet["num"] = num;
+    for (Json::Value &jsonSingleValue : jsAlertVal)
+    {
+        std::string datetimeStr = jsonSingleValue["created_time"].asString();
+        // 替换T为空格
+        size_t pos = datetimeStr.find('T');
+        if (pos != std::string::npos)
+        {
+            datetimeStr.replace(pos, 1, " ");
+        }
+
+        // 去除末尾的毫秒部分
+        pos = datetimeStr.find('.');
+        if (pos != std::string::npos)
+        {
+            datetimeStr.erase(pos);
+        }
+        jsonSingleValue["created_time"] = datetimeStr;
+        if (!jsonSingleValue["updated_time"].empty())
+        {
+            std::string datetimeStrUp = jsonSingleValue["updated_time"].asString();
+            // 替换T为空格
+            size_t posUp = datetimeStrUp.find('T');
+            if (posUp != std::string::npos)
+            {
+                datetimeStrUp.replace(posUp, 1, " ");
+            }
+
+            // 去除末尾的毫秒部分
+            posUp = datetimeStrUp.find('.');
+            if (posUp != std::string::npos)
+            {
+                datetimeStrUp.erase(posUp);
+            }
+            jsonSingleValue["updated_time"] = datetimeStrUp;
+        }
+
+        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
+                  Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
+    }
+    return Utils::makeResponse(ret, std::move(jsRet));
+}
+
+std::string AppFrame::AppFrameworkImpl::collectImage(const std::string &)
+{
+    bool ret = false;
+    saveImageFlag.store(true, std::memory_order_release);
+    ret = true;
+    return Utils::makeResponse(ret);
+}
+
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
     if (!SqlHelper::getSqlHelper().initSqlHelper())
@@ -397,16 +461,14 @@ void AppFrame::AppFrameworkImpl::updateProduceRealData()
               Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
 }
 
-void AppFrame::AppFrameworkImpl::updateAlarmData(const std::string &strAlram)
+void AppFrame::AppFrameworkImpl::updateAlertData()
 {
-    Json::Value jsAlarmVal;
-
-    /*生产数据界面实时更新数据*/
-    jsAlarmVal["date"] = Utils::getCurrentTime(false);
-    jsAlarmVal["alarmText"] = strAlram;
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsAlarmVal).c_str()));
+    Json::Value jsAlertVal = AlertWapper::selectAlertDataPaged(7, 1);
+    for (Json::Value &jsonSingleValue : jsAlertVal)
+    {
+        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
+                  Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
+    }
 }
 
 void AppFrame::AppFrameworkImpl::updateFormulaData()
@@ -455,6 +517,11 @@ void AppFrame::AppFrameworkImpl::updateVideo()
             QImage img = Utils::matToQImage(target);
             if (img.isNull() == false)
             {
+                if (saveImageFlag.load(std::memory_order_acquire))
+                {
+                    saveImageFlag.store(false, std::memory_order_release);
+                    saveImageToFile(img, camId);
+                }
                 invokeCpp(mapStorePainter_[camId], "updateImage", Q_ARG(QImage, img));
             }
         });
@@ -637,6 +704,47 @@ void AppFrame::AppFrameworkImpl::initHttp()
     });
 }
 
+void AppFrame::AppFrameworkImpl::initFile()
+{
+    QDir qdir;
+    saveImageDir = qdir.currentPath() + "/" + "Image";
+    if (!qdir.exists(saveImageDir))
+    {
+        bool res = qdir.mkdir(saveImageDir);
+        if (!res)
+        {
+            LogWarn("create saveImageDir dir file!");
+        }
+    }
+    QString saveImageSubDir1 = saveImageDir + "/LocationCamera";
+    QString saveImageSubDir2 = saveImageDir + "/CodeCheckCamera";
+    QString saveImageSubDir3 = saveImageDir + "/LocateCheckCamera";
+    if (!qdir.exists(saveImageSubDir1))
+    {
+        bool res = qdir.mkdir(saveImageSubDir1);
+        if (!res)
+        {
+            LogWarn("create LocationCamera dir file!");
+        }
+    }
+    if (!qdir.exists(saveImageSubDir2))
+    {
+        bool res = qdir.mkdir(saveImageSubDir2);
+        if (!res)
+        {
+            LogWarn("create CodeCheckCamera dir file!");
+        }
+    }
+    if (!qdir.exists(saveImageSubDir3))
+    {
+        bool res = qdir.mkdir(saveImageSubDir3);
+        if (!res)
+        {
+            LogWarn("create LocateCheckCamera dir file!");
+        }
+    }
+}
+
 void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const std::string &imageName,
                                          cv::Mat &matImage)
 {
@@ -647,7 +755,7 @@ void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const s
         return;
     }
     QImage saveImage = Utils::matToQImage(matImage);
-    saveImage_(saveImage, DisplayWindows::CodeCheckCamera);
+    // saveImageToFile(saveImage, DisplayWindows::CodeCheckCamera);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     if (modeleName == "paddleOCR")
     {
@@ -929,7 +1037,7 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv
         // 1 图像操作：显示在界面、保存
         std::string imagePath = "D:/deviceintegration/build/Debug/image/test2.jpg";
         QImage saveImage = Utils::matToQImage(matImage);
-        saveImage_(saveImage, DisplayWindows::LocateCheckCamera);
+        saveImageToFile(saveImage, DisplayWindows::LocateCheckCamera);
         if (jsonObject["model"] == "paddleOCR")
             invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
                       Q_ARG(QImage, Utils::matToQImage(matImage)));
@@ -943,24 +1051,27 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv
     }
 }
 
-void AppFrame::AppFrameworkImpl::saveImage_(QImage &imgSave, const DisplayWindows &camId)
+void AppFrame::AppFrameworkImpl::saveImageToFile(QImage &imgSave, const DisplayWindows &camId)
 {
     Utils::asyncTask([this, imgSave, camId] {
-        static std::mutex mtx;
-        std::lock_guard lock(mtx);
-
-        QDir qdir;
-        QDateTime currentDateTime = QDateTime::currentDateTime();
-        QString currentDateTimeStr = currentDateTime.toString("yyyyMMdd_hhmmss_zzz");
-        QString saveImageSubDir = saveImageDir + "/" + QString::number(static_cast<int>(camId));
-        if (!qdir.exists(saveImageSubDir))
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QString saveImageSubDir = "";
+        switch (camId)
         {
-            qdir.mkdir(saveImageSubDir);
+        case DisplayWindows::LocationCamera:
+            saveImageSubDir = saveImageDir + "/LocationCamera/";
+            break;
+        case DisplayWindows::CodeCheckCamera:
+            saveImageSubDir = saveImageDir + "/CodeCheckCamera/";
+            break;
+        case DisplayWindows::LocateCheckCamera:
+            saveImageSubDir = saveImageDir + "/LocateCheckCamera/";
+            break;
         }
-        QString imagePath = saveImageSubDir + "/" + currentDateTimeStr + ".jpg";
+        QString imagePath = saveImageSubDir + currentDateTimeStr + ".jpg";
         if (!imgSave.save(imagePath, "JPG"))
         {
-            qDebug() << "save image failed : " + currentDateTimeStr;
+            qDebug() << "save image failed : " + imagePath;
         }
     });
 }
