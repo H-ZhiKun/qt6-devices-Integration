@@ -9,16 +9,12 @@
 /**
  * @brief Modbus初始化参数
  */
+
 class ModbusInitArguments
 {
   public:
-    std::string ip;          // plc ip地址
-    uint16_t port;           // plc 端口号
-    uint16_t rStartAddr = 0; /**< 读寄存器起始地址 */
-    uint16_t rSize = 0;      /**< 读寄存器数量 */
-    uint16_t rClock = 0;     /**< 读取间隔 ms*/
-    uint16_t wStartAddr = 0; /**< 写寄存器起始地址 */
-    uint16_t wSize = 0;      /**< 写寄存器数量 */
+    std::string ip; // plc ip地址
+    uint16_t port;  // plc 端口号
 };
 
 class RegisterWriteData
@@ -44,11 +40,13 @@ class RegisterWriteData
     uint16_t wData[2]{0};    // 写入数据
 };
 
-class RegisterReadData
+class CacheInfo
 {
   public:
-    uint16_t rStartAddr = 0; /**< 读寄存器头地址 */
-    uint16_t rSize = 0;      /**< 读寄存器数量 */
+    int32_t offset = -1;         // -1为只写 大于0为读取间隔ms
+    uint16_t address = 0;        /**< 寄存器头地址 */
+    uint16_t size = 0;           /**< 寄存器数量 */
+    std::vector<uint16_t> cache; // 寄存器缓存
 };
 
 enum class WriteRegisterType
@@ -85,21 +83,23 @@ class ModbusClient
     ModbusClient(ModbusClient &&) noexcept(true) = default;
     ModbusClient &operator=(ModbusClient &&) noexcept(true) = default;
     void work();
-
+    void addReadCache(uint16_t addr, uint16_t size, int32_t offset);
+    void addFIFOCache(uint16_t addr, uint16_t size, int32_t offset);
+    void addWriteCache(uint16_t addr, uint16_t size);
     /**
      * @brief 读取寄存器数据
      * @param address 寄存器起始地址
      * @param count 读取的寄存器数量
      * @return 读取的寄存器数据
      */
-    bool readDatas(uint16_t address, uint16_t count, std::vector<uint16_t> &outData);
-
+    bool readCache(uint16_t address, uint16_t count, std::vector<uint16_t> &outData);
+    CacheInfo readFIFO();
     /**
      * @brief 写入寄存器数据
      * @param address 寄存器起始地址
      * @param values 要写入的寄存器值
      */
-    bool writeDatas(uint16_t address, WriteRegisterType type, const uint16_t *data);
+    bool writeCache(uint16_t address, WriteRegisterType type, const uint16_t *data);
 
     /**
      * @brief 获取当前连接状态
@@ -114,7 +114,7 @@ class ModbusClient
      * @param count 读取的寄存器数量
      * @param buffer 读取结果缓冲区
      */
-    bool readRegisters(uint16_t address, uint16_t count);
+    bool readRegisters(uint16_t address, uint16_t count, std::vector<uint16_t> &cache);
 
     /**
      * @brief 写入寄存器数据
@@ -126,15 +126,16 @@ class ModbusClient
   private:
     modbus_t *mbsContext_ = nullptr;              /**< Modbus上下文指针 */
     std::mutex mtxMbs_;                           /**< 互斥锁，用于保护Modbus访问 */
-    std::mutex mtxRCache_;                        // 读缓存锁
-    std::vector<uint16_t> rCaches_;               /**< 寄存器读缓存 */
-    std::vector<uint16_t> wCaches_;               /**< 寄存器写缓存 */
+    std::mutex mtxReadCache_;                     // 读缓存锁
+    std::mutex mtxFIFO_;                          // FIFO缓存锁
     std::vector<std::thread> tasks_;              // 存储当前任务线程。
     std::atomic_bool bThreadHolder_{true};        // 子线程保持者，在析构中退出。
     std::condition_variable cvConnector_;         // 重连线程条件变量
     std::atomic_bool bConnected_{false};          // 当前连接设备状态
     ModbusInitArguments args_;                    // 初始化参数 只读
-    std::vector<RegisterReadData> vReadData;      // 读寄存器执行数组
+    CacheInfo rCacheInfo_;                        // 读缓存数据结构
+    CacheInfo FIFOCacheInfo_;                     // FIFO读缓存数据结构
+    CacheInfo wCacheInfo_;                        // 写缓存数据结构
     LockFreeQueue<RegisterWriteData> qWriteData_; // 写寄存器执行队列
 
     /**
