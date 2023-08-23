@@ -144,4 +144,5 @@ class Utils
     }
 
     static cv::Mat qImageToMat(QImage &qim);
+    static std::vector<std::string> splitString(const std::string &input, const std::string &delimiter);
 };
