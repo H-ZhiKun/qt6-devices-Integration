@@ -113,7 +113,7 @@ bool ModbusClient::readCache(uint16_t address, uint16_t count, std::vector<uint1
     }
     // 使用std::copy进行批量读取
     std::lock_guard lock(mtxReadCache_); // 加缓存读锁
-    std::copy(rCacheInfo_.cache.begin() + addr, rCacheInfo_.cache.begin() + addr + count, std::back_inserter(outData));
+    std::copy(rCacheInfo_.cache.begin() + addr, rCacheInfo_.cache.begin() + addr + count, outData.begin());
 
     return true;
 }
