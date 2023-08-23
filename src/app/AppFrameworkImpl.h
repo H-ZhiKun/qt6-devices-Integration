@@ -83,7 +83,7 @@ class AppFrameworkImpl final : public AppFramework
     // 私有变量区域
     std::list<QThread *> lvThread_;
     std::list<std::thread> lvFulltimeThread_;
-    std::atomic_bool bThreadHolder = true;
+    std::atomic_bool bThreadHolder{true};
     QString saveImageDir;
     bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;

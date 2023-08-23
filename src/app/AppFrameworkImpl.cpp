@@ -62,8 +62,7 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 {
     // 保证一定完成了资源清理
-    if (bThreadHolder)
-        memoryClean();
+    memoryClean();
 }
 
 int AppFrame::AppFrameworkImpl::run()
