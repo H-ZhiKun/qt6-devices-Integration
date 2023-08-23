@@ -214,7 +214,7 @@ void BaumerManager::deinitializeBGAPI()
                 if (ifc_iter->second->IsOpen())
                 {
                     ifc_iter->second->RegisterPnPEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
-                    ifc_iter->second->UnregisterPnPEvent();
+                    // ifc_iter->second->UnregisterPnPEvent();
                     ifc_iter->second->Close();
                 }
             }
