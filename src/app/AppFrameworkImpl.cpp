@@ -55,11 +55,8 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::modifyUser, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::SelectAlert,
                         std::bind(&AppFrameworkImpl::selectAlert, this, std::placeholders::_1));
-    QDir qdir_;
-    saveImageDir = qdir_.currentPath() + "/" + "saveImageDir";
-    mapSaveImage_[DisplayWindows::CodeCheckCamera] = 0;
-    mapSaveImage_[DisplayWindows::LocateCheckCamera] = 0;
-    mapSaveImage_[DisplayWindows::LocationCamera] = 0;
+    registerExpectation(ExpectedFunction::CollectImage,
+                        std::bind(&AppFrameworkImpl::collectImage, this, std::placeholders::_1));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -76,6 +73,7 @@ int AppFrame::AppFrameworkImpl::run()
                                     10, 5);
 
     LogInfo("AppFrame Run");
+    initFile();
     initSqlHelper();
     initHttp();
     // cv::Mat test = cv::imread("F:/deviceintegration/build/Debug/algorimTest.jpg");
@@ -350,6 +348,14 @@ std::string AppFrame::AppFrameworkImpl::selectAlert(const std::string &value)
     return Utils::makeResponse(ret, std::move(jsRet));
 }
 
+std::string AppFrame::AppFrameworkImpl::collectImage(const std::string &)
+{
+    bool ret = false;
+    saveImageFlag.store(true, std::memory_order_release);
+    ret = true;
+    return Utils::makeResponse(ret);
+}
+
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
     if (!SqlHelper::getSqlHelper().initSqlHelper())
@@ -512,6 +518,11 @@ void AppFrame::AppFrameworkImpl::updateVideo()
             QImage img = Utils::matToQImage(target);
             if (img.isNull() == false)
             {
+                if (saveImageFlag.load(std::memory_order_acquire))
+                {
+                    saveImageFlag.store(false, std::memory_order_release);
+                    saveImageToFile(img, camId);
+                }
                 invokeCpp(mapStorePainter_[camId], "updateImage", Q_ARG(QImage, img));
             }
         });
@@ -694,6 +705,47 @@ void AppFrame::AppFrameworkImpl::initHttp()
     });
 }
 
+void AppFrame::AppFrameworkImpl::initFile()
+{
+    QDir qdir;
+    saveImageDir = qdir.currentPath() + "/" + "Image";
+    if (!qdir.exists(saveImageDir))
+    {
+        bool res = qdir.mkdir(saveImageDir);
+        if (!res)
+        {
+            LogWarn("create saveImageDir dir file!");
+        }
+    }
+    QString saveImageSubDir1 = saveImageDir + "/LocationCamera";
+    QString saveImageSubDir2 = saveImageDir + "/CodeCheckCamera";
+    QString saveImageSubDir3 = saveImageDir + "/LocateCheckCamera";
+    if (!qdir.exists(saveImageSubDir1))
+    {
+        bool res = qdir.mkdir(saveImageSubDir1);
+        if (!res)
+        {
+            LogWarn("create LocationCamera dir file!");
+        }
+    }
+    if (!qdir.exists(saveImageSubDir2))
+    {
+        bool res = qdir.mkdir(saveImageSubDir2);
+        if (!res)
+        {
+            LogWarn("create CodeCheckCamera dir file!");
+        }
+    }
+    if (!qdir.exists(saveImageSubDir3))
+    {
+        bool res = qdir.mkdir(saveImageSubDir3);
+        if (!res)
+        {
+            LogWarn("create LocateCheckCamera dir file!");
+        }
+    }
+}
+
 void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const std::string &imageName,
                                          cv::Mat &matImage)
 {
@@ -704,7 +756,7 @@ void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const s
         return;
     }
     QImage saveImage = Utils::matToQImage(matImage);
-    saveImage_(saveImage, DisplayWindows::CodeCheckCamera);
+    // saveImageToFile(saveImage, DisplayWindows::CodeCheckCamera);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     if (modeleName == "paddleOCR")
     {
@@ -986,7 +1038,7 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv
         // 1 图像操作：显示在界面、保存
         std::string imagePath = "D:/deviceintegration/build/Debug/image/test2.jpg";
         QImage saveImage = Utils::matToQImage(matImage);
-        saveImage_(saveImage, DisplayWindows::LocateCheckCamera);
+        saveImageToFile(saveImage, DisplayWindows::LocateCheckCamera);
         if (jsonObject["model"] == "paddleOCR")
             invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
                       Q_ARG(QImage, Utils::matToQImage(matImage)));
@@ -1000,24 +1052,27 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv
     }
 }
 
-void AppFrame::AppFrameworkImpl::saveImage_(QImage &imgSave, const DisplayWindows &camId)
+void AppFrame::AppFrameworkImpl::saveImageToFile(QImage &imgSave, const DisplayWindows &camId)
 {
     Utils::asyncTask([this, imgSave, camId] {
-        static std::mutex mtx;
-        std::lock_guard lock(mtx);
-
-        QDir qdir;
-        QDateTime currentDateTime = QDateTime::currentDateTime();
-        QString currentDateTimeStr = currentDateTime.toString("yyyyMMdd_hhmmss_zzz");
-        QString saveImageSubDir = saveImageDir + "/" + QString::number(static_cast<int>(camId));
-        if (!qdir.exists(saveImageSubDir))
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QString saveImageSubDir = "";
+        switch (camId)
         {
-            qdir.mkdir(saveImageSubDir);
+        case DisplayWindows::LocationCamera:
+            saveImageSubDir = saveImageDir + "/LocationCamera/";
+            break;
+        case DisplayWindows::CodeCheckCamera:
+            saveImageSubDir = saveImageDir + "/CodeCheckCamera/";
+            break;
+        case DisplayWindows::LocateCheckCamera:
+            saveImageSubDir = saveImageDir + "/LocateCheckCamera/";
+            break;
         }
-        QString imagePath = saveImageSubDir + "/" + currentDateTimeStr + ".jpg";
+        QString imagePath = saveImageSubDir + currentDateTimeStr + ".jpg";
         if (!imgSave.save(imagePath, "JPG"))
         {
-            qDebug() << "save image failed : " + currentDateTimeStr;
+            qDebug() << "save image failed : " + imagePath;
         }
     });
 }

@@ -49,6 +49,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string deleteUser(const std::string &);
     std::string modifyUser(const std::string &);
     std::string selectAlert(const std::string &);
+    std::string collectImage(const std::string &);
     // 差异调用 接口区域
     void initSqlHelper();
     void runDomino();
@@ -58,6 +59,7 @@ class AppFrameworkImpl final : public AppFramework
     void initBaumerManager();
     void initHttp();
     void initProduct();
+    void initFile();
 
     void runHttp(const std::string &&modelName, const std::string &imageName, cv::Mat &matImage);
 
@@ -76,7 +78,7 @@ class AppFrameworkImpl final : public AppFramework
     void timerTask();                                   // 定时任务
     void processPaddleOCR(QJsonDocument, cv::Mat);      // 处理检测算法
     void processYoloTangle(QJsonDocument &, cv::Mat &); // 处理角度预测算法
-    void saveImage_(QImage &imgSave, const DisplayWindows &camId);
+    void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
 
     void runMainProcess();
 
@@ -86,7 +88,7 @@ class AppFrameworkImpl final : public AppFramework
     std::list<std::thread> lvFulltimeThread_;
     std::atomic_bool bThreadHolder = true;
     QString saveImageDir;
-    bool saveImageFlag;
+    std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
     // Module 组装区域
     Domino *domino_ = nullptr;

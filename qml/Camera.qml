@@ -504,6 +504,28 @@ GroupBox {
         }
     }
 
+    Button {
+        id: button1
+        x: 560
+        y: 512
+        width: 108
+        height: 38
+        text: qsTr("保存图像")
+        onClicked: {
+            var json = {
+                "name": "保存图像"
+            };
+            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.CollectImage, JSON.stringify(json));
+            var result = JSON.parse(jsRet);
+            if (result.ok === true) {
+                // 保存成功
+                console.log("save success");
+            } else {
+                console.log("save failed");
+            }
+        }
+    }
+
     Connections {
         target: appMetaFlash // C++ 对象实例
         function onPageMainChange(value) {

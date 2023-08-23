@@ -704,6 +704,339 @@ GroupBox {
         }
     }
 
+    // 这样写的原因： 地址不连续，建立映射关系
+    function initPower() {
+        var itemq = valveListView1.itemAtIndex(0);
+        var item1 = valveListView1.itemAtIndex(1);
+        var item2 = valveListView1.itemAtIndex(2);
+        var item3 = valveListView1.itemAtIndex(3);
+        var item4 = valveListView1.itemAtIndex(4);
+        var item5 = valveListView2.itemAtIndex(0);
+        var item6 = valveListView2.itemAtIndex(1);
+        var item7 = valveListView2.itemAtIndex(2);
+        var item8 = valveListView2.itemAtIndex(3);
+        var item9 = valveListView2.itemAtIndex(4);
+        var item10 = valveListView3.itemAtIndex(0);
+        var item11 = valveListView3.itemAtIndex(1);
+        var item12 = valveListView3.itemAtIndex(2);
+        var item13 = valveListView3.itemAtIndex(3);
+        var item14 = valveListView3.itemAtIndex(4);
+        var item15 = valveListView4.itemAtIndex(0);
+        var item16 = valveListView4.itemAtIndex(1);
+        var item17 = valveListView4.itemAtIndex(2);
+        var item18 = valveListView4.itemAtIndex(3);
+        var item19 = valveListView4.itemAtIndex(4);
+        var item20 = valveListView5.itemAtIndex(0);
+        var item21 = valveListView5.itemAtIndex(1);
+        var item22 = valveListView5.itemAtIndex(2);
+        var item23 = valveListView5.itemAtIndex(3);
+        var item24 = valveListView5.itemAtIndex(4);
+        var item25 = valveListView6.itemAtIndex(0);
+        var item26 = valveListView6.itemAtIndex(1);
+        var item27 = valveListView6.itemAtIndex(2);
+        var item28 = valveListView6.itemAtIndex(3);
+        var item29 = valveListView6.itemAtIndex(4);
+        var item30 = valveListView7.itemAtIndex(0);
+        var item31 = valveListView7.itemAtIndex(1);
+        var item32 = valveListView7.itemAtIndex(2);
+        if (itemq === null) {
+            console.log("M001 no item");
+        } else {
+            itemq.itemName = "M001";
+            itemq.stateAddr = "M001_b_12315_11";
+            itemq.modeAddr = "M001_b_12318_10";
+            itemq.realLocateAddr = "M001_r_12350";
+            itemq.realSpeedAddr = "M001_r_12352";
+        }
+        if (item1 === null) {
+            console.log("M002 no item");
+        } else {
+            item1.itemName = "M002";
+            item1.stateAddr = "M002_b_12315_12";
+            item1.modeAddr = "M002_b_12318_11";
+            item1.realLocateAddr = "M002_r_12354";
+            item1.realSpeedAddr = "M002_r_12356";
+        }
+        if (item2 === null) {
+            console.log("M003 no item");
+        } else {
+            item2.itemName = "M003";
+            item2.stateAddr = "M003_b_12315_13";
+            item2.modeAddr = "M003_b_12318_12";
+            item2.realLocateAddr = "M003_r_12358";
+            item2.realSpeedAddr = "M003_r_12360";
+        }
+        if (item3 === null) {
+            console.log("M004 no item");
+        } else {
+            item3.itemName = "M004";
+            item3.stateAddr = "M004_b_12315_14";
+            item3.modeAddr = "M004_b_12318_13";
+            item3.realLocateAddr = "M004_r_12362";
+            item3.realSpeedAddr = "M004_r_12364";
+        }
+        if (item4 === null) {
+            console.log("M005 no item");
+        } else {
+            item4.itemName = "M005";
+            item4.stateAddr = "M005_b_12315_15";
+            item4.modeAddr = "M005_b_12318_14";
+            item4.realLocateAddr = "M005_r_12366";
+            item4.realSpeedAddr = "M005_r_12368";
+        }
+        if (item5 === null) {
+            console.log("M006 no item");
+        } else {
+            item5.itemName = "M006";
+            item5.stateAddr = "M006_b_12316_00";
+            item5.modeAddr = "M006_b_12318_15";
+            item5.realLocateAddr = "M006_r_12370";
+            item5.realSpeedAddr = "M006_r_12372";
+        }
+        if (item6 === null) {
+            console.log("M007 no item");
+        } else {
+            item6.itemName = "M007";
+            item6.stateAddr = "M007_b_12316_01";
+            item6.modeAddr = "M007_b_12319_00";
+            item6.realLocateAddr = "M007_r_12374";
+            item6.realSpeedAddr = "M007_r_12376";
+        }
+        if (item7 === null) {
+            console.log("M008 no item");
+        } else {
+            item7.itemName = "M008";
+            item7.stateAddr = "M008_b_12316_02";
+            item7.modeAddr = "M008_b_12319_01";
+            item7.realLocateAddr = "M008_r_12378";
+            item7.realSpeedAddr = "M008_r_12380";
+        }
+        if (item8 === null) {
+            console.log("M009 no item");
+        } else {
+            item8.itemName = "M009";
+            item8.stateAddr = "M009_b_12316_03";
+            item8.modeAddr = "M009_b_12319_02";
+            item8.realLocateAddr = "M009_r_12382";
+            item8.realSpeedAddr = "M009_r_12384";
+        }
+        if (item9 === null) {
+            console.log("M010 no item");
+        } else {
+            item9.itemName = "M010";
+            item9.stateAddr = "M010_b_12316_04";
+            item9.modeAddr = "M010_b_12319_03";
+            item9.realLocateAddr = "M010_r_12386";
+            item9.realSpeedAddr = "M010_r_12388";
+        }
+        if (item10 === null) {
+            console.log("M011 no item");
+        } else {
+            item10.itemName = "M011";
+            item10.stateAddr = "M011_b_12316_05";
+            item10.modeAddr = "M011_b_12319_04";
+            item10.realLocateAddr = "M011_r_12390";
+            item10.realSpeedAddr = "M011_r_12392";
+        }
+        if (item11 === null) {
+            console.log("M012 no item");
+        } else {
+            item11.itemName = "M012";
+            item11.stateAddr = "M012_b_12316_06";
+            item11.modeAddr = "M012_b_12319_05";
+            item11.realLocateAddr = "M012_r_12394";
+            item11.realSpeedAddr = "M012_r_12396";
+        }
+        if (item12 === null) {
+            console.log("M013 no item");
+        } else {
+            item12.itemName = "M013";
+            item12.stateAddr = "M013_b_12316_07";
+            item12.modeAddr = "M013_b_12319_06";
+            item12.realLocateAddr = "M013_r_12398";
+            item12.realSpeedAddr = "M013_r_12400";
+        }
+        if (item13 === null) {
+            console.log("M014 no item");
+        } else {
+            item13.itemName = "M014";
+            item13.stateAddr = "M014_b_12316_08";
+            item13.modeAddr = "M014_b_12319_07";
+            item13.realLocateAddr = "M014_r_12402";
+            item13.realSpeedAddr = "M014_r_12404";
+        }
+        if (item14 === null) {
+            console.log("M015 no item");
+        } else {
+            item14.itemName = "M015";
+            item14.stateAddr = "M015_b_12316_09";
+            item14.modeAddr = "M015_b_12319_08";
+            item14.realLocateAddr = "M015_r_12406";
+            item14.realSpeedAddr = "M015_r_12408";
+        }
+        if (item15 === null) {
+            console.log("M016 no item");
+        } else {
+            item15.itemName = "M016";
+            item15.stateAddr = "M016_b_12316_10";
+            item15.modeAddr = "M016_b_12319_09";
+            item15.realLocateAddr = "M016_r_12410";
+            item15.realSpeedAddr = "M016_r_12412";
+        }
+        if (item16 === null) {
+            console.log("M017 no item");
+        } else {
+            item16.itemName = "M017";
+            item16.stateAddr = "M017_b_12316_11";
+            item16.modeAddr = "M017_b_12319_10";
+            item16.realLocateAddr = "M017_r_12414";
+            item16.realSpeedAddr = "M017_r_12416";
+        }
+        if (item17 === null) {
+            console.log("M018 no item");
+        } else {
+            item17.itemName = "M018";
+            item17.stateAddr = "M018_b_12316_12";
+            item17.modeAddr = "M018_b_12319_11";
+            item17.realLocateAddr = "M018_r_12418";
+            item17.realSpeedAddr = "M018_r_12420";
+        }
+        if (item18 === null) {
+            console.log("M019 no item");
+        } else {
+            item18.itemName = "M019";
+            item18.stateAddr = "M019_b_12316_13";
+            item18.modeAddr = "M019_b_12319_12";
+            item18.realLocateAddr = "M019_r_12422";
+            item18.realSpeedAddr = "M019_r_12424";
+        }
+        if (item19 === null) {
+            console.log("M020 no item");
+        } else {
+            item19.itemName = "M020";
+            item19.stateAddr = "M020_b_12316_14";
+            item19.modeAddr = "M020_b_12319_13";
+            item19.realLocateAddr = "M020_r_12426";
+            item19.realSpeedAddr = "M020_r_12428";
+        }
+        if (item20 === null) {
+            console.log("M021 no item");
+        } else {
+            item20.itemName = "M021";
+            item20.stateAddr = "M021_b_12316_15";
+            item20.modeAddr = "M021_b_12319_14";
+            item20.realLocateAddr = "M021_r_12430";
+            item20.realSpeedAddr = "M021_r_12432";
+        }
+        if (item21 === null) {
+            console.log("M022 no item");
+        } else {
+            item21.itemName = "M022";
+            item21.stateAddr = "M022_b_12317_00";
+            item21.modeAddr = "M022_b_12319_15";
+            item21.realLocateAddr = "M022_r_12434";
+            item21.realSpeedAddr = "M022_r_12436";
+        }
+        if (item22 === null) {
+            console.log("M023 no item");
+        } else {
+            item22.itemName = "M023";
+            item22.stateAddr = "M023_b_12317_01";
+            item22.modeAddr = "M023_b_12320_00";
+            item22.realLocateAddr = "M023_r_12438";
+            item22.realSpeedAddr = "M023_r_12440";
+        }
+        if (item23 === null) {
+            console.log("M024 no item");
+        } else {
+            item23.itemName = "M024";
+            item23.stateAddr = "M024_b_12317_02";
+            item23.modeAddr = "M024_b_12320_01";
+            item23.realLocateAddr = "M024_r_12442";
+            item23.realSpeedAddr = "M024_r_12444";
+        }
+        if (item24 === null) {
+            console.log("M051 no item");
+        } else {
+            item24.itemName = "M051";
+            item24.stateAddr = "M051_b_12315_06";
+            item24.modeAddr = "M051_b_12318_05";
+            item24.realLocateAddr = "M051_r_12494";
+            item24.realSpeedAddr = "M051_r_12496";
+        }
+        if (item25 === null) {
+            console.log("M056 no item");
+        } else {
+            item25.itemName = "M056";
+            item25.stateAddr = "M056_b_12315_07";
+            item25.modeAddr = "M056_b_12318_06";
+            item25.realLocateAddr = "M056_r_12498";
+            item25.realSpeedAddr = "M056_r_12500";
+        }
+        if (item26 === null) {
+            console.log("M061 no item");
+        } else {
+            item26.itemName = "M061";
+            item26.stateAddr = "M061_b_12315_02";
+            item26.modeAddr = "M061_b_12318_01";
+            item26.realLocateAddr = "M061_r_12330";
+            item26.realSpeedAddr = "M061_r_12332";
+        }
+        if (item27 === null) {
+            console.log("M062 no item");
+        } else {
+            item27.itemName = "M062";
+            item27.stateAddr = "M062_b_12315_03";
+            item27.modeAddr = "M062_b_12318_02";
+            item27.realLocateAddr = "M062_r_12334";
+            item27.realSpeedAddr = "M062_r_12336";
+        }
+        if (item28 === null) {
+            console.log("M063 no item");
+        } else {
+            item28.itemName = "M063";
+            item28.stateAddr = "M063_b_12315_04";
+            item28.modeAddr = "M063_b_12318_03";
+            item28.realLocateAddr = "M063_r_12338";
+            item28.realSpeedAddr = "M063_r_12340";
+        }
+        if (item29 === null) {
+            console.log("M066 no item");
+        } else {
+            item29.itemName = "M066";
+            item29.stateAddr = "M066_b_12315_05";
+            item29.modeAddr = "M066_b_12318_04";
+            item29.realLocateAddr = "M066_r_12342";
+            item29.realSpeedAddr = "M066_r_12344";
+        }
+        if (item30 === null) {
+            console.log("M071 no item");
+        } else {
+            item30.itemName = "M071";
+            item30.stateAddr = "M071_b_12315_00";
+            item30.modeAddr = "M071_b_12317_15";
+            item30.realLocateAddr = "M071_r_12322";
+            item30.realSpeedAddr = "M071_r_12324";
+        }
+        if (item31 === null) {
+            console.log("M081 no item");
+        } else {
+            item31.itemName = "M081";
+            item31.stateAddr = "M081_b_12315_09";
+            item31.modeAddr = "M081_b_12318_08";
+            item31.realLocateAddr = "M081_r_12502";
+            item31.realSpeedAddr = "M081_r_12504";
+        }
+        if (item32 === null) {
+            console.log("M082 no item");
+        } else {
+            item32.itemName = "M082";
+            item32.stateAddr = "M082_b_12315_10";
+            item32.modeAddr = "M082_b_12318_09";
+            item32.realLocateAddr = "M082_r_12506";
+            item32.realSpeedAddr = "M082_r_12508";
+        }
+    }
     Connections {
         target: appMetaFlash // C++ 对象实例
         function onPagePowerChange(value) {
