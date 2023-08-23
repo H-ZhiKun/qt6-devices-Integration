@@ -23,7 +23,9 @@ class PLCDevice
     explicit PLCDevice();
     ~PLCDevice();
     void init();
-    bool writeDataToDevice(std::string addr, std::string type, std::string value);
+    std::string readDevice(const std::string &type, const std::string &addr, const std::string &bit = "");
+    bool writeDataToDevice(const std::string &type, const std::string &addr, const std::string &bit = "",
+                           const std::string &value = "");
     const FIFOInfo &getFIFOInfo();
 
   protected:

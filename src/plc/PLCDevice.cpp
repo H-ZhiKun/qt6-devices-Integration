@@ -31,34 +31,28 @@ void PLCDevice::init()
     updateData();
 }
 
-bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::string value)
+bool PLCDevice::writeDataToDevice(const std::string &type, const std::string &addr, const std::string &bit,
+                                  const std::string &value)
 {
     bool ret = false;
     if (!addr.empty() && !type.empty() && !value.empty())
     {
         uint16_t data[2] = {};
-        uint16_t plcAddr = 0;
+        uint16_t plcAddr = Utils::anyFromString<uint16_t>(addr);
         WriteRegisterType regType;
-        if (type == "bool")
+        if (type == "b")
         {
-            if (addr.find('_') == std::string::npos)
-            {
-                return ret;
-            }
-            std::string subAddr = addr.substr(0, addr.find_first_of('_'));
-            std::string bitAddr = addr.substr(addr.find_first_of('_') + 1);
-            plcAddr = Utils::anyFromString<uint16_t>(subAddr);
-            data[0] = Utils::anyFromString<uint16_t>(bitAddr);
+            data[0] = Utils::anyFromString<uint16_t>(bit);
             data[1] = Utils::anyFromString<uint16_t>(value);
             regType = WriteRegisterType::RegBool;
         }
-        else if (type == "int")
+        else if (type == "n")
         {
             plcAddr = Utils::anyFromString<uint16_t>(addr);
             data[0] = Utils::anyFromString<uint16_t>(value);
             regType = WriteRegisterType::RegInt;
         }
-        else if (type == "real")
+        else if (type == "r")
         {
             plcAddr = Utils::anyFromString<uint16_t>(addr);
             uint32_t uint32Val = Utils::anyFromString<float>(value) * 100;
@@ -66,6 +60,7 @@ bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::strin
             data[1] = (uint16_t)(uint32Val >> 16);
             regType = WriteRegisterType::RegReal;
         }
+
         client_->writeCache(plcAddr, regType, data);
         // 加wapper 更新写缓存表
         ret = true;
@@ -81,17 +76,16 @@ const FIFOInfo &PLCDevice::getFIFOInfo()
 void PLCDevice::updateData()
 {
     thUpdate_ = std::thread([this] {
-        std::vector<uint16_t> readCache;
-        readCache.resize(readCacheSize_);
+        const uint16_t readSize = 22;
+        std::vector<uint16_t> readCache(readSize);
         AlertWapper::modifyAllStatus();
         while (updateHolder_.load(std::memory_order_acquire))
         {
             if (client_ != nullptr && client_->getConnection())
             {
-                readCache.clear();
-                if (client_->readCache(readBeginAddress_, 22, readCache))
+                if (client_->readCache(readBeginAddress_, readSize, readCache))
                 {
-                    alertParsing(readCache.data(), 22);
+                    alertParsing(readCache.data(), readSize);
                 }
                 int8_t fifoCount = 10;
                 while (fifoCount)
@@ -144,4 +138,14 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
+    fifoInfo_.numQRCode.store(FIFOGroup[1], std::memory_order_relaxed);
+    fifoInfo_.numPosition.store(FIFOGroup[2], std::memory_order_relaxed);
+    fifoInfo_.numVerifyPos.store(FIFOGroup[3], std::memory_order_relaxed);
+    fifoInfo_.numCoding.store(FIFOGroup[4], std::memory_order_relaxed);
+    fifoInfo_.numVerifyCoding.store(FIFOGroup[5], std::memory_order_relaxed);
+
+    fifoInfo_.signalMove.store(FIFOGroup[12], std::memory_order_relaxed);
+    fifoInfo_.signalSearchCoding.store(FIFOGroup[13], std::memory_order_relaxed);
+    std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding
+              << Utils::getCurrentTime(true) << std::endl;
 }
