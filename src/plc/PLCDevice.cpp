@@ -8,13 +8,13 @@ PLCDevice::PLCDevice()
 
 PLCDevice::~PLCDevice()
 {
+    updateHolder_.store(false, std::memory_order_release);
+    thUpdate_.join();
     if (client_)
     {
         delete client_;
         client_ = nullptr;
     }
-    updateHolder_ = false;
-    thUpdate_.join();
     // 加wapper 清除写缓存表
 }
 
@@ -24,9 +24,9 @@ void PLCDevice::init()
     args.ip = "127.0.0.1";
     args.port = 502;
     client_ = new ModbusClient(std::move(args));
-    client_->addWriteCache(12688, 316);
-    client_->addReadCache(12288, 331, 500);
-    client_->addFIFOCache(12641, 14, 50);
+    client_->addWriteCache(writeBeginAddress_, writeCacheSize_);
+    client_->addReadCache(readBeginAddress_, readCacheSize_, 500);
+    client_->addFIFOCache(FIFOBeginAddress_, FIFOCacheSize_, 50);
     client_->work();
     updateData();
 }
@@ -73,23 +73,38 @@ bool PLCDevice::writeDataToDevice(std::string addr, std::string type, std::strin
     return ret;
 }
 
+const FIFOInfo &PLCDevice::getFIFOInfo()
+{
+    return fifoInfo_;
+}
+
 void PLCDevice::updateData()
 {
     thUpdate_ = std::thread([this] {
         std::vector<uint16_t> readCache;
-        readCache.resize(400);
+        readCache.resize(readCacheSize_);
         AlertWapper::modifyAllStatus();
-        while (updateHolder_)
+        while (updateHolder_.load(std::memory_order_acquire))
         {
-            if (client_->getConnection())
+            if (client_ != nullptr && client_->getConnection())
             {
                 readCache.clear();
-                if (client_->readCache(alertBeginAddress, 22, readCache))
+                if (client_->readCache(readBeginAddress_, 22, readCache))
                 {
                     alertParsing(readCache.data(), 22);
                 }
+                int8_t fifoCount = 10;
+                while (fifoCount)
+                {
+                    auto FIFO = client_->readFIFO();
+                    if (FIFO.cache.size() > 0)
+                    {
+                        FIFOParsing(FIFO.cache.data(), FIFO.cache.size());
+                    }
+                    fifoCount--;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                }
             }
-            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     });
 }
@@ -109,7 +124,7 @@ void PLCDevice::alertParsing(const uint16_t *alertGoup, uint16_t size)
                 if (temp.test(j))
                 {
                     // 首编号4 是PLC保持寄存器类型号
-                    std::string key = fmt::format("4{}_{}", alertBeginAddress + i + 1, j);
+                    std::string key = fmt::format("4{}_{}", readBeginAddress_ + i + 1, j);
                     std::cout << "PLC Address = " << key << std::endl;
                     auto finder = regWapper_.mapAlertInfo.find(key);
                     if (finder != regWapper_.mapAlertInfo.end())
@@ -122,4 +137,8 @@ void PLCDevice::alertParsing(const uint16_t *alertGoup, uint16_t size)
         }
     }
     AlertWapper::updateRealtimeAlert(mapRealAlertInfo);
+}
+
+void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
+{
 }
