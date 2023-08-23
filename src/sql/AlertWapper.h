@@ -55,10 +55,11 @@ class AlertWapper
     }
     static void updateRealtimeAlert(std::map<std::string, std::string> &mapAlert)
     {
-        std::map<std::string, std::string> mapCurrent = mapAlert; // 正在报警的条目
-        static std::map<std::string, std::string> mapLast;        // 上次报警的条目
-        auto lastIter = mapLast.begin();
-        while (lastIter != mapLast.end())
+        std::map<std::string, std::string> mapCurrent = mapAlert;
+        static std::map<std::string, std::string> mapLast;
+
+        // 使用迭代器遍历而不是自增循环
+        for (auto lastIter = mapLast.begin(); lastIter != mapLast.end();)
         {
             auto curIter = mapCurrent.find(lastIter->first);
             if (curIter != mapCurrent.end())
@@ -68,12 +69,13 @@ class AlertWapper
             }
             else
             {
-                lastIter++;
+                ++lastIter;
             }
         }
+
         insertAlert(mapCurrent);
         modifyAlert(mapLast);
-        std::swap(mapLast, mapAlert);
+        mapLast.swap(mapAlert);
     }
 
     static int alertNum()

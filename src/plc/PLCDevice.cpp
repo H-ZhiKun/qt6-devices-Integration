@@ -109,33 +109,36 @@ void PLCDevice::updateData()
     });
 }
 
-void PLCDevice::alertParsing(const uint16_t *alertGoup, uint16_t size)
+void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 {
-    static std::map<std::string, std::string> mapRealAlertInfo; // 需要默认排序，所以采用红黑树结构
-    mapRealAlertInfo.clear();
+    std::map<std::string, std::string> mapRealAlertInfo;
     // 12289 ~ 12310
-    for (uint16_t i = 0; i < size; i++) // 读报警信息
+    const uint16_t baseAddress = readBeginAddress_ + 1; // 预先计算起始地址
+
+    for (uint16_t i = 0; i < size; i++)
     {
-        if (alertGoup[i] > 0)
+        if (alertGroup[i] > 0)
         {
-            std::bitset<16> temp(alertGoup[i]);
+            std::bitset<16> temp(alertGroup[i]);
+
             for (uint8_t j = 0; j < 16; j++)
             {
                 if (temp.test(j))
                 {
-                    // 首编号4 是PLC保持寄存器类型号
-                    std::string key = fmt::format("4{}_{}", readBeginAddress_ + i + 1, j);
+                    // 计算 key
+                    const std::string key = fmt::format("4{}_{}", baseAddress + i, j);
                     std::cout << "PLC Address = " << key << std::endl;
+
                     auto finder = regWapper_.mapAlertInfo.find(key);
                     if (finder != regWapper_.mapAlertInfo.end())
                     {
                         mapRealAlertInfo[key] = finder->second;
-                        qDebug() << "alert: " << QString::fromUtf8(finder->second.c_str());
                     }
                 }
             }
         }
     }
+
     AlertWapper::updateRealtimeAlert(mapRealAlertInfo);
 }
 
