@@ -68,7 +68,7 @@ AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 int AppFrame::AppFrameworkImpl::run()
 {
     // 初始化日志记录器
-    CLogger::GetLogger().initLogger(qApp->applicationDirPath().toStdString() + "/logs/log_.html", spdlog::level::info,
+    CLogger::GetLogger().initLogger(qApp->applicationDirPath().toStdString() + "/logs/log_.html", spdlog::level::debug,
                                     10, 5);
 
     LogInfo("AppFrame Run");
@@ -449,13 +449,7 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
 void AppFrame::AppFrameworkImpl::runDomino()
 {
     domino_ = new Domino();
-    QThread *th = new QThread();
-    domino_->moveToThread(th);
-
-    th->start();
     invokeCpp(domino_, domino_->invokeStartClient, Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 20001));
-    domino_->sendData("");
-    lvThread_.push_back(th);
 }
 
 void AppFrame::AppFrameworkImpl::runPLC()
@@ -480,12 +474,7 @@ void AppFrame::AppFrameworkImpl::runPLC()
 void AppFrame::AppFrameworkImpl::runCognex()
 {
     cognex_ = new Cognex();
-    QThread *th = new QThread();
-    cognex_->moveToThread(th);
-
-    th->start();
     invokeCpp(cognex_, cognex_->invokeStartClient, Q_ARG(QString, "192.168.101.111"), Q_ARG(quint16, 23));
-    lvThread_.push_back(th);
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -897,16 +886,6 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     }
     lvFulltimeThread_.clear();
 
-    for (auto ptr : lvThread_)
-    {
-        if (ptr != nullptr)
-        {
-            ptr->quit();
-            ptr->wait();
-            delete ptr;
-        }
-    }
-    lvThread_.clear();
     // 对象清理区域
     if (plcDev_ != nullptr)
     {

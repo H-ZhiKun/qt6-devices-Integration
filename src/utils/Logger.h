@@ -269,29 +269,19 @@ class CLogger final
     void initLogger(std::string_view fileName, size_t level, size_t maxFileSize, size_t maxFiles,
                     std::string_view pattern = GetDefaultLogPattern())
     {
-        try
-        {
-            auto fileSink =
-                std::make_shared<HtmlFormatSink_mt>(std::string(fileName), maxFileSize * 1024 * 1024, maxFiles);
-            fileSink->set_level(static_cast<spdlog::level::level_enum>(level));
-            fileSink->set_pattern(std::string(pattern));
+        auto fileSink = std::make_shared<HtmlFormatSink_mt>(std::string(fileName), maxFileSize * 1024 * 1024, maxFiles);
+        fileSink->set_level(static_cast<spdlog::level::level_enum>(level));
+        fileSink->set_pattern(std::string(pattern));
 
-            auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            consoleSink->set_level(static_cast<spdlog::level::level_enum>(level));
-            consoleSink->set_pattern(std::string(pattern));
+        auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        consoleSink->set_level(static_cast<spdlog::level::level_enum>(level));
+        consoleSink->set_pattern(std::string(pattern));
 
-            std::vector<spdlog::sink_ptr> sinks{fileSink, consoleSink};
-            _logger = std::make_shared<spdlog::logger>("MultiLogger", std::begin(sinks), std::end(sinks));
-            _logger->set_level(static_cast<spdlog::level::level_enum>(level));
+        std::vector<spdlog::sink_ptr> sinks{fileSink, consoleSink};
+        _logger = std::make_shared<spdlog::logger>("MultiLogger", std::begin(sinks), std::end(sinks));
+        _logger->set_level(static_cast<spdlog::level::level_enum>(level));
 
-            spdlog::set_default_logger(_logger);
-        }
-        catch (const std::exception &e)
-        {
-            std::string exc = e.what();
-            // Handle any exceptions that might occur during resource allocation
-            // Log an error message, cleanup, or rethrow the exception as appropriate
-        }
+        spdlog::set_default_logger(_logger);
     }
 
   private:
@@ -356,6 +346,7 @@ template <typename... Args> struct LogError
     constexpr LogError(fmt::format_string<Args...> fmt, Args &&...args, SourceLocation location = {})
     {
         spdlog::log(GetLogSourceLocation(location), spdlog::level::err, fmt, std::forward<Args>(args)...);
+        spdlog::flush_on(spdlog::level::trace);
     }
 };
 
