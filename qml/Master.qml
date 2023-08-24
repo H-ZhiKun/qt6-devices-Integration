@@ -172,6 +172,7 @@ Rectangle {
                         "pageSize": 12,
                         "pageNumber": 1
                     };
+                    alarmItem.alarmList.clear();
                     var strSend = JSON.stringify(json);
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SelectAlert, strSend);
                     var result = JSON.parse(jsRet);
@@ -372,6 +373,10 @@ Rectangle {
                 hoverEnabled: true
                 onClicked: {
                     bar.currentIndex = 6;
+                    if (powerItem.initFlag) {
+                        powerItem.initFlag = false;
+                        powerItem.initPower();
+                    }
                 }
                 onEntered: {
                     powerRec.border.color = "lightblue";
@@ -537,6 +542,7 @@ Rectangle {
         Item {
             id: powerPageTab
             PowerPage {
+                id: powerItem
                 x: 190
                 y: 30
             }

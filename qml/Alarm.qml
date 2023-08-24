@@ -6,6 +6,7 @@ GroupBox {
     id: alarmWin
     objectName: "alarmWin"
     property alias itemCount: pageCompo.itemCount
+    property alias alarmList: alarmTable.model
     /*
     modality: Qt.WindowModal
     //固定窗口大小

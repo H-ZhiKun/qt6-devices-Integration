@@ -18,10 +18,17 @@ ListView {
         // highlighted: sensorListView1.isCurrentItem  // 移入高亮
         property alias imageSource: imageState.source
         property string itemName: ""
-        property string stateAddr: ""
-        property string modeAddr: ""
-        property string realLocateAddr: ""
-        property string realSpeedAddr: ""
+        property string stateAddr: "" // 状态
+        property string modeAddr: "" // 读：手动模式，1为手动、0为自动
+        property string locateAddr: "" // 定位，1为定位模式，0为速度模式
+        property string handMoveAddr: ""// 写：手动模式，1为手动、0为自动
+        property string startAddr: "" // 启动，1为启动，0为停止，按下为1松开为0
+        property string jogAddr: "" // 点动模式
+        property string directAddr: "" // 电机正向，1为正向，0为反向
+        property string setLocateAddr: "" // 设置位置
+        property string setSpeedAddr: "" // 设置速度
+        property string realLocateAddr: "" // 实际位置
+        property string realSpeedAddr: "" // 实际速度
         // 大小
         height: 70
         width: 130
