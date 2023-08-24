@@ -80,24 +80,21 @@ GroupBox {
                 property bool sendFlag: true
                 focusPolicy: Qt.NoFocus
                 enabled: singalComponent.curentSensor === -1 ? false : true
-                onCheckedChanged: {
+                onClicked: {
                     if (checked) {
-                        if (sendFlag) {
-                            var handMoveAddr = singalComponent.curItem.handMoveAddr;
-                            var json = {
-                                [handMoveAddr]: "0"
-                            };
-                            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
-                            var result = JSON.parse(jsRet);
-                            if (result.ok === true) {
-                                setInfo.text = "自动成功！";
-                                setInfo.color = "green";
-                            } else {
-                                setInfo.text = "自动失败！";
-                                setInfo.color = "red";
-                            }
+                        var handMoveAddr = singalComponent.curItem.handMoveAddr;
+                        var json = {
+                            [handMoveAddr]: "0"
+                        };
+                        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                        var result = JSON.parse(jsRet);
+                        if (result.ok === true) {
+                            setInfo.text = "自动成功！";
+                            setInfo.color = "green";
                         } else {
-                            sendFlag = false;
+                            setInfo.text = "自动失败！";
+                            setInfo.color = "red";
+                            checked = false;
                         }
                     }
                 }
@@ -115,10 +112,24 @@ GroupBox {
                 enabled: singalComponent.curentSensor === -1 ? false : true
                 onClicked: {
                     if (checked) {
-                        allAutoColor.colorState = false;
-                        allAutoColor.color = Qt.rgba(204 / 255, 204 / 255, 204 / 255, 1);
-                        allAutoColor.border.width = 0;
-                        allAutoButton.text = "全部自动";
+                        var handMoveAddr = singalComponent.curItem.handMoveAddr;
+                        var json = {
+                            [handMoveAddr]: "1"
+                        };
+                        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                        var result = JSON.parse(jsRet);
+                        if (result.ok === true) {
+                            setInfo.text = "手动成功！";
+                            setInfo.color = "green";
+                            allAutoColor.colorState = false;
+                            allAutoColor.color = Qt.rgba(204 / 255, 204 / 255, 204 / 255, 1);
+                            allAutoColor.border.width = 0;
+                            allAutoButton.text = "全部自动";
+                        } else {
+                            setInfo.text = "手动失败！";
+                            setInfo.color = "red";
+                            checked = false;
+                        }
                     }
                 }
             }

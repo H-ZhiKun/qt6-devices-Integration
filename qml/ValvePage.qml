@@ -89,6 +89,23 @@ GroupBox {
                     text: qsTr("自动模式")
                     focusPolicy: Qt.NoFocus
                     enabled: singalComponent.curentSensor === -1 ? false : true
+                    onClicked: {
+                        if (checked) {
+                            var handMoveAddr = singalComponent.curItem.handMoveAddr;
+                            var json = {
+                                [handMoveAddr]: "1"
+                            };
+                            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                            var result = JSON.parse(jsRet);
+                            if (result.ok === true) {
+                                setInfo.text = "自动成功！";
+                                setInfo.color = "green";
+                            } else {
+                                setInfo.text = "自动失败！";
+                                setInfo.color = "red";
+                            }
+                        }
+                    }
                 }
 
                 RadioButton {
@@ -103,10 +120,24 @@ GroupBox {
                     enabled: singalComponent.curentSensor === -1 ? false : true
                     onClicked: {
                         if (checked) {
-                            allAutoColor.colorState = false;
-                            allAutoColor.color = Qt.rgba(204 / 255, 204 / 255, 204 / 255, 1);
-                            allAutoColor.border.width = 0;
-                            allAutoButton.text = "全部自动";
+                            var handMoveAddr = singalComponent.curItem.handMoveAddr;
+                            var json = {
+                                [handMoveAddr]: "0"
+                            };
+                            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                            var result = JSON.parse(jsRet);
+                            if (result.ok === true) {
+                                setInfo.text = "手动成功！";
+                                setInfo.color = "green";
+                                allAutoColor.colorState = false;
+                                allAutoColor.color = Qt.rgba(204 / 255, 204 / 255, 204 / 255, 1);
+                                allAutoColor.border.width = 0;
+                                allAutoButton.text = "全部自动";
+                            } else {
+                                checked = false;
+                                setInfo.text = "手动失败！";
+                                setInfo.color = "red";
+                            }
                         }
                     }
                 }
@@ -119,6 +150,22 @@ GroupBox {
                 text: checked ? "开启" : "关闭"
                 focusPolicy: Qt.NoFocus
                 enabled: valveHandMove.checked ? true : false
+                onClicked: {
+                    var startAddr = singalComponent.curItem.startAddr;
+                    var json = {
+                        [startAddr]: checked ? "1" : "0"
+                    };
+                    var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                    var result = JSON.parse(jsRet);
+                    if (result.ok === true) {
+                        setInfo.text = "操作成功！";
+                        setInfo.color = "green";
+                    } else {
+                        setInfo.text = "操作失败！";
+                        setInfo.color = "red";
+                        checked = !checked;
+                    }
+                }
             }
         }
 
@@ -169,6 +216,13 @@ GroupBox {
                     //plc逻辑
                 }
             }
+        }
+        Label {
+            id: setInfo
+            x: 10
+            y: 467
+            text: qsTr("")
+            font.pointSize: 14
         }
     }
     GroupBox {
@@ -340,6 +394,7 @@ GroupBox {
             }
         }
     }
+
     function initValve() {
         var item0 = valveListView1.itemAtIndex(0);
         var item1 = valveListView1.itemAtIndex(1);
