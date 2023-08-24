@@ -21,7 +21,8 @@ PLCDevice::~PLCDevice()
 void PLCDevice::init()
 {
     ModbusInitArguments args;
-    args.ip = "127.0.0.1";
+    // args.ip = "127.0.0.1";
+    args.ip = "192.168.1.10";
     args.port = 502;
     client_ = new ModbusClient(std::move(args));
     client_->addWriteCache(writeBeginAddress_, writeCacheSize_);

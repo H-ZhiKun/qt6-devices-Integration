@@ -14,13 +14,13 @@ class HttpApiManager : public QObject
   public:
     explicit HttpApiManager(QObject *parent = nullptr);
     ~HttpApiManager() = default;
-    void post(const QString &url, const QString &data, cv::Mat &matImage);
+    void post(const QString &url, const QString &data, cv::Mat &matImage, const int bottomNum);
 
   signals:
-    void requestFinished(const QString &response, cv::Mat matImage);
+    void requestFinished(const QString &response, cv::Mat matImage, const int bottomNum);
 
   private slots:
-    void onReplyFinished(QNetworkReply *reply, cv::Mat matImage);
+    void onReplyFinished(QNetworkReply *reply, cv::Mat matImage, const int bottomNum);
 
   private:
     QNetworkAccessManager m_networkManager;

@@ -21,6 +21,8 @@ GroupBox {
     height: 640  //Screen.desktopAvailableHeight
 
     property string objName: "阀门"
+    property alias curPage: bar.currentIndex
+    property bool openFlag: true
     visible: true
     background: Rectangle {
         anchors.fill: parent
@@ -246,8 +248,13 @@ GroupBox {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
+                    property bool pageFlag: true
                     onClicked: {
                         bar.currentIndex = 1;
+                        if (pageFlag) {
+                            initValve();
+                            pageFlag = false;
+                        }
                     }
                     onEntered: {
                         volveTab2Rec.border.color = "lightblue";
@@ -326,80 +333,13 @@ GroupBox {
                     anchors.leftMargin: 135
                     objectName: "valveListView6"
                     baseIndex: 26
-                    listName: valveControllWin.objName
-                }
-                ComponentList {
-                    id: valveListView7
-                    anchors.leftMargin: 270
-                    objectName: "valveListView7"
-                    baseIndex: 31
-                    listName: valveControllWin.objName
-                }
-                ComponentList {
-                    id: valveListView8
-                    anchors.leftMargin: 405
-                    objectName: "valveListView8"
-                    baseIndex: 36
+                    model: 4
                     listName: valveControllWin.objName
                 }
             }
-            /*Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 0
-                    id: valveListView9
-                    baseIndex: 41
-                    listName: valveControllWin.objName
-                }
-                ComponentList{
-                    anchors.leftMargin: 140
-                    id: valveListView10
-                    baseIndex:46
-                    listName: valveControllWin.objectName
-                }
-                ComponentList{
-                    anchors.leftMargin: 280
-                    id: valveListView11
-                    baseIndex:51
-                    listName: valveControllWin.objectName
-                }
-                ComponentList{
-                    anchors.leftMargin: 420
-                    id: valveListView12
-                    baseIndex:56
-                    listName: valveControllWin.objectName
-                }
-            }
-            Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 0
-                    id: valveListView13
-                    baseIndex: 61
-                    listName: valveControllWin.objectName
-                }
-                ComponentList{
-                    anchors.leftMargin: 140
-                    id: valveListView14
-                    baseIndex:66
-                    listName: valveControllWin.objectName
-                }
-                ComponentList{
-                    anchors.leftMargin: 280
-                    id: valveListView15
-                    baseIndex:71
-                    listName: valveControllWin.objectName
-                }
-                ComponentList{
-                    anchors.leftMargin: 420
-                    id: valveListView16
-                    baseIndex:76
-                    listName: valveControllWin.objectName
-                }
-            }*/
         }
     }
-    function initPower() {
+    function initValve() {
         var item0 = valveListView1.itemAtIndex(0);
         var item1 = valveListView1.itemAtIndex(1);
         var item2 = valveListView1.itemAtIndex(2);

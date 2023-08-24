@@ -9,6 +9,8 @@ import QtQuick.Layouts
 GroupBox {
     id: sensorControllWin
     objectName: "sensorControllWin"
+    property bool openFlag: true
+    property alias curPage: bar.currentIndex
     /*
     modality: Qt.WindowModal
     //固定窗口大小
@@ -253,8 +255,13 @@ GroupBox {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
+                    property bool pageFlag1: true
                     onClicked: {
                         bar.currentIndex = 1;
+                        if (pageFlag1) {
+                            initSensor();
+                            pageFlag1 = false;
+                        }
                     }
                     onEntered: {
                         sensorTab2Rec.border.color = "lightblue";
@@ -288,8 +295,13 @@ GroupBox {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
+                    property bool pageFlag2: true
                     onClicked: {
                         bar.currentIndex = 2;
+                        if (pageFlag2) {
+                            initSensor();
+                            pageFlag2 = false;
+                        }
                     }
                     onEntered: {
                         sensorTab3Rec.border.color = "lightblue";
@@ -322,8 +334,13 @@ GroupBox {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
+                    property bool pageFlag3: true
                     onClicked: {
                         bar.currentIndex = 3;
+                        if (pageFlag3) {
+                            initSensor();
+                            pageFlag3 = false;
+                        }
                     }
                     onEntered: {
                         sensorTab4Rec.border.color = "lightblue";
@@ -463,18 +480,12 @@ GroupBox {
                     objectName: "sensorListView15"
                     baseIndex: 71
                     listName: sensorControllWin.objName
-                }
-                ComponentList {
-                    id: sensorListView16
-                    anchors.leftMargin: 700
-                    objectName: "sensorListView16"
-                    baseIndex: 76
-                    listName: sensorControllWin.objName
+                    model: 2
                 }
             }
         }
     }
-    function initPower() {
+    function initSensor() {
         var item0 = sensorListView1.itemAtIndex(0);
         var item1 = sensorListView1.itemAtIndex(1);
         var item2 = sensorListView1.itemAtIndex(2);
@@ -838,8 +849,8 @@ GroupBox {
         if (item48 === null) {
             console.log("YS101 no item");
         } else {
-            item47.itemName = "YS101";
-            item47.stateAddr = "YS101_b_12562_08";
+            item48.itemName = "YS101";
+            item48.stateAddr = "YS101_b_12562_08";
         }
         if (item49 === null) {
             console.log("YS102 no item");

@@ -63,7 +63,7 @@ class AppFrameworkImpl final : public AppFramework
     void initProduct();
     void initFile();
 
-    void runHttp(const std::string &&modelName, const std::string &imageName, cv::Mat &matImage);
+    void runHttp(const std::string &&modelName, const std::string &imageName, cv::Mat &matImage, const int bottomNum);
 
     void bindDisplay(const std::string &snId, const DisplayWindows &painterId); // 绑定展示窗口和SN号
     void updateRealData();                                                      // 主界面实时更新数据
@@ -77,9 +77,9 @@ class AppFrameworkImpl final : public AppFramework
     void updateByMinute(const std::string &minute);                             // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();
-    void timerTask();                                   // 定时任务
-    void processPaddleOCR(QJsonDocument, cv::Mat);      // 处理检测算法
-    void processYoloTangle(QJsonDocument &, cv::Mat &); // 处理角度预测算法
+    void timerTask();                                              // 定时任务
+    void processPaddleOCR(QJsonDocument, cv::Mat, const int);      // 处理检测算法
+    void processYoloTangle(QJsonDocument &, cv::Mat &, const int); // 处理角度预测算法
     void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
 
     void runMainProcess();

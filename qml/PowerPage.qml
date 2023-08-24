@@ -22,6 +22,7 @@ GroupBox {
     height: 640  //Screen.desktopAvailableHeight
 
     property string objName: "电机"
+    property alias curPage: bar.currentIndex
     visible: true
     background: Rectangle {
         anchors.fill: parent
@@ -527,51 +528,19 @@ GroupBox {
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
+                    property bool pageFlag: true
                     onClicked: {
                         bar.currentIndex = 1;
-                        initPower();
+                        if (pageFlag) {
+                            initPower();
+                            pageFlag = false;
+                        }
                     }
                     onEntered: {
                         powerTab2Rec.border.color = "lightblue";
                     }
                     onExited: {
                         powerTab2Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
-                    }
-                }
-            }
-            TabButton {
-                id: powerTab3
-                text: qsTr("41~60")
-                font.pointSize: 18
-                contentItem: IconLabel {
-                    spacing: powerTab3.spacing
-                    mirrored: powerTab3.mirrored
-                    display: powerTab3.display
-
-                    icon: powerTab3.icon
-                    text: powerTab3.text
-                    font: powerTab3.font
-                    color: powerTab3.palette.windowText
-                }
-                background: Rectangle {
-                    id: powerTab3Rec
-                    border.width: 2
-
-                    border.color: Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
-                    color: bar.currentIndex === 2 ? "lightblue" : Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1)
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        bar.currentIndex = 2;
-                        initPower();
-                    }
-                    onEntered: {
-                        powerTab3Rec.border.color = "lightblue";
-                    }
-                    onExited: {
-                        powerTab3Rec.border.color = Qt.rgba(220 / 255, 220 / 255, 220 / 255, 1);
                     }
                 }
             }
@@ -640,69 +609,9 @@ GroupBox {
                     anchors.leftMargin: 270
                     baseIndex: 31
                     listName: valveControllWin.objName
-                }
-                ComponentList {
-                    id: valveListView8
-                    anchors.leftMargin: 405
-                    baseIndex: 36
-                    listName: valveControllWin.objName
+                    model: 3
                 }
             }
-            Rectangle {
-                // anchors.fill: stacklaout
-                color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                ComponentList {
-                    id: valveListView9
-                    anchors.leftMargin: 0
-                    baseIndex: 41
-                    listName: valveControllWin.objName
-                }
-                ComponentList {
-                    id: valveListView10
-                    anchors.leftMargin: 135
-                    baseIndex: 46
-                    listName: valveControllWin.objName
-                }
-                ComponentList {
-                    id: valveListView11
-                    anchors.leftMargin: 270
-                    baseIndex: 51
-                    listName: valveControllWin.objName
-                }
-                ComponentList {
-                    id: valveListView12
-                    anchors.leftMargin: 405
-                    baseIndex: 56
-                    listName: valveControllWin.objName
-                }
-            }
-            /*Rectangle  {
-                anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 0
-                    id: valveListView13
-                    baseIndex: 61
-                    listName: valveControllWin.objName
-                }
-                ComponentList{
-                    anchors.leftMargin: 140
-                    id: valveListView14
-                    baseIndex:66
-                    listName: valveControllWin.objName
-                }
-                ComponentList{
-                    anchors.leftMargin: 280
-                    id: valveListView15
-                    baseIndex:71
-                    listName: valveControllWin.objName
-                }
-                ComponentList{
-                    anchors.leftMargin: 420
-                    id: valveListView16
-                    baseIndex:76
-                    listName: valveControllWin.objName
-                }
-            }*/
         }
     }
 

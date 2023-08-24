@@ -277,6 +277,14 @@ Rectangle {
                 hoverEnabled: true
                 onClicked: {
                     bar.currentIndex = 4;
+                    if (sensorItem.openFlag) {
+                        sensorItem.curPage = 1;
+                        sensorItem.curPage = 2;
+                        sensorItem.curPage = 3;
+                        sensorItem.curPage = 0;
+                        sensorItem.initSensor();
+                        sensorItem.openFlag = false;
+                    }
                 }
                 onEntered: {
                     sensorRec.border.color = "lightblue";
@@ -325,6 +333,12 @@ Rectangle {
                 hoverEnabled: true
                 onClicked: {
                     bar.currentIndex = 5;
+                    if (volveItem.openFlag) {
+                        volveItem.curPage = 1;
+                        volveItem.curPage = 0;
+                        volveItem.initValve();
+                        volveItem.openFlag = false;
+                    }
                 }
                 onEntered: {
                     valveRec.border.color = "lightblue";
@@ -374,8 +388,10 @@ Rectangle {
                 onClicked: {
                     bar.currentIndex = 6;
                     if (powerItem.initFlag) {
-                        powerItem.initFlag = false;
+                        powerItem.curPage = 1;
+                        powerItem.curPage = 0;
                         powerItem.initPower();
+                        powerItem.initFlag = false;
                     }
                 }
                 onEntered: {
@@ -526,6 +542,7 @@ Rectangle {
         Item {
             id: sensorPageTab
             SensorPage {
+                id: sensorItem
                 x: 190
                 y: 30
             }
@@ -534,6 +551,7 @@ Rectangle {
         Item {
             id: valvePageTab
             ValvePage {
+                id: volveItem
                 x: 190
                 y: 30
             }

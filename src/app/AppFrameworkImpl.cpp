@@ -80,7 +80,7 @@ int AppFrame::AppFrameworkImpl::run()
     // cv::Mat tangleTest = cv::imread("F:/deviceintegration/build/Debug/tangleTest.jpg");
     // runHttp("tangle", "algorimTest", tangleTest);
     initBaumerManager();
-    runDomino();
+    // runDomino();
     runPLC();
     // runCognex();
     timerTask();
@@ -388,6 +388,8 @@ std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
 
 std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
 {
+    // 例：key:M071_b_12288_14  count=4   value  "1"或"0"
+    // 例：key:M071_r_12288  count=3   value    "0.76"
     bool ret = false;
     Json::Value jsParams = Utils::stringToJson(value);
     for (const auto &key : jsParams.getMemberNames())
@@ -398,10 +400,18 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
         if (vKeys.size() == 3)
         {
             ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], "0", curValue);
+            if (ret == false)
+            {
+                LogWarn("write data faile! address: ", value);
+            }
         }
         else if (vKeys.size() == 4)
         {
             ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], vKeys[3], curValue);
+            if (ret == false)
+            {
+                LogWarn("write data faile! address: ", value);
+            }
         }
         else
         {
@@ -558,17 +568,22 @@ void AppFrame::AppFrameworkImpl::updateVideo()
         cv::Mat temp = matData.back();
         Utils::asyncTask([this, camId, target = std::move(temp)] {
             cv::Mat algoImage = target.clone();
+            const FIFOInfo &it = plcDev_->getFIFOInfo();
+            int num = it.numPosition;
             if (camId == DisplayWindows::CodeCheckCamera)
             {
-                runHttp("paddleOCR", "Utils::getCurrentTime(true)", algoImage);
+                runHttp("paddleOCR", "Utils::getCurrentTime(true)", algoImage, num);
+                LogInfo("CodeCheckCamera bottom: ", num);
             }
             else if (camId == DisplayWindows::LocationCamera)
             {
-                runHttp("tangle", "Utils::getCurrentTime(true)", algoImage);
+                runHttp("tangle", "Utils::getCurrentTime(true)", algoImage, num);
+                LogInfo("LocationCamera bottom: ", num);
             }
-            else if (camId == DisplayWindows::CodeCheckCamera)
+            else if (camId == DisplayWindows::LocateCheckCamera)
             {
-                runHttp("tangleCheck", "Utils::getCurrentTime(true)", algoImage);
+                runHttp("tangleCheck", "Utils::getCurrentTime(true)", algoImage, num);
+                LogInfo("LocateCheckCamera bottom: ", num);
             }
             QImage img = Utils::matToQImage(target);
             if (img.isNull() == false)
@@ -712,52 +727,54 @@ void AppFrame::AppFrameworkImpl::initHttp()
     http_.emplace_back(httpLogistics);
     http_.emplace_back(httpLocate);
     http_.emplace_back(httpLocateCheck);
-    QObject::connect(http_[0], &HttpApiManager::requestFinished, [this](const QString &response, cv::Mat matImage) {
-        if (response.isEmpty())
-        {
-            return;
-        }
-        qDebug() << "resJS" << response;
-        // 1 获取方框位置，绘制
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-        // QVariantMap dataMap = jsonDocumentData.toVariant().toMap();
-        // ocr:识别物流码  yolovn5_tagle：定位  yolov5：定位复核
-        //  检查是否解析成功
-        if (!jsonDocument.isNull())
-        {
-            Utils::asyncTask([this, jsonDocument = std::move(jsonDocument), matImage = std::move(matImage)]() {
-                processPaddleOCR(std::move(jsonDocument), std::move(matImage));
-            });
-        }
-    });
-    QObject::connect(http_[1], &HttpApiManager::requestFinished, [this](const QString &response, cv::Mat matImage) {
-        if (response.isEmpty())
-        {
-            return;
-        }
-        qDebug() << "resJS" << response;
-        // 1 获取方框位置，绘制
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-        //  检查是否解析成功
-        if (!jsonDocument.isNull())
-        {
-            Utils::asyncTask([this, jsonDocument = std::move(jsonDocument), matImage = std::move(matImage)]() {
-                processPaddleOCR(std::move(jsonDocument), std::move(matImage));
-            });
-        }
-    });
-    QObject::connect(http_[2], &HttpApiManager::requestFinished, [this](const QString &response, cv::Mat matImage) {
-        if (response.isEmpty())
-        {
-            return;
-        }
-        qDebug() << "resJS" << response;
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-        if (!jsonDocument.isNull())
-        {
-            processYoloTangle(jsonDocument, matImage);
-        }
-    });
+    QObject::connect(http_[0], &HttpApiManager::requestFinished,
+                     [this](const QString &response, cv::Mat matImage, const int bottomNum) {
+                         if (response.isEmpty())
+                         {
+                             return;
+                         }
+                         LogInfo("resJS", response.toStdString());
+                         // 1 获取方框位置，绘制
+                         QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
+                         // QVariantMap dataMap = jsonDocumentData.toVariant().toMap();
+                         // ocr:识别物流码  yolovn5_tagle：定位  yolov5：定位复核
+                         //  检查是否解析成功
+                         if (!jsonDocument.isNull())
+                         {
+                             Utils::asyncTask([this, jsonDocument = std::move(jsonDocument),
+                                               matImage = std::move(matImage), bottomNum]() {
+                                 processPaddleOCR(std::move(jsonDocument), std::move(matImage), bottomNum);
+                             });
+                         }
+                     });
+    QObject::connect(http_[1], &HttpApiManager::requestFinished,
+                     [this](const QString &response, cv::Mat matImage, const int bottomNum) {
+                         if (response.isEmpty())
+                         {
+                             return;
+                         }
+                         LogInfo("resJS", response.toStdString());
+                         // 1 获取方框位置，绘制
+                         QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
+                         //  检查是否解析成功
+                         if (!jsonDocument.isNull())
+                         {
+                             processYoloTangle(jsonDocument, matImage, bottomNum);
+                         }
+                     });
+    QObject::connect(http_[2], &HttpApiManager::requestFinished,
+                     [this](const QString &response, cv::Mat matImage, const int bottomNum) {
+                         if (response.isEmpty())
+                         {
+                             return;
+                         }
+                         LogInfo("resJS", response.toStdString());
+                         QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
+                         if (!jsonDocument.isNull())
+                         {
+                             processYoloTangle(jsonDocument, matImage, bottomNum);
+                         }
+                     });
 }
 
 void AppFrame::AppFrameworkImpl::initFile()
@@ -802,7 +819,7 @@ void AppFrame::AppFrameworkImpl::initFile()
 }
 
 void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const std::string &imageName,
-                                         cv::Mat &matImage)
+                                         cv::Mat &matImage, const int bottomNum)
 {
     std::string apiUrl;
     if (matImage.empty())
@@ -827,12 +844,13 @@ void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const s
         jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
         jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
         std::string strJS = jsVal.toStyledString();
-        http_[0]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage);
+        http_[0]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
         std::string imagePath = "D:/deviceintegration/build/Debug/image/test.jpg";
     }
     else if (modeleName == "tangle" || modeleName == "tangleCheck")
     {
-        apiUrl = "http://192.168.101.8:5000/predict_tangle";
+        // apiUrl = "http://192.168.101.8:5000/predict_tangle";
+        apiUrl = "http://127.0.0.1:5000/predict_tangle";
         // 将图像转换为QByteArray
         std::vector<uchar> buffer;
         cv::imencode(".jpg", matImage, buffer);
@@ -845,9 +863,9 @@ void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const s
         jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
         std::string strJS = jsVal.toStyledString();
         if (modeleName == "tangle")
-            http_[1]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage);
+            http_[1]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
         else if (modeleName == "tangleCheck")
-            http_[2]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage);
+            http_[2]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
     }
     return;
 }
@@ -952,6 +970,12 @@ void AppFrame::AppFrameworkImpl::timerTask()
             { // 更新每分钟数据
                 updateByMinute(minute);
                 recMinute = minute;
+                // int num = plcDev_->getFIFOInfo().numPosition;
+                // Json::Value jsParams, jsNum;
+                // jsParams["tangle_r_13002"] = "53";
+                // jsNum["tangle_n_12993"] = std::to_string(num);
+                // writePLC(Utils::jsonToString(jsParams));
+                // writePLC(Utils::jsonToString(jsNum));
             }
             if (second != recSecond)
             { // 更新每秒数据
@@ -974,7 +998,7 @@ void AppFrame::AppFrameworkImpl::timerTask()
     }));
 }
 
-void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument, cv::Mat &matImage)
+void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument, cv::Mat &matImage, const int bottomNum)
 {
     // 转换为QJsonObject
     QJsonObject jsonObject = jsonDocument.object();
@@ -992,6 +1016,13 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument, 
             QString result = boxObject["result"].toString().toUtf8();
 
             QString resstr = "tangle; " + result + "; ";
+            Json::Value jsParams, jsNum;
+            jsParams["tangle_r_13002"] = result.toStdString();
+            jsNum["tangle_n_12993"] = std::to_string(bottomNum);
+            writePLC(Utils::jsonToString(jsParams));
+            writePLC(Utils::jsonToString(jsNum));
+            LogInfo("writePLC 13002: ", result.toStdString());
+            LogInfo("writePLC 12993: ", bottomNum);
             cv::putText(matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
                         cv::Scalar(0, 0, 255), 2, 8); // 输出文字
         }
@@ -1031,7 +1062,7 @@ void AppFrame::AppFrameworkImpl::runMainProcess()
     // }
 }
 
-void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv::Mat matImage)
+void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv::Mat matImage, const int bottomNum)
 {
     // 转换为QJsonObject
     QJsonObject jsonObject = jsonDocument.object();
@@ -1059,7 +1090,7 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv
         {
             QJsonObject boxObject = boxValue.toObject();
             QString result = boxObject["result"].toString().toUtf8();
-            qDebug() << "result str" << result;
+            LogInfo("result str", result.toStdString());
             QString confidence = boxObject["confidence"].toString();
             float num = confidence.toFloat();
             confidence = QString::number(num, 'f', 2);
