@@ -563,28 +563,26 @@ void AppFrame::AppFrameworkImpl::updateVideo()
         }
         cv::Mat temp = matData.back();
         Utils::asyncTask([this, camId, target = std::move(temp)] {
-            cv::Mat algoImage = target.clone();
             const FIFOInfo &it = plcDev_->getFIFOInfo();
             int num = it.numPosition;
+            std::string url;
             if (camId == DisplayWindows::CodeCheckCamera)
             {
-                httpClient_->sendPostRequest("http://192.168.101.8:5001/paddleOCR",
-                                             Utils::makeHttpBodyWithCVMat(algoImage, num));
+                url = "http://192.168.101.8:5001/paddleOCR";
                 LogInfo("CodeCheckCamera bottom: ", num);
             }
             else if (camId == DisplayWindows::LocationCamera)
             {
-                httpClient_->sendPostRequest("http://192.168.101.8:5000/predict_tangle",
-                                             Utils::makeHttpBodyWithCVMat(algoImage, num));
+                url = "http://192.168.101.8:5000/predict_tangle";
                 LogInfo("LocationCamera bottom: ", num);
             }
             else if (camId == DisplayWindows::LocateCheckCamera)
             {
-
-                httpClient_->sendPostRequest("http://192.168.101.8:5000/predict_tangle",
-                                             Utils::makeHttpBodyWithCVMat(algoImage, num));
+                url = "http://192.168.101.8:5000/predict_tangle";
                 LogInfo("LocateCheckCamera bottom: ", num);
             }
+            invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+                      Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, num)));
             QImage img = Utils::matToQImage(target);
             if (img.isNull() == false)
             {
