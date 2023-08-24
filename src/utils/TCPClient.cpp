@@ -102,14 +102,14 @@ void TCPClient::reconnect()
     if (tcpSocket && tcpSocket->state() == QAbstractSocket::UnconnectedState)
     {
         // 断开连接后重新连接到服务器
-        LogInfo("reconnect to {}", serverHost.toStdString());
+        LogInfo("reconnect to ip={},port={}", serverHost.toStdString(), serverPort);
         connectToServer();
     }
 }
 
 void TCPClient::onConnected()
 {
-    LogInfo("Connected to {}", serverHost.toStdString());
+    LogInfo("Connected to ip = {}, port={}", serverHost.toStdString(), serverPort);
     // 连接成功后停止重连计时器
     if (reconnectTimer)
         reconnectTimer->stop();
