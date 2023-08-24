@@ -31,6 +31,34 @@ void PLCDevice::init()
     updateData();
 }
 
+std::string PLCDevice::readDevice(const std::string &type, const std::string &addr, const std::string &bit)
+{
+    std::string ret;
+    if (!addr.empty() && !type.empty())
+    {
+        std::vector<uint16_t> data(2);
+        uint16_t plcAddr = Utils::anyFromString<uint16_t>(addr);
+        if (client_->readCache(plcAddr, 2, data))
+        {
+            if (type == "b")
+            {
+                uint16_t bitPos = Utils::anyFromString<uint16_t>(bit);
+                ret = std::to_string(std::bitset<16>(data[0])[bitPos]);
+            }
+            else if (type == "r")
+            {
+                uint32_t combinedValue = (static_cast<uint32_t>(data[1]) << 16) | static_cast<uint32_t>(data[0]);
+                ret = fmt::format("{:.2f}", static_cast<float>(combinedValue) / 100.0);
+            }
+            else if (type == "n")
+            {
+                ret = std::to_string(data[0]);
+            }
+        }
+    }
+    return ret;
+}
+
 bool PLCDevice::writeDataToDevice(const std::string &type, const std::string &addr, const std::string &bit,
                                   const std::string &value)
 {
