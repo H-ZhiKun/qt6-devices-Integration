@@ -14,8 +14,7 @@
 #include <fstream>
 #include <iomanip>
 #include <json/json.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -145,4 +144,5 @@ class Utils
 
     static cv::Mat qImageToMat(QImage &qim);
     static std::vector<std::string> splitString(const std::string &input, const std::string &delimiter);
+    static std::string makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum);
 };

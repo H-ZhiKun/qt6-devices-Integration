@@ -418,3 +418,18 @@ std::vector<std::string> Utils::splitString(const std::string &input, const std:
     }
     return tokens;
 }
+
+std::string Utils::makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum)
+{
+    // 将图像转换为QByteArray
+    std::vector<uint8_t> buffer;
+    cv::imencode(".jpg", algoImage, buffer);
+    QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
+
+    Json::Value jsVal;
+    jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
+    jsVal["imageName"] = getCurrentTime(true);
+    jsVal["imageWidth"] = std::to_string(algoImage.cols);
+    jsVal["imageHeight"] = std::to_string(algoImage.rows);
+    return jsonToString(jsVal);
+}
