@@ -15,6 +15,7 @@ ListView {
 
     // 单个item
     delegate: ItemDelegate {
+        id: singleItem
         // highlighted: sensorListView1.isCurrentItem  // 移入高亮
         property alias imageSource: imageState.source
         property string itemName: ""
@@ -68,6 +69,7 @@ ListView {
                     // 数据传输到传感器控制栏
                     singalComponent.title = "当前选中： " + itemName;
                     singalComponent.curentSensor = (modelData + baseIndex);
+                    singalComponent.curItem = singleItem;
                 }
                 onEntered: {
                     sensorRec.border.color = "#ddabd3ed";

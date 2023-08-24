@@ -4,7 +4,7 @@ import QtQuick.Controls 2.15
 Window {
     id: root
     width: 400
-    height: 360
+    height: 430
     visible: true
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     screen: Qt.application.screens[0]
@@ -26,7 +26,9 @@ Window {
         DeleteUser,     //11 删除用户
         ModifyUser,     //12 修改用户
         SelectAlert,    //13 选择报警信息
-        CollectImage    //14 采集图像
+        CollectImage,   //14 采集图像
+        ReadPLC,        //15 读取PLC
+        WritePLC        //16 写入PLC
     }
     // Loader {
     //     id: pageLoader

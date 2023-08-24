@@ -58,6 +58,7 @@ GroupBox {
             height: parent.height - 200
             title: "当前未选中" + valveControllWin.objName
             property int curentSensor: -1
+            property var curItem: valveListView1.itemAtIndex(0)
             font.pointSize: 12
             background: Rectangle {
                 anchors.fill: parent

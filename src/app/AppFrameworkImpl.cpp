@@ -57,6 +57,10 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::selectAlert, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::CollectImage,
                         std::bind(&AppFrameworkImpl::collectImage, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::CollectImage,
+                        std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::WritePLC,
+                        std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -396,7 +400,7 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
             ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], "0", curValue);
             if (ret == false)
             {
-                LogWarn("write data faile! address: ", value);
+                LogWarn("write data faile! address: {}", value);
             }
         }
         else if (vKeys.size() == 4)
@@ -404,7 +408,7 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
             ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], vKeys[3], curValue);
             if (ret == false)
             {
-                LogWarn("write data faile! address: ", value);
+                LogWarn("write data faile! address: {}", value);
             }
         }
         else
