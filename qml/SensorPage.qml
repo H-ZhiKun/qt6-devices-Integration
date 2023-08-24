@@ -474,6 +474,512 @@ GroupBox {
             }
         }
     }
+    function initPower() {
+        var item0 = sensorListView1.itemAtIndex(0);
+        var item1 = sensorListView1.itemAtIndex(1);
+        var item2 = sensorListView1.itemAtIndex(2);
+        var item3 = sensorListView1.itemAtIndex(3);
+        var item4 = sensorListView1.itemAtIndex(4);
+        var item5 = sensorListView2.itemAtIndex(0);
+        var item6 = sensorListView2.itemAtIndex(1);
+        var item7 = sensorListView2.itemAtIndex(2);
+        var item8 = sensorListView2.itemAtIndex(3);
+        var item9 = sensorListView2.itemAtIndex(4);
+        var item10 = sensorListView3.itemAtIndex(0);
+        var item11 = sensorListView3.itemAtIndex(1);
+        var item12 = sensorListView3.itemAtIndex(2);
+        var item13 = sensorListView3.itemAtIndex(3);
+        var item14 = sensorListView3.itemAtIndex(4);
+        var item15 = sensorListView4.itemAtIndex(0);
+        var item16 = sensorListView4.itemAtIndex(1);
+        var item17 = sensorListView4.itemAtIndex(2);
+        var item18 = sensorListView4.itemAtIndex(3);
+        var item19 = sensorListView4.itemAtIndex(4);
+        var item20 = sensorListView5.itemAtIndex(0);
+        var item21 = sensorListView5.itemAtIndex(1);
+        var item22 = sensorListView5.itemAtIndex(2);
+        var item23 = sensorListView5.itemAtIndex(3);
+        var item24 = sensorListView5.itemAtIndex(4);
+        var item25 = sensorListView6.itemAtIndex(0);
+        var item26 = sensorListView6.itemAtIndex(1);
+        var item27 = sensorListView6.itemAtIndex(2);
+        var item28 = sensorListView6.itemAtIndex(3);
+        var item29 = sensorListView6.itemAtIndex(4);
+        var item30 = sensorListView7.itemAtIndex(0);
+        var item31 = sensorListView7.itemAtIndex(1);
+        var item32 = sensorListView7.itemAtIndex(2);
+        var item33 = sensorListView7.itemAtIndex(3);
+        var item34 = sensorListView7.itemAtIndex(4);
+        var item35 = sensorListView8.itemAtIndex(0);
+        var item36 = sensorListView8.itemAtIndex(1);
+        var item37 = sensorListView8.itemAtIndex(2);
+        var item38 = sensorListView8.itemAtIndex(3);
+        var item39 = sensorListView8.itemAtIndex(4);
+        var item40 = sensorListView9.itemAtIndex(0);
+        var item41 = sensorListView9.itemAtIndex(1);
+        var item42 = sensorListView9.itemAtIndex(2);
+        var item43 = sensorListView9.itemAtIndex(3);
+        var item44 = sensorListView9.itemAtIndex(4);
+        var item45 = sensorListView10.itemAtIndex(0);
+        var item46 = sensorListView10.itemAtIndex(1);
+        var item47 = sensorListView10.itemAtIndex(2);
+        var item48 = sensorListView10.itemAtIndex(3);
+        var item49 = sensorListView10.itemAtIndex(4);
+        var item50 = sensorListView11.itemAtIndex(0);
+        var item51 = sensorListView11.itemAtIndex(1);
+        var item52 = sensorListView11.itemAtIndex(2);
+        var item53 = sensorListView11.itemAtIndex(3);
+        var item54 = sensorListView11.itemAtIndex(4);
+        var item55 = sensorListView12.itemAtIndex(0);
+        var item56 = sensorListView12.itemAtIndex(1);
+        var item57 = sensorListView12.itemAtIndex(2);
+        var item58 = sensorListView12.itemAtIndex(3);
+        var item59 = sensorListView12.itemAtIndex(4);
+        var item60 = sensorListView13.itemAtIndex(0);
+        var item61 = sensorListView13.itemAtIndex(1);
+        var item62 = sensorListView13.itemAtIndex(2);
+        var item63 = sensorListView13.itemAtIndex(3);
+        var item64 = sensorListView13.itemAtIndex(4);
+        var item65 = sensorListView14.itemAtIndex(0);
+        var item66 = sensorListView14.itemAtIndex(1);
+        var item67 = sensorListView14.itemAtIndex(2);
+        var item68 = sensorListView14.itemAtIndex(3);
+        var item69 = sensorListView14.itemAtIndex(4);
+        var item70 = sensorListView15.itemAtIndex(0);
+        var item71 = sensorListView15.itemAtIndex(1);
+        if (item0 === null) {
+            console.log("YS001 no item");
+        } else {
+            item0.itemName = "YS001";
+            item0.stateAddr = "YS001_b_12558_00";
+        }
+        if (item1 === null) {
+            console.log("YS002 no item");
+        } else {
+            item1.itemName = "YS002";
+            item1.stateAddr = "YS002_b_12558_01";
+        }
+        if (item2 === null) {
+            console.log("YS003 no item");
+        } else {
+            item2.itemName = "YS003";
+            item2.stateAddr = "YS003_b_12558_02";
+        }
+        if (item3 === null) {
+            console.log("YS004 no item");
+        } else {
+            item3.itemName = "YS004";
+            item3.stateAddr = "YS004_b_12558_03";
+        }
+        if (item4 === null) {
+            console.log("YS005 no item");
+        } else {
+            item4.itemName = "YS005";
+            item4.stateAddr = "YS005_b_12558_04";
+        }
+        if (item5 === null) {
+            console.log("YS006 no item");
+        } else {
+            item5.itemName = "YS006";
+            item5.stateAddr = "YS006_b_12558_05";
+        }
+        if (item6 === null) {
+            console.log("YS007 no item");
+        } else {
+            item6.itemName = "YS007";
+            item6.stateAddr = "YS007_b_12558_06";
+        }
+        if (item7 === null) {
+            console.log("YS008 no item");
+        } else {
+            item7.itemName = "YS008";
+            item7.stateAddr = "YS008_b_12558_07";
+        }
+        if (item8 === null) {
+            console.log("YS009 no item");
+        } else {
+            item8.itemName = "YS009";
+            item8.stateAddr = "YS009_b_12558_08";
+        }
+        if (item9 === null) {
+            console.log("YS010 no item");
+        } else {
+            item9.itemName = "YS010";
+            item9.stateAddr = "YS010_b_12558_09";
+        }
+        if (item10 === null) {
+            console.log("YS011 no item");
+        } else {
+            item10.itemName = "YS011";
+            item10.stateAddr = "YS011_b_12558_10";
+        }
+        if (item11 === null) {
+            console.log("YS012 no item");
+        } else {
+            item11.itemName = "YS012";
+            item11.stateAddr = "YS012_b_12558_11";
+        }
+        if (item12 === null) {
+            console.log("YS013 no item");
+        } else {
+            item12.itemName = "YS013";
+            item12.stateAddr = "YS013_b_12558_12";
+        }
+        if (item13 === null) {
+            console.log("YS014 no item");
+        } else {
+            item13.itemName = "YS014";
+            item13.stateAddr = "YS014_b_12558_13";
+        }
+        if (item14 === null) {
+            console.log("YS015 no item");
+        } else {
+            item14.itemName = "YS015";
+            item14.stateAddr = "YS015_b_12558_14";
+        }
+        if (item15 === null) {
+            console.log("YS016 no item");
+        } else {
+            item15.itemName = "YS016";
+            item15.stateAddr = "YS016_b_12558_15";
+        }
+        if (item16 === null) {
+            console.log("YS017 no item");
+        } else {
+            item16.itemName = "YS017";
+            item16.stateAddr = "YS017_b_12559_00";
+        }
+        if (item17 === null) {
+            console.log("YS018 no item");
+        } else {
+            item17.itemName = "YS018";
+            item17.stateAddr = "YS018_b_12559_01";
+        }
+        if (item18 === null) {
+            console.log("YS019 no item");
+        } else {
+            item18.itemName = "YS019";
+            item18.stateAddr = "YS019_b_12559_02";
+        }
+        if (item19 === null) {
+            console.log("YS020 no item");
+        } else {
+            item19.itemName = "YS020";
+            item19.stateAddr = "YS020_b_12559_03";
+        }
+        if (item20 === null) {
+            console.log("YS021 no item");
+        } else {
+            item20.itemName = "YS021";
+            item20.stateAddr = "YS021_b_12559_04";
+        }
+        if (item21 === null) {
+            console.log("YS022 no item");
+        } else {
+            item21.itemName = "YS022";
+            item21.stateAddr = "YS022_b_12559_05";
+        }
+        if (item22 === null) {
+            console.log("YS023 no item");
+        } else {
+            item22.itemName = "YS023";
+            item22.stateAddr = "YS023_b_12559_06";
+        }
+        if (item23 === null) {
+            console.log("YS024 no item");
+        } else {
+            item23.itemName = "YS024";
+            item23.stateAddr = "YS024_b_12559_07";
+        }
+        if (item24 === null) {
+            console.log("YS025 no item");
+        } else {
+            item24.itemName = "YS025";
+            item24.stateAddr = "YS025_b_12559_08";
+        }
+        if (item25 === null) {
+            console.log("YS026 no item");
+        } else {
+            item25.itemName = "YS026";
+            item25.stateAddr = "YS026_b_12559_09";
+        }
+        if (item26 === null) {
+            console.log("YS027 no item");
+        } else {
+            item26.itemName = "YS027";
+            item26.stateAddr = "YS027_b_12559_10";
+        }
+        if (item27 === null) {
+            console.log("YS028 no item");
+        } else {
+            item27.itemName = "YS028";
+            item27.stateAddr = "YS028_b_12559_11";
+        }
+        if (item28 === null) {
+            console.log("YS029 no item");
+        } else {
+            item28.itemName = "YS029";
+            item28.stateAddr = "YS029_b_12559_12";
+        }
+        if (item29 === null) {
+            console.log("YS030 no item");
+        } else {
+            item29.itemName = "YS030";
+            item29.stateAddr = "YS030_b_12559_13";
+        }
+        if (item30 === null) {
+            console.log("YS031 no item");
+        } else {
+            item30.itemName = "YS031";
+            item30.stateAddr = "YS031_b_12559_14";
+        }
+        if (item31 === null) {
+            console.log("YS032 no item");
+        } else {
+            item31.itemName = "YS032";
+            item31.stateAddr = "YS032_b_12559_15";
+        }
+        if (item32 === null) {
+            console.log("YS033 no item");
+        } else {
+            item32.itemName = "YS033";
+            item32.stateAddr = "YS033_b_12560_00";
+        }
+        if (item33 === null) {
+            console.log("YS034 no item");
+        } else {
+            item33.itemName = "YS034";
+            item33.stateAddr = "YS034_b_12560_01";
+        }
+        if (item34 === null) {
+            console.log("YS035 no item");
+        } else {
+            item34.itemName = "YS035";
+            item34.stateAddr = "YS035_b_12560_02";
+        }
+        if (item35 === null) {
+            console.log("YS036 no item");
+        } else {
+            item35.itemName = "YS036";
+            item35.stateAddr = "YS036_b_12560_03";
+        }
+        if (item36 === null) {
+            console.log("YS037 no item");
+        } else {
+            item36.itemName = "YS037";
+            item36.stateAddr = "YS037_b_12560_04";
+        }
+        if (item37 === null) {
+            console.log("YS038 no item");
+        } else {
+            item37.itemName = "YS038";
+            item37.stateAddr = "YS038_b_12560_05";
+        }
+        if (item38 === null) {
+            console.log("YS039 no item");
+        } else {
+            item38.itemName = "YS039";
+            item38.stateAddr = "YS039_b_12560_06";
+        }
+        if (item39 === null) {
+            console.log("YS040 no item");
+        } else {
+            item39.itemName = "YS040";
+            item39.stateAddr = "YS040_b_12560_07";
+        }
+        if (item40 === null) {
+            console.log("YS041 no item");
+        } else {
+            item40.itemName = "YS041";
+            item40.stateAddr = "YS041_b_12560_08";
+        }
+        if (item41 === null) {
+            console.log("YS042 no item");
+        } else {
+            item41.itemName = "YS042";
+            item41.stateAddr = "YS042_b_12560_09";
+        }
+        if (item42 === null) {
+            console.log("YS043 no item");
+        } else {
+            item42.itemName = "YS043";
+            item42.stateAddr = "YS043_b_12560_10";
+        }
+        if (item43 === null) {
+            console.log("YS044 no item");
+        } else {
+            item43.itemName = "YS044";
+            item43.stateAddr = "YS044_b_12560_11";
+        }
+        if (item44 === null) {
+            console.log("YS045 no item");
+        } else {
+            item44.itemName = "YS045";
+            item44.stateAddr = "YS045_b_12560_12";
+        }
+        if (item45 === null) {
+            console.log("YS046 no item");
+        } else {
+            item45.itemName = "YS046";
+            item45.stateAddr = "YS046_b_12560_13";
+        }
+        if (item46 === null) {
+            console.log("YS047 no item");
+        } else {
+            item46.itemName = "YS047";
+            item46.stateAddr = "YS047_b_12560_14";
+        }
+        if (item47 === null) {
+            console.log("YS048 no item");
+        } else {
+            item47.itemName = "YS048";
+            item47.stateAddr = "YS048_b_12560_15";
+        }
+        if (item48 === null) {
+            console.log("YS101 no item");
+        } else {
+            item47.itemName = "YS101";
+            item47.stateAddr = "YS101_b_12562_08";
+        }
+        if (item49 === null) {
+            console.log("YS102 no item");
+        } else {
+            item49.itemName = "YS102";
+            item49.stateAddr = "YS102_b_12562_09";
+        }
+        if (item50 === null) {
+            console.log("YS103 no item");
+        } else {
+            item50.itemName = "YS103";
+            item50.stateAddr = "YS103_b_12562_10";
+        }
+        if (item51 === null) {
+            console.log("YS104 no item");
+        } else {
+            item51.itemName = "YS104";
+            item51.stateAddr = "YS104_b_12562_11";
+        }
+        if (item52 === null) {
+            console.log("YS105 no item");
+        } else {
+            item52.itemName = "YS105";
+            item52.stateAddr = "YS105_b_12562_12";
+        }
+        if (item53 === null) {
+            console.log("YS106 no item");
+        } else {
+            item53.itemName = "YS106";
+            item53.stateAddr = "YS106_b_12562_13";
+        }
+        if (item54 === null) {
+            console.log("YS107 no item");
+        } else {
+            item54.itemName = "YS107";
+            item54.stateAddr = "YS107_b_12562_14";
+        }
+        if (item55 === null) {
+            console.log("YS108 no item");
+        } else {
+            item55.itemName = "YS108";
+            item55.stateAddr = "YS108_b_12562_15";
+        }
+        if (item56 === null) {
+            console.log("YS109 no item");
+        } else {
+            item56.itemName = "YS109";
+            item56.stateAddr = "YS109_b_12563_00";
+        }
+        if (item57 === null) {
+            console.log("YS110 no item");
+        } else {
+            item57.itemName = "YS110";
+            item57.stateAddr = "YS110_b_12563_01";
+        }
+        if (item58 === null) {
+            console.log("YS111 no item");
+        } else {
+            item58.itemName = "YS111";
+            item58.stateAddr = "YS111_b_12563_02";
+        }
+        if (item59 === null) {
+            console.log("YS112 no item");
+        } else {
+            item59.itemName = "YS112";
+            item59.stateAddr = "YS112_b_12563_03";
+        }
+        if (item60 === null) {
+            console.log("YS113 no item");
+        } else {
+            item60.itemName = "YS113";
+            item60.stateAddr = "YS113_b_12563_04";
+        }
+        if (item61 === null) {
+            console.log("YS114 no item");
+        } else {
+            item61.itemName = "YS114";
+            item61.stateAddr = "YS114_b_12563_05";
+        }
+        if (item62 === null) {
+            console.log("YS120 no item");
+        } else {
+            item62.itemName = "YS120";
+            item62.stateAddr = "YS120_b_12563_06";
+        }
+        if (item63 === null) {
+            console.log("YS121 no item");
+        } else {
+            item63.itemName = "YS121";
+            item63.stateAddr = "YS121_b_12563_07";
+        }
+        if (item64 === null) {
+            console.log("YS122 no item");
+        } else {
+            item64.itemName = "YS122";
+            item64.stateAddr = "YS122_b_12563_08";
+        }
+        if (item65 === null) {
+            console.log("YS151 no item");
+        } else {
+            item65.itemName = "YS151";
+            item65.stateAddr = "YS151_b_12563_11";
+        }
+        if (item66 === null) {
+            console.log("YS170 no item");
+        } else {
+            item66.itemName = "YS170";
+            item66.stateAddr = "YS170_b_12563_09";
+        }
+        if (item67 === null) {
+            console.log("YS171 no item");
+        } else {
+            item67.itemName = "YS171";
+            item67.stateAddr = "YS171_b_12563_10";
+        }
+        if (item68 === null) {
+            console.log("YS172 no item");
+        } else {
+            item68.itemName = "YS172";
+            item68.stateAddr = "YS172_b_12563_12";
+        }
+        if (item69 === null) {
+            console.log("YS173 no item");
+        } else {
+            item69.itemName = "YS173";
+            item69.stateAddr = "YS173_b_12563_13";
+        }
+        if (item70 === null) {
+            console.log("YS175 no item");
+        } else {
+            item70.itemName = "YS175";
+            item70.stateAddr = "YS175_b_12563_14";
+        }
+        if (item71 === null) {
+            console.log("YS176 no item");
+        } else {
+            item71.itemName = "YS176";
+            item71.stateAddr = "YS176_b_12563_15";
+        }
+    }
     Connections {
         target: appMetaFlash // C++ 对象实例
         function onPageSensorChange(value) {
