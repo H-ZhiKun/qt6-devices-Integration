@@ -60,6 +60,7 @@ GroupBox {
             height: parent.height - 75
             title: "当前未选中" + valveControllWin.objName
             property int curentSensor: -1
+            property var curItem: valveListView1.itemAtIndex(0)
             font.pointSize: 12
             background: Rectangle {
                 anchors.fill: parent
@@ -76,8 +77,30 @@ GroupBox {
                 x: 10
                 y: 10
                 text: qsTr("自动模式")
+                property bool sendFlag: true
                 focusPolicy: Qt.NoFocus
                 enabled: singalComponent.curentSensor === -1 ? false : true
+                onCheckedChanged: {
+                    if (checked) {
+                        if (sendFlag) {
+                            var handMoveAddr = singalComponent.curItem.handMoveAddr;
+                            var json = {
+                                [handMoveAddr]: "0"
+                            };
+                            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                            var result = JSON.parse(jsRet);
+                            if (result.ok === true) {
+                                setInfo.text = "自动成功！";
+                                setInfo.color = "green";
+                            } else {
+                                setInfo.text = "自动失败！";
+                                setInfo.color = "red";
+                            }
+                        } else {
+                            sendFlag = false;
+                        }
+                    }
+                }
             }
 
             RadioButton {
@@ -208,9 +231,10 @@ GroupBox {
 
                 // 速度设置
                 TextArea {
-                    id: setSpeedParam  // 0~360
+                    id: setSpeedParam  // 0~3000
                     x: 40
                     y: 32
+                    text: actruePowerParam.actureSpeed
                     width: 70
                     height: 28
                     enabled: powerHandMove.checked ? true : false
@@ -221,6 +245,7 @@ GroupBox {
                     id: setPositionParam  // 0~360
                     x: 40
                     y: 0
+                    text: actruePowerParam.acturePosition
                     width: 50
                     height: 28
                     enabled: powerHandMove.checked ? true : false
@@ -293,7 +318,7 @@ GroupBox {
                     objectName: "powerMode"
                     x: 0
                     y: -4
-                    model: ["速度模式", "位置模式", "点动模式"]
+                    model: ["速度模式", "定位模式"]
                     focusPolicy: Qt.NoFocus
                     enabled: powerHandMove.checked ? true : false
                     font.pointSize: 11
@@ -351,12 +376,36 @@ GroupBox {
                     icon.source: "file:///" + appdir + "/ico/baocun.png"
                     enabled: powerHandMove.checked ? true : false
                     onClicked: {
-                        if (0) {
-                            saveText.text = "保存失败！";
-                            saveText.color = "red";
+                        var handMoveAddr = singalComponent.curItem.handMoveAddr;
+                        if (Number(setPositionParam.text) <= 360 && Number(setPositionParam.text) >= 0) {
+                            var setLocateAddr = singalComponent.curItem.setLocateAddr;
                         } else {
-                            saveText.text = "保存成功！";
-                            saveText.color = "green";
+                            setInfo.text = "位置参数超出阈值！";
+                            return;
+                        }
+                        if (Number(setSpeedParam.text) <= 3000 && Number(setSpeedParam.text) >= 0) {
+                            var setSpeedAddr = singalComponent.curItem.setSpeedAddr;
+                        } else {
+                            setInfo.text = "速度参数超出阈值！";
+                            return;
+                        }
+                        var directAddr = singalComponent.curItem.directAddr;
+                        var locateAddr = singalComponent.curItem.locateAddr;
+                        var json = {
+                            [handMoveAddr]: "1",
+                            [setLocateAddr]: setPositionParam.text,
+                            [setSpeedAddr]: setSpeedParam.text,
+                            [directAddr]: switchPowerDirection.checked ? "0" : "1",
+                            [locateAddr]: comboBox.currentIndex === 1 ? "1" : "0"
+                        };
+                        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                        var result = JSON.parse(jsRet);
+                        if (result.ok === true) {
+                            setInfo.text = "保存成功！";
+                            setInfo.color = "green";
+                        } else {
+                            setInfo.text = "保存失败！";
+                            setInfo.color = "red";
                         }
                     }
                     onEnabledChanged: {
@@ -613,6 +662,14 @@ GroupBox {
                 }
             }
         }
+    }
+
+    Label {
+        id: setInfo
+        x: 610
+        y: 590
+        text: qsTr("")
+        color: "red"
     }
 
     // 这样写的原因： 地址不连续，建立映射关系

@@ -176,7 +176,7 @@ GroupBox {
     }*/
 
     GroupBox {
-        id: sensorDisplay
+        id: singalComponent
         objectName: "sensorDisplay"
         anchors.fill: parent
         anchors.margins: 30
