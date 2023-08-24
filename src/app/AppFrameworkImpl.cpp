@@ -75,14 +75,9 @@ int AppFrame::AppFrameworkImpl::run()
     initFile();
     initSqlHelper();
     initHttp();
-    // cv::Mat test = cv::imread("F:/deviceintegration/build/Debug/algorimTest.jpg");
-    // cv::Mat nesseTest = cv::imread("F:/deviceintegration/build/Debug/3.jpg");
-    // cv::Mat tangleTest = cv::imread("F:/deviceintegration/build/Debug/tangleTest.jpg");
-    // runHttp("tangle", "algorimTest", tangleTest);
+    initNetworkClient();
     initBaumerManager();
-    // runDomino();
-    runPLC();
-    // runCognex();
+    initPLC();
     timerTask();
     return 0;
 }
@@ -446,13 +441,17 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
     updateUserData();
 }
 
-void AppFrame::AppFrameworkImpl::runDomino()
+void AppFrame::AppFrameworkImpl::initNetworkClient()
 {
     domino_ = new Domino();
-    invokeCpp(domino_, domino_->invokeStartClient, Q_ARG(QString, "127.0.0.1"), Q_ARG(quint16, 20001));
+    domino_->startClient("127.0.0.1", 20001);
+    cognex_ = new Cognex();
+    cognex_->startClient("192.168.101.111", 23);
+    permission_ = new Permission();
+    permission_->startClient("127.0.0.1", 61000);
 }
 
-void AppFrame::AppFrameworkImpl::runPLC()
+void AppFrame::AppFrameworkImpl::initPLC()
 {
     plcDev_ = new PLCDevice;
     plcDev_->init();
@@ -469,12 +468,6 @@ void AppFrame::AppFrameworkImpl::runPLC()
     //     }
     //     productManager_->qrCodeQueue.push(productNew);
     // });
-}
-
-void AppFrame::AppFrameworkImpl::runCognex()
-{
-    cognex_ = new Cognex();
-    invokeCpp(cognex_, cognex_->invokeStartClient, Q_ARG(QString, "192.168.101.111"), Q_ARG(quint16, 23));
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()

@@ -6,6 +6,7 @@
 #include "HttpApiManager.h"
 #include "Logger.h"
 #include "PLCDevice.h"
+#include "Permission.h"
 #include "SqlHelper.h"
 #include <QDir>
 #include <QQmlApplicationEngine>
@@ -54,13 +55,11 @@ class AppFrameworkImpl final : public AppFramework
     std::string writePLC(const std::string &);
     // 差异调用 接口区域
     void initSqlHelper();
-    void runDomino();
-    void runPLC();
-    void runCognex();
+    void initNetworkClient();
+    void initPLC();
     void memoryClean();
     void initBaumerManager();
     void initHttp();
-    void initProduct();
     void initFile();
 
     void runHttp(const std::string &&modelName, const std::string &imageName, cv::Mat &matImage, const int bottomNum);
@@ -92,8 +91,11 @@ class AppFrameworkImpl final : public AppFramework
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
     // Module 组装区域
+    // tcp client begin
     Domino *domino_ = nullptr;
     Cognex *cognex_ = nullptr;
+    Permission *permission_ = nullptr;
+    // tcp client end
     PLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
     std::vector<HttpApiManager *> http_;
