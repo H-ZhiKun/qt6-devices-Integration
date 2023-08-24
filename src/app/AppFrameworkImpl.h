@@ -3,7 +3,7 @@
 #include "BaumerManager.h"
 #include "Cognex.h"
 #include "Domino.h"
-#include "HttpApiManager.h"
+#include "HttpClient.h"
 #include "Logger.h"
 #include "PLCDevice.h"
 #include "Permission.h"
@@ -59,10 +59,7 @@ class AppFrameworkImpl final : public AppFramework
     void initPLC();
     void memoryClean();
     void initBaumerManager();
-    void initHttp();
     void initFile();
-
-    void runHttp(const std::string &&modelName, const std::string &imageName, cv::Mat &matImage, const int bottomNum);
 
     void bindDisplay(const std::string &snId, const DisplayWindows &painterId); // 绑定展示窗口和SN号
     void updateRealData();                                                      // 主界面实时更新数据
@@ -76,7 +73,9 @@ class AppFrameworkImpl final : public AppFramework
     void updateByMinute(const std::string &minute);                             // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();
-    void timerTask();                                              // 定时任务
+    void timerTask(); // 定时任务
+    void processHttpRes(
+        const std::string &jsonData); // 处理http 返回参数                                     // 处理http 返回参数
     void processPaddleOCR(QJsonDocument, cv::Mat, const int);      // 处理检测算法
     void processYoloTangle(QJsonDocument &, cv::Mat &, const int); // 处理角度预测算法
     void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
@@ -95,10 +94,10 @@ class AppFrameworkImpl final : public AppFramework
     Domino *domino_ = nullptr;
     Cognex *cognex_ = nullptr;
     Permission *permission_ = nullptr;
+    HttpClient *httpClient_ = nullptr;
     // tcp client end
     PLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
-    std::vector<HttpApiManager *> http_;
     std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
     std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
     std::unordered_map<DisplayWindows, std::string> mapWndDisplay_; // 绑定好SN码的patinter, first=painterId,second=SN号
