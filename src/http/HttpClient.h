@@ -15,7 +15,7 @@ class HttpClient : public QObject
 
   public:
     explicit HttpClient(QObject *parent = nullptr);
-
+  public slots:
     void sendGetRequest(const std::string &urlStr);
     void sendPostRequest(const std::string &urlStr, const std::string &postDataStr);
 
