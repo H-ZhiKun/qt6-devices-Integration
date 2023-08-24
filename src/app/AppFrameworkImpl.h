@@ -86,7 +86,6 @@ class AppFrameworkImpl final : public AppFramework
 
   private:
     // 私有变量区域
-    std::list<QThread *> lvThread_;
     std::list<std::thread> lvFulltimeThread_;
     std::atomic_bool bThreadHolder{true};
     QString saveImageDir;
