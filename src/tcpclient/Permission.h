@@ -17,6 +17,7 @@ class Permission : public TCPClient
     void systemOk();
     void sysError();
     void codeNull();
+    void codeRight(const std::string &code1, const std::string &code2);
 
   private:
     std::string strCodeError = "FFFFEor1\r\n";  // 激光码返回错误信息

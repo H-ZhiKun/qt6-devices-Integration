@@ -16,12 +16,23 @@ Permission::~Permission()
 void Permission::dealing(std::vector<unsigned char> buffer)
 {
     std::string result(buffer.begin(), buffer.end());
-    qDebug() << result.c_str();
     auto iter = mapSignals_.find(result);
     if (iter != mapSignals_.end())
     {
         LogInfo("permission signal: {}", result);
         iter->second();
+    }
+    else if (result.length() == 30)
+    {
+        std::string code1 = result.substr(4, 12);
+        std::string code2 = result.substr(16, 12);
+        LogInfo("code1 = ", code1);
+        LogInfo("code2 = ", code2);
+        emit codeRight(code1, code2);
+    }
+    else
+    {
+        LogError("permission code error.");
     }
 }
 void Permission::sendQRCode(const std::string &code)
@@ -31,4 +42,13 @@ void Permission::sendQRCode(const std::string &code)
 }
 void Permission::pingBehavior()
 {
+    // test
+    static bool test = true;
+    static std::string str1 = "HTTPS://N.PLSBD.COM/W/?W=W39FDC778B342D4B";
+    static std::string str2 = "HTTPS://N.PLSBD.COM/W/?W=W39F";
+    if (test)
+        sendQRCode(str1);
+    else
+        sendQRCode(str1);
+    test = !test;
 }
