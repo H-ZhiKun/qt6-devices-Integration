@@ -1,6 +1,7 @@
 #include "Utils.h"
 #include "ConcurrentTaskQueue.h"
 #include "Logger.h"
+#include <regex>
 
 std::string Utils::base64Encode(const unsigned char *str, int bytes)
 {
@@ -402,4 +403,18 @@ cv::Mat Utils::qImageToMat(QImage &qim)
         break;
     }
     return mat;
+}
+
+std::vector<std::string> Utils::splitString(const std::string &input, const std::string &delimiter)
+{
+    std::regex regexDelimiter(delimiter);
+    std::sregex_token_iterator iterator(input.begin(), input.end(), regexDelimiter, -1);
+    std::sregex_token_iterator end;
+
+    std::vector<std::string> tokens;
+    for (; iterator != end; ++iterator)
+    {
+        tokens.push_back(*iterator);
+    }
+    return tokens;
 }

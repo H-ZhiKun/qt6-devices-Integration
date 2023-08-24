@@ -50,6 +50,8 @@ class AppFrameworkImpl final : public AppFramework
     std::string modifyUser(const std::string &);
     std::string selectAlert(const std::string &);
     std::string collectImage(const std::string &);
+    std::string readPLC(const std::string &);
+    std::string writePLC(const std::string &);
     // 差异调用 接口区域
     void initSqlHelper();
     void runDomino();

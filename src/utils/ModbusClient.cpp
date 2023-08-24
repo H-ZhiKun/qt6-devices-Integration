@@ -33,7 +33,10 @@ void ModbusClient::work()
 {
     // 根据启动参数列表创建任务线程
     tasks_.emplace_back(std::thread([this]() {
-        std::vector<uint16_t> readBuffer;
+        std::vector<uint16_t> cacheBuffer;
+        cacheBuffer.resize(rCacheInfo_.size);
+        std::vector<uint16_t> FIFOBuffer;
+        FIFOBuffer.resize(FIFOCacheInfo_.size);
         uint16_t offsetCount = 0;
         while (bThreadHolder_.load(std::memory_order_acquire))
         {
@@ -49,21 +52,19 @@ void ModbusClient::work()
                 // 读缓存
                 if (offsetCount >= 10)
                 {
-                    readBuffer.resize(rCacheInfo_.size);
-                    if (readRegisters(rCacheInfo_.address, rCacheInfo_.size, readBuffer))
+                    if (readRegisters(rCacheInfo_.address, rCacheInfo_.size, cacheBuffer))
                     {
                         std::lock_guard lock(mtxReadCache_);
-                        std::copy(readBuffer.begin(), readBuffer.end(), rCacheInfo_.cache.begin());
+                        std::copy(cacheBuffer.begin(), cacheBuffer.end(), rCacheInfo_.cache.begin());
                         qDebug() << fmt::format("updated by addr = {}, size = {}", rCacheInfo_.address,
                                                 rCacheInfo_.size);
                     }
                     offsetCount = 0;
                 }
-                readBuffer.resize(FIFOCacheInfo_.size);
-                if (readRegisters(FIFOCacheInfo_.address, FIFOCacheInfo_.size, readBuffer))
+                if (readRegisters(FIFOCacheInfo_.address, FIFOCacheInfo_.size, FIFOBuffer))
                 {
-                    std::lock_guard lock(mtxReadCache_);
-                    std::copy(readBuffer.begin(), readBuffer.end(), FIFOCacheInfo_.cache.begin());
+                    std::lock_guard lock(mtxFIFO_);
+                    std::copy(FIFOBuffer.begin(), FIFOBuffer.end(), FIFOCacheInfo_.cache.begin());
                     qDebug() << fmt::format("updated by addr = {}, size = {}", FIFOCacheInfo_.address,
                                             FIFOCacheInfo_.size);
                 }
@@ -112,7 +113,7 @@ bool ModbusClient::readCache(uint16_t address, uint16_t count, std::vector<uint1
     }
     // 使用std::copy进行批量读取
     std::lock_guard lock(mtxReadCache_); // 加缓存读锁
-    std::copy(rCacheInfo_.cache.begin() + addr, rCacheInfo_.cache.begin() + addr + count, std::back_inserter(outData));
+    std::copy(rCacheInfo_.cache.begin() + addr, rCacheInfo_.cache.begin() + addr + count, outData.begin());
 
     return true;
 }

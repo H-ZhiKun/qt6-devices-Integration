@@ -355,6 +355,62 @@ std::string AppFrame::AppFrameworkImpl::collectImage(const std::string &)
     return Utils::makeResponse(ret);
 }
 
+std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
+{
+    bool ret = false;
+    Json::Value jsParams = Utils::stringToJson(value);
+    Json::Value res;
+    for (const auto &item : jsParams)
+    {
+        std::string temp;
+        const std::string &key = item.asString();
+        auto vKeys = Utils::splitString(key, "_");
+        if (vKeys.size() == 3)
+        {
+            temp = plcDev_->readDevice(vKeys[1], vKeys[2]);
+        }
+        else if (vKeys.size() == 4)
+        {
+            temp = plcDev_->readDevice(vKeys[1], vKeys[2], vKeys[3]);
+        }
+        else
+        {
+            continue;
+        }
+        if (!temp.empty())
+        {
+            res[key] = temp;
+            ret = true;
+        }
+    }
+    return Utils::makeResponse(ret, std::move(res));
+}
+
+std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
+{
+    bool ret = false;
+    Json::Value jsParams = Utils::stringToJson(value);
+    for (const auto &key : jsParams.getMemberNames())
+    {
+        std::string temp;
+        const std::string &curValue = jsParams[key].asString();
+        auto vKeys = Utils::splitString(key, "_");
+        if (vKeys.size() == 3)
+        {
+            ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], "0", curValue);
+        }
+        else if (vKeys.size() == 4)
+        {
+            ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], vKeys[3], curValue);
+        }
+        else
+        {
+            continue;
+        }
+    }
+    return Utils::makeResponse(ret);
+}
+
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
     if (!SqlHelper::getSqlHelper().initSqlHelper())

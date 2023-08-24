@@ -28,7 +28,9 @@ enum class ExpectedFunction
     DeleteUser = 11,    // 删除用户
     ModifyUser = 12,    // 修改用户
     SelectAlert = 13,   // 选择报警信息
-    CollectImage = 14   // 采集图像
+    CollectImage = 14,  // 采集图像
+    ReadPLC = 15,       // 读PLC数据
+    WritePLC = 16       // 写PLC数据
 };
 class AppFramework : public NonCopyable
 {
