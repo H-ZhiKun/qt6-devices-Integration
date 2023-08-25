@@ -358,10 +358,9 @@ std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
     bool ret = false;
     Json::Value jsParams = Utils::stringToJson(value);
     Json::Value res;
-    for (const auto &item : jsParams)
+    for (const auto &key : jsParams.getMemberNames())
     {
         std::string temp;
-        const std::string &key = item.asString();
         auto vKeys = Utils::splitString(key, "_");
         if (vKeys.size() == 3)
         {
