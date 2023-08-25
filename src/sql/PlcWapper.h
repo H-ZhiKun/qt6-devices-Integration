@@ -1,5 +1,5 @@
 #pragma once
-#include "SqlHelper.h"
+#include "PgsqlHelper.h"
 #include "Utils.h"
 #include "json/json.h"
 
@@ -11,7 +11,7 @@ class PlcWapper
     static bool modifyPLC(const Json::Value &jsonData)
     {
         bool res = false;
-        if (SqlHelper::getSqlHelper().upsertData("plc_register_rw", std::move(jsonData)))
+        if (PgsqlHelper::getSqlHelper().upsertData("plc_register_rw", std::move(jsonData)))
         {
             LogInfo("PLCData updated successfully");
             res = true;
@@ -25,7 +25,7 @@ class PlcWapper
 
     static bool isPLCInDB(const QString &addr)
     {
-        bool res = SqlHelper::getSqlHelper().checkRecordExist(plc_register_rw, "plc_address", addr.toStdString());
+        bool res = PgsqlHelper::getSqlHelper().checkRecordExist(plc_register_rw, "plc_address", addr.toStdString());
         return res;
     }
 };

@@ -357,10 +357,9 @@ std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
     bool ret = false;
     Json::Value jsParams = Utils::stringToJson(value);
     Json::Value res;
-    for (const auto &item : jsParams)
+    for (const auto &key : jsParams.getMemberNames())
     {
         std::string temp;
-        const std::string &key = item.asString();
         auto vKeys = Utils::splitString(key, "_");
         if (vKeys.size() == 3)
         {
@@ -423,7 +422,7 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
 
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
-    if (!SqlHelper::getSqlHelper().initSqlHelper())
+    if (!PgsqlHelper::getSqlHelper().initSqlHelper())
     {
         LogInfo("sqlhelper init failed.");
         memoryClean();
@@ -622,7 +621,7 @@ void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
     dataEle["c_direction_current"] = 43.77;
     dataEle["humidity"] = 43;
 
-    SqlHelper::getSqlHelper().insertData("electric_data", std::move(dataEle));
+    PgsqlHelper::getSqlHelper().insertData("electric_data", std::move(dataEle));
     // updateAlarmData("test"); // TODO：有报错才发送
 }
 
@@ -645,7 +644,7 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
                                   "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin",
                                   "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE",
                                   "PRIMARY KEY (`id`) USING BTREE"};
-    if (SqlHelper::getSqlHelper().createTable(monthSingleBoottleTB, std::move(fields)))
+    if (PgsqlHelper::getSqlHelper().createTable(monthSingleBoottleTB, std::move(fields)))
     {
         LogInfo("This month table created successfully");
     }
@@ -678,7 +677,7 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
                                       "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin",
                                       "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE",
                                       "PRIMARY KEY (`id`) USING BTREE"};
-    if (SqlHelper::getSqlHelper().createTable(lastMonthSingle, std::move(lastFields)))
+    if (PgsqlHelper::getSqlHelper().createTable(lastMonthSingle, std::move(lastFields)))
     {
         LogInfo("Last month table created successfully");
     }

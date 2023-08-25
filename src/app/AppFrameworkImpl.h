@@ -7,7 +7,7 @@
 #include "Logger.h"
 #include "PLCDevice.h"
 #include "Permission.h"
-#include "SqlHelper.h"
+#include "PgsqlHelper.h"
 #include <QDir>
 #include <QQmlApplicationEngine>
 #include <memory>

@@ -1,5 +1,5 @@
 #pragma once
-#include "SqlHelper.h"
+#include "PgsqlHelper.h"
 #include "Utils.h"
 class UserWapper
 {
@@ -20,7 +20,7 @@ class UserWapper
 
         insertData["password"] = password;
 
-        bool res = SqlHelper::getSqlHelper().insertData(TABLE_USER_NAME, std::move(insertData));
+        bool res = PgsqlHelper::getSqlHelper().insertData(TABLE_USER_NAME, std::move(insertData));
         if (!res)
         {
             LogError("Failed to insert user data");
@@ -31,7 +31,7 @@ class UserWapper
     static Json::Value selectAllUser()
     {
         Json::Value jsonVec;
-        jsonVec = SqlHelper::getSqlHelper().selectData(TABLE_USER_NAME, "", "created_time");
+        jsonVec = PgsqlHelper::getSqlHelper().selectData(TABLE_USER_NAME, "", "created_time");
 
         return jsonVec;
     }
@@ -41,7 +41,7 @@ class UserWapper
         QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonString.toUtf8());
         QVariantMap updateData = jsonDocument.toVariant().toMap();
         std::string selectStr = "name = '" + updateData["name"].toString().toStdString() + "'";
-        QString userID = SqlHelper::getSqlHelper().selectOneData(TABLE_USER_NAME, "id", selectStr, "created_time");
+        QString userID = PgsqlHelper::getSqlHelper().selectOneData(TABLE_USER_NAME, "id", selectStr, "created_time");
         return userID;
     }
 
@@ -55,7 +55,7 @@ class UserWapper
         }
         std::string selectStr = fmt::format("name = '{}'", updateData["name"].asString().c_str());
         updateData.removeMember("name");
-        if (SqlHelper::getSqlHelper().updateData(TABLE_USER_NAME, std::move(updateData), std::move(selectStr)))
+        if (PgsqlHelper::getSqlHelper().updateData(TABLE_USER_NAME, std::move(updateData), std::move(selectStr)))
         {
             return true;
         }
@@ -69,7 +69,7 @@ class UserWapper
     static bool deleteUser(const QString &id)
     {
         std::string selectStr = "id = '" + id.toStdString() + "'";
-        if (SqlHelper::getSqlHelper().deleteData(TABLE_USER_NAME, selectStr))
+        if (PgsqlHelper::getSqlHelper().deleteData(TABLE_USER_NAME, selectStr))
         {
             qDebug() << "Data deleted successfully";
             return true;
@@ -84,7 +84,7 @@ class UserWapper
     static QString selectUser(const std::string &name)
     {
         std::string selectStr = "name = '" + name + "'";
-        Json::Value value = SqlHelper::getSqlHelper().selectData(TABLE_USER_NAME, std::move(selectStr), "");
+        Json::Value value = PgsqlHelper::getSqlHelper().selectData(TABLE_USER_NAME, std::move(selectStr), "");
         Json::Value jsonSingleValue;
         for (const Json::Value &jsonValue : value)
         {
