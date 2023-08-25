@@ -76,7 +76,7 @@ int AppFrame::AppFrameworkImpl::run()
 
     LogInfo("AppFrame Run");
     initFile();
-    initSqlHelper();
+    // initSqlHelper();
     initNetworkClient();
     initBaumerManager();
     initPLC();

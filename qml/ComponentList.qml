@@ -83,9 +83,9 @@ ListView {
                         console.log("power item");
                         // 电机
                         var json = {
-                            "0": singleItem.modeAddr,
-                            "1": singleItem.realLocateAddr,
-                            "2": singleItem.realSpeedAddr
+                            [singleItem.modeAddr]: "0",
+                            [singleItem.realLocateAddr]: "1",
+                            [singleItem.realSpeedAddr]: "2"
                         };
                         var strSend = JSON.stringify(json);
                         var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ReadPLC, strSend);
