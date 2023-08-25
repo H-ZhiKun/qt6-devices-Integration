@@ -175,6 +175,6 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 
     fifoInfo_.signalMove.store(FIFOGroup[12], std::memory_order_relaxed);
     fifoInfo_.signalSearchCoding.store(FIFOGroup[13], std::memory_order_relaxed);
-    std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding
-              << Utils::getCurrentTime(true) << std::endl;
+    // std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding
+    //           << Utils::getCurrentTime(true) << std::endl;
 }

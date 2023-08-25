@@ -57,8 +57,7 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::selectAlert, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::CollectImage,
                         std::bind(&AppFrameworkImpl::collectImage, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::CollectImage,
-                        std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::ReadPLC, std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::WritePLC,
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
 }
@@ -366,6 +365,7 @@ std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
         if (vKeys.size() == 3)
         {
             temp = plcDev_->readDevice(vKeys[1], vKeys[2]);
+            qDebug() << "temp" << temp;
         }
         else if (vKeys.size() == 4)
         {
@@ -381,7 +381,9 @@ std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
             ret = true;
         }
     }
-    return Utils::makeResponse(ret, std::move(res));
+    std::string result = Utils::makeResponse(ret, std::move(res));
+    qDebug() << result;
+    return result;
 }
 
 std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)

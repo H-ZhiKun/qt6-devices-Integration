@@ -56,8 +56,8 @@ void ModbusClient::work()
                     {
                         std::lock_guard lock(mtxReadCache_);
                         std::copy(cacheBuffer.begin(), cacheBuffer.end(), rCacheInfo_.cache.begin());
-                        qDebug() << fmt::format("updated by addr = {}, size = {}", rCacheInfo_.address,
-                                                rCacheInfo_.size);
+                        // qDebug() << fmt::format("updated by addr = {}, size = {}", rCacheInfo_.address,
+                        //                         rCacheInfo_.size);
                     }
                     offsetCount = 0;
                 }
@@ -65,8 +65,8 @@ void ModbusClient::work()
                 {
                     std::lock_guard lock(mtxFIFO_);
                     std::copy(FIFOBuffer.begin(), FIFOBuffer.end(), FIFOCacheInfo_.cache.begin());
-                    qDebug() << fmt::format("updated by addr = {}, size = {}", FIFOCacheInfo_.address,
-                                            FIFOCacheInfo_.size);
+                    // qDebug() << fmt::format("updated by addr = {}, size = {}", FIFOCacheInfo_.address,
+                    //                         FIFOCacheInfo_.size);
                 }
                 offsetCount++;
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));

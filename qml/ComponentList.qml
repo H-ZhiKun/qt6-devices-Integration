@@ -70,6 +70,42 @@ ListView {
                     singalComponent.title = "当前选中： " + itemName;
                     singalComponent.curentSensor = (modelData + baseIndex);
                     singalComponent.curItem = singleItem;
+                    if (singleItem.startAddr === "") {
+                        console.log("sensor item");
+                        // 传感器
+                        return;
+                    }
+                    if (singleItem.locateAddr === "") {
+                        // 阀门
+                        console.log("volve item");
+                        return;
+                    } else {
+                        console.log("power item");
+                        // 电机
+                        var json = {
+                            "0": singleItem.modeAddr,
+                            "1": singleItem.realLocateAddr,
+                            "2": singleItem.realSpeedAddr
+                        };
+                        var strSend = JSON.stringify(json);
+                        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ReadPLC, strSend);
+                        var result = JSON.parse(jsRet);
+                        if (result.ok === true) {
+                            var modeRes = result.details[singleItem.modeAddr];
+                            if (modeRes === "0") {
+                                powerAuto.checked = true;
+                            }
+                            if (modeRes === "1") {
+                                powerHandMove.checked = true;
+                            }
+                            actruePowerParam.acturePosition = result.details[singleItem.realLocateAddr];
+                            //console.log("acturePosition: ", result.details.two);
+                            actruePowerParam.actureSpeed = result.details[singleItem.realSpeedAddr];
+                        } else {
+                            setInfo.text = "读取失败！";
+                            setInfo.color = "red";
+                        }
+                    }
                 }
                 onEntered: {
                     sensorRec.border.color = "#ddabd3ed";
