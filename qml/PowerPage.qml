@@ -151,8 +151,8 @@ GroupBox {
                 height: 110
                 objectName: "actruePowerParam"
                 title: "实际参数"
-                property int acturePosition: 360  // 0~360
-                property int actureSpeed: 1000  // 0~3000
+                property string acturePosition: ""  // 0~360
+                property string actureSpeed: ""  // 0~3000
                 y: 60
                 font.pointSize: 11
                 background: Rectangle {
@@ -472,6 +472,15 @@ GroupBox {
                     allAutoColor.color = Qt.rgba(153 / 255, 153 / 255, 153 / 255, 1);
                 }
                 onClicked: {
+                    var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                    var result = JSON.parse(jsRet);
+                    if (result.ok === true) {
+                        setInfo.text = "保存成功！";
+                        setInfo.color = "green";
+                    } else {
+                        setInfo.text = "保存失败！";
+                        setInfo.color = "red";
+                    }
                     allAutoColor.color = Qt.rgba(153 / 255, 153 / 255, 153 / 255, 1);
                     allAutoColor.colorState = true;
                     allAutoColor.border.width = 2;

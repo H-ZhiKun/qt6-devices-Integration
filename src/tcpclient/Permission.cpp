@@ -42,13 +42,4 @@ void Permission::sendQRCode(const std::string &code)
 }
 void Permission::pingBehavior()
 {
-    // test
-    static bool test = true;
-    static std::string str1 = "HTTPS://N.PLSBD.COM/W/?W=W39FDC778B342D4B";
-    static std::string str2 = "HTTPS://N.PLSBD.COM/W/?W=W39F";
-    if (test)
-        sendQRCode(str1);
-    else
-        sendQRCode(str1);
-    test = !test;
 }
