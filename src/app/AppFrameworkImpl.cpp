@@ -71,6 +71,7 @@ AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 
 int AppFrame::AppFrameworkImpl::run()
 {
+    loadConfig();
     // 初始化日志记录器
     CLogger::GetLogger().initLogger(qApp->applicationDirPath().toStdString() + "/logs/log_.html", spdlog::level::debug,
                                     10, 5);
@@ -416,6 +417,21 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
         }
     }
     return Utils::makeResponse(ret);
+}
+
+void AppFrame::AppFrameworkImpl::loadConfig()
+{
+    try
+    {
+        config_ = YAML::LoadFile("config.yaml");
+        LogInfo("loadConfig success.");
+        qDebug() << config_["app"]["database"]["host"].as<std::string>();
+    }
+    catch (const YAML::Exception &e)
+    {
+        LogError("Error parsing YAML: {}", e.what());
+        Utils::appExit(-1);
+    }
 }
 
 void AppFrame::AppFrameworkImpl::initSqlHelper()

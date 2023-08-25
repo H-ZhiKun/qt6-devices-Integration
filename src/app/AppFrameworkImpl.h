@@ -14,6 +14,7 @@
 #include <mutex>
 #include <opencv2/opencv.hpp>
 #include <thread>
+#include <yaml-cpp/yaml.h>
 namespace AppFrame
 {
 
@@ -24,7 +25,6 @@ class AppFrameworkImpl final : public AppFramework
     ~AppFrameworkImpl() noexcept override;
     inline static AppFrameworkImpl &instance()
     {
-
         static AppFrameworkImpl instance;
         return instance;
     }
@@ -54,6 +54,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string readPLC(const std::string &);
     std::string writePLC(const std::string &);
     // 差异调用 接口区域
+    void loadConfig();
     void initSqlHelper();
     void initNetworkClient();
     void initPLC();
@@ -84,6 +85,7 @@ class AppFrameworkImpl final : public AppFramework
 
   private:
     // 私有变量区域
+    YAML::Node config_;
     std::list<std::thread> lvFulltimeThread_;
     std::atomic_bool bThreadHolder{true};
     QString saveImageDir;
