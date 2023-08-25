@@ -1,5 +1,5 @@
 #pragma once
-#include "SqlHelper.h"
+#include "PgsqlHelper.h"
 #include "Utils.h"
 #include "json/json.h"
 #include <Vector>
@@ -11,13 +11,13 @@ class CameraWapper
     ~CameraWapper() = default;
     static Json::Value selectAllCamera()
     {
-        return SqlHelper::getSqlHelper().selectData(TABLE_NAME, "");
+        return PgsqlHelper::getSqlHelper().selectData(TABLE_NAME, "");
     }
     static QString selectOneCamera(const std::string &name)
     {
         QString res;
         std::string selectStr = "sn_num = '" + name + "'";
-        Json::Value value = SqlHelper::getSqlHelper().selectData(TABLE_NAME, std::move(selectStr));
+        Json::Value value = PgsqlHelper::getSqlHelper().selectData(TABLE_NAME, std::move(selectStr));
         if (value.size() > 0)
         {
             res = Utils::jsonToString(value[0]).c_str();
@@ -28,7 +28,7 @@ class CameraWapper
     static bool modifyCamera(const Json::Value &jsonData)
     {
         bool res = false;
-        if (SqlHelper::getSqlHelper().upsertData(TABLE_NAME, std::move(jsonData)))
+        if (PgsqlHelper::getSqlHelper().upsertData(TABLE_NAME, std::move(jsonData)))
         {
             LogInfo("Data updated successfully");
             res = true;
@@ -42,7 +42,7 @@ class CameraWapper
 
     static bool isCameraInDB(const QString &sn_num)
     {
-        bool res = SqlHelper::getSqlHelper().checkRecordExist(TABLE_NAME, "sn_num", sn_num.toStdString());
+        bool res = PgsqlHelper::getSqlHelper().checkRecordExist(TABLE_NAME, "sn_num", sn_num.toStdString());
         return res;
     }
 };

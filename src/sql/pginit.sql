@@ -1,9 +1,3 @@
--- Create the database if it doesn't exist
-CREATE DATABASE integration;
-
--- Connect to the newly created database
-\c integration;
-
 -- Create the tables
 
 -- Table structure for system_config

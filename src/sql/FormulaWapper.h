@@ -1,5 +1,5 @@
 #pragma once
-#include "SqlHelper.h"
+#include "PgsqlHelper.h"
 #include "Utils.h"
 #include "json/json.h"
 #include <Vector>
@@ -11,7 +11,7 @@ class FormulaWapper
     static Json::Value selectAllFormula()
     {
         Json::Value jsonVec;
-        jsonVec = SqlHelper::getSqlHelper().selectData("formula_data", "", "created_time");
+        jsonVec = PgsqlHelper::getSqlHelper().selectData("formula_data", "", "created_time");
 
         return jsonVec;
     }
@@ -19,7 +19,7 @@ class FormulaWapper
     static QString selectOneFormula(const std::string &name)
     {
         std::string selectStr = "name = '" + name + "'";
-        Json::Value value = SqlHelper::getSqlHelper().selectData("formula_data", std::move(selectStr), "");
+        Json::Value value = PgsqlHelper::getSqlHelper().selectData("formula_data", std::move(selectStr), "");
         Json::Value jsonSingleValue;
         for (const Json::Value &jsonValue : value)
         {
@@ -31,7 +31,7 @@ class FormulaWapper
     static bool insertFormula(const QString &jsonString)
     {
         Json::Value jsonValue = Utils::stringToJson(jsonString.toStdString());
-        bool res = SqlHelper::getSqlHelper().insertData("formula_data", std::move(jsonValue));
+        bool res = PgsqlHelper::getSqlHelper().insertData("formula_data", std::move(jsonValue));
         return res;
     }
 
@@ -46,7 +46,7 @@ class FormulaWapper
         // updateData["deceleration_produce"] = jsonres["deceleration_produce"];
         std::string selectStr = fmt::format("name = '{}'", updateData["name"].asString().c_str());
         updateData.removeMember("name");
-        if (SqlHelper::getSqlHelper().updateData("formula_data", std::move(updateData), std::move(selectStr)))
+        if (PgsqlHelper::getSqlHelper().updateData("formula_data", std::move(updateData), std::move(selectStr)))
         {
             qDebug() << "Data updated successfully";
             return true;
@@ -61,7 +61,7 @@ class FormulaWapper
     static bool deleteFormula(const QString &name)
     {
         std::string selectStr = "name = '" + name.toStdString() + "'";
-        if (SqlHelper::getSqlHelper().deleteData("formula_data", selectStr))
+        if (PgsqlHelper::getSqlHelper().deleteData("formula_data", selectStr))
         {
             qDebug() << "Data deleted successfully";
             return true;

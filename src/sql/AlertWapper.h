@@ -1,5 +1,5 @@
 #pragma once
-#include "SqlHelper.h"
+#include "PgsqlHelper.h"
 #include "Utils.h"
 #include "json/json.h"
 #include <QDebug>
@@ -15,7 +15,7 @@ class AlertWapper
     {
         Json::Value json;
         std::string condition = "state = " + std::to_string(1);
-        json = SqlHelper::getSqlHelper().selectData(TABLE_ALARM_DATA, std::move(condition));
+        json = PgsqlHelper::getSqlHelper().selectData(TABLE_ALARM_DATA, std::move(condition));
         return json;
     }
     static void insertAlert(std::map<std::string, std::string> &mapAlert)
@@ -31,7 +31,7 @@ class AlertWapper
             item["state"] = 1;
             json.append(item);
         }
-        SqlHelper::getSqlHelper().insertData(TABLE_ALARM_DATA, std::move(json));
+        PgsqlHelper::getSqlHelper().insertData(TABLE_ALARM_DATA, std::move(json));
     }
     static void modifyAlert(std::map<std::string, std::string> &mapModify)
     {
@@ -42,7 +42,7 @@ class AlertWapper
             Json::Value item;
             item["state"] = 0;
             std::string condition = fmt::format("`register_address` = '{}'", key);
-            SqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
+            PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
         }
     }
 
@@ -51,7 +51,7 @@ class AlertWapper
         Json::Value item;
         item["state"] = 0;
         std::string condition = "state = 1";
-        SqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
+        PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
     }
     static void updateRealtimeAlert(std::map<std::string, std::string> &mapAlert)
     {
@@ -80,14 +80,14 @@ class AlertWapper
 
     static int alertNum()
     {
-        QString res = SqlHelper::getSqlHelper().selectOneData(TABLE_ALARM_DATA, "count(*)");
+        QString res = PgsqlHelper::getSqlHelper().selectOneData(TABLE_ALARM_DATA, "count(*)");
         return res.toInt();
     }
 
     static Json::Value selectAlertDataPaged(const int pageSize, const int pageNumber,
                                             const std::string &&condition = "", const std::string &&orderBy = "")
     {
-        return SqlHelper::getSqlHelper().selectDataPaged(TABLE_ALARM_DATA, pageSize, pageNumber, std::move(condition),
-                                                         std::move(orderBy));
+        return PgsqlHelper::getSqlHelper().selectDataPaged(TABLE_ALARM_DATA, pageSize, pageNumber, std::move(condition),
+                                                           std::move(orderBy));
     }
 };
