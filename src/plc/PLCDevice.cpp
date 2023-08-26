@@ -172,40 +172,40 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
-    if (FIFOGroup[1] != fifoInfo_.numQRCode.load(std::memory_order_relaxed))
+    if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
-        deviceUpdate_->UpdateBottomMove(FIFOGroup[1]);
-        fifoInfo_.numQRCode.store(FIFOGroup[1], std::memory_order_relaxed);
+        deviceUpdate_->UpdateReadQRCode(FIFOGroup[1]);
+        fifoInfo_.numQRCode = FIFOGroup[1];
     }
-    if (FIFOGroup[2] != fifoInfo_.numPosition.load(std::memory_order_relaxed))
+    if (FIFOGroup[2] != fifoInfo_.numPosition)
     {
-        emit deviceUpdate_->locatePhoto(0, FIFOGroup[2]);
-        fifoInfo_.numPosition.store(FIFOGroup[2], std::memory_order_relaxed);
+        emit deviceUpdate_->UpdateLocatePhoto(0, FIFOGroup[2]);
+        fifoInfo_.numPosition = FIFOGroup[2];
     }
-    if (FIFOGroup[3] != fifoInfo_.numVerifyPos.load(std::memory_order_relaxed))
+    if (FIFOGroup[3] != fifoInfo_.numVerifyPos)
     {
-        emit deviceUpdate_->locateCheckPhoto(2, FIFOGroup[3]);
-        fifoInfo_.numVerifyPos.store(FIFOGroup[3], std::memory_order_relaxed);
+        emit deviceUpdate_->UpdateLocateCheckPhoto(2, FIFOGroup[3]);
+        fifoInfo_.numVerifyPos = FIFOGroup[3];
     }
-    if (FIFOGroup[4] != fifoInfo_.numCoding.load(std::memory_order_relaxed))
+    if (FIFOGroup[4] != fifoInfo_.numCoding)
     {
-        emit deviceUpdate_->codeLogistics(FIFOGroup[4]);
-        fifoInfo_.numCoding.store(FIFOGroup[4], std::memory_order_relaxed);
+        emit deviceUpdate_->UpdateCodeLogistics(FIFOGroup[4]);
+        fifoInfo_.numCoding = FIFOGroup[4];
     }
-    if (FIFOGroup[5] != fifoInfo_.numVerifyCoding.load(std::memory_order_relaxed))
+    if (FIFOGroup[5] != fifoInfo_.numVerifyCoding)
     {
-        emit deviceUpdate_->codeCheck(1, FIFOGroup[5]);
-        fifoInfo_.numVerifyCoding.store(FIFOGroup[5], std::memory_order_relaxed);
+        emit deviceUpdate_->UpdateCodeCheck(1, FIFOGroup[5]);
+        fifoInfo_.numVerifyCoding = FIFOGroup[5];
     }
-    if (FIFOGroup[12] != fifoInfo_.signalMove.load(std::memory_order_relaxed))
+    if (FIFOGroup[12] != fifoInfo_.signalMove)
     {
-        emit deviceUpdate_->bottomMove(FIFOGroup[12]);
-        fifoInfo_.signalMove.store(FIFOGroup[12], std::memory_order_relaxed);
+        emit deviceUpdate_->UpdateBottomMove(FIFOGroup[12]);
+        fifoInfo_.signalMove = FIFOGroup[12];
     }
-    if (FIFOGroup[13] != fifoInfo_.signalSearchCoding.load(std::memory_order_relaxed))
+    if (FIFOGroup[13] != fifoInfo_.signalSearchCoding)
     {
-        emit deviceUpdate_->codeSerch(FIFOGroup[13]);
-        fifoInfo_.signalSearchCoding.store(FIFOGroup[13], std::memory_order_relaxed);
+        emit deviceUpdate_->UpdateCodeSerch(FIFOGroup[13]);
+        fifoInfo_.signalSearchCoding = FIFOGroup[13];
     }
 
     // std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding

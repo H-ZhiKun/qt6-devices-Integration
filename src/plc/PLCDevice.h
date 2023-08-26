@@ -9,13 +9,13 @@
 #include <vector>
 struct FIFOInfo
 {
-    std::atomic_uint16_t numQRCode;          // 412643 二维码读取工位小瓶编号
-    std::atomic_uint16_t numPosition;        // 412644 定位拍照工位小瓶编号
-    std::atomic_uint16_t numVerifyPos;       // 412645 定位确认拍照工位小瓶编号
-    std::atomic_uint16_t numCoding;          // 412646 喷码工位小瓶编号
-    std::atomic_uint16_t numVerifyCoding;    // 412647 喷码复核工位小瓶编号
-    std::atomic_uint16_t signalMove;         // 412654 喷码复核工位小瓶编号
-    std::atomic_uint16_t signalSearchCoding; // 412655 喷码数据查找信号
+    uint16_t numQRCode;          // 412643 二维码读取工位小瓶编号
+    uint16_t numPosition;        // 412644 定位拍照工位小瓶编号
+    uint16_t numVerifyPos;       // 412645 定位确认拍照工位小瓶编号
+    uint16_t numCoding;          // 412646 喷码工位小瓶编号
+    uint16_t numVerifyCoding;    // 412647 喷码复核工位小瓶编号
+    uint16_t signalMove;         // 412654 喷码复核工位小瓶编号
+    uint16_t signalSearchCoding; // 412655 喷码数据查找信号
 };
 
 class PLCDevice
