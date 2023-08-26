@@ -46,16 +46,14 @@ class PgsqlHelper : public AppFrame::NonCopyable
             return false;
         }
         QSqlQuery query(*connect);
-
-        // 构建创建表的SQL语句
-        QString sql = fmt::format("CREATE TABLE IF NOT EXISTS `{}` (", tableName.c_str()).c_str();
+        QString sql = fmt::format("CREATE TABLE IF NOT EXISTS \"{0}\" (", tableName.c_str()).c_str();
         for (const auto &field : fields)
         {
             sql += field.c_str() + QString(", ");
         }
         sql.chop(2); // 去除最后的逗号和空格
         sql += ")";
-        sql += " ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = DYNAMIC;";
+        sql += ";";
 
         if (!query.exec(sql))
         {
@@ -63,8 +61,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
             ret = false;
         }
         pool_->releaseConnection(connect);
-
-        return ret;
     }
 
     bool insertData(const std::string &tableName, const Json::Value &&jsValue)
@@ -87,8 +83,8 @@ class PgsqlHelper : public AppFrame::NonCopyable
         // 判断 jsValue 是数组还是对象
         if (jsValue.isArray())
         {
-            // 构建批量插入数据的SQL语句
-            QString sql = fmt::format("INSERT INTO `{}` (", tableName.c_str()).c_str();
+            // 构建批量插入数据的 SQL 语句
+            QString sql = fmt::format("INSERT INTO \"{0}\" (", tableName).c_str();
             QString values;
             QVariantList params;
             bool bAddfield = false;
@@ -105,7 +101,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
                 {
                     if (!bAddfield)
                     {
-                        sql += QString("`") + iter.name().c_str() + "`, ";
+                        sql += fmt::format("\"{0}\", ", iter.name().c_str()).c_str();
                     }
                     valuePlaceholders += "?, ";
                     QVariant curVal;
@@ -136,14 +132,14 @@ class PgsqlHelper : public AppFrame::NonCopyable
         else if (jsValue.isObject())
         {
             // 直接插入单个对象
-            QString sql = "INSERT INTO " + QString::fromStdString(tableName) + " (";
+            QString sql = fmt::format("INSERT INTO \"{0}\" (", tableName).c_str();
             QString values;
             QVariantList params;
 
             QString valuePlaceholders;
             for (auto iter = jsValue.begin(); iter != jsValue.end(); ++iter)
             {
-                sql += QString("`") + iter.name().c_str() + "`, ";
+                sql += fmt::format("\"{0}\", ", iter.name().c_str()).c_str();
                 valuePlaceholders += "?, ";
                 QVariant curVal;
                 if (iter->isBool())
@@ -244,11 +240,11 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QVariantList params;
 
         // 构建UPSERT语句
-        QString upsertSql = fmt::format("INSERT INTO `{}` (", tableName.c_str()).c_str();
+        QString upsertSql = fmt::format("INSERT INTO \"{0}\" (", tableName.c_str()).c_str();
         QString updateSql = ") VALUES (";
         for (auto it = data.begin(); it != data.end(); ++it)
         {
-            upsertSql += it.name() + ", ";
+            upsertSql += "\"" + it.name() + "\", ";
             updateSql += "?, ";
             QVariant curVal;
             if (it->isBool())
@@ -263,10 +259,10 @@ class PgsqlHelper : public AppFrame::NonCopyable
         }
         upsertSql.chop(2); // 去除最后的逗号和空格
         updateSql.chop(2); // 去除最后的逗号和空格
-        upsertSql += updateSql + ") ON DUPLICATE KEY UPDATE ";
+        upsertSql += updateSql + ") ON CONFLICT DO UPDATE SET ";
         for (auto it = data.begin(); it != data.end(); ++it)
         {
-            upsertSql += it.name() + " = VALUES(" + it.name() + "), ";
+            upsertSql += "\"" + it.name() + "\" = EXCLUDED.\"" + it.name() + "\", ";
         }
         upsertSql.chop(2); // 去除最后的逗号和空格
         query.prepare(upsertSql);
@@ -296,7 +292,8 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建删除数据的SQL语句
-        QString sql = "DELETE FROM " + QString::fromStdString(tableName) + " WHERE " + condition.c_str();
+        QString sql =
+            "DELETE FROM \"" + QString::fromStdString(tableName) + "\" WHERE " + QString::fromStdString(condition);
 
         query.prepare(sql);
         qDebug() << "delete user sql" << sql;
@@ -322,14 +319,14 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建查询数据的SQL语句
-        QString sql = QString("SELECT * FROM ") + tableName.c_str();
+        QString sql = "SELECT * FROM \"" + QString::fromStdString(tableName) + "\"";
         if (!condition.empty())
         {
-            sql += " WHERE " + condition;
+            sql += " WHERE " + QString::fromStdString(condition);
         }
         if (!orderBy.empty())
         {
-            sql += " ORDER BY " + orderBy;
+            sql += " ORDER BY " + QString::fromStdString(orderBy);
         }
         // qDebug() << "sql statement: " << sql;
         query.prepare(sql);
@@ -377,17 +374,16 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QString sql = QString("SELECT * FROM %1").arg(tableName.c_str());
         if (!condition.empty())
         {
-            sql += " WHERE " + condition;
+            sql += " WHERE " + QString::fromStdString(condition);
         }
         if (!orderBy.empty())
         {
-            sql += " ORDER BY " + orderBy;
+            sql += " ORDER BY " + QString::fromStdString(orderBy);
         }
         // 添加分页限制
         sql += QString(" LIMIT %1 OFFSET %2").arg(pageSize).arg(offset);
 
-        query.prepare(sql);
-        if (query.exec())
+        if (query.exec(sql))
         {
             while (query.next())
             {
@@ -396,7 +392,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
                 for (int i = 0; i < record.count(); ++i)
                 {
                     QString fieldName = record.fieldName(i);
-                    jsItem[fieldName.toStdString()] = std::move(query.value(i).toString().toStdString());
+                    jsItem[fieldName.toStdString()] = query.value(i).toString().toStdString();
                 }
                 jsVal.append(jsItem);
             }
@@ -415,9 +411,9 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QSqlDatabase *connect = pool_->getConnection();
         if (connect == nullptr)
         {
-            LogError("Sql poll init failed!");
+            LogError("Sql pool init failed!");
             return false;
-        };
+        }
         QSqlQuery query(*connect);
         QString sqlQuery = QString("SELECT COUNT(*) AS count FROM %1 WHERE %2 = :value")
                                .arg(QString::fromStdString(tableName))
@@ -457,20 +453,22 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建查询数据的SQL语句
-        QString sql = "SELECT " + QString::fromStdString(selectItem) + " FROM " + QString::fromStdString(tableName);
+        QString sql =
+            "SELECT \"" + QString::fromStdString(selectItem) + "\" FROM \"" + QString::fromStdString(tableName) + "\"";
         if (!condition.empty())
         {
-            sql += " WHERE " + condition;
+            sql += " WHERE " + QString::fromStdString(condition);
         }
         if (!orderBy.empty())
         {
-            sql += " ORDER BY " + orderBy;
+            sql += " ORDER BY \"" + QString::fromStdString(orderBy) + "\"";
         }
         qDebug() << "sql statement: " << sql;
         query.prepare(sql);
+
         if (query.exec())
         {
-            while (query.next())
+            if (query.next())
             {
                 fieldName = query.value(0).toString();
             }

@@ -77,7 +77,7 @@ int AppFrame::AppFrameworkImpl::run()
 
     LogInfo("AppFrame Run");
     initFile();
-    // initSqlHelper();
+    initSqlHelper();
     initNetworkClient();
     initBaumerManager();
     initPLC();
@@ -425,7 +425,8 @@ void AppFrame::AppFrameworkImpl::loadConfig()
 {
     try
     {
-        config_ = YAML::LoadFile("config.yaml");
+        std::string filePath = qApp->applicationDirPath().toStdString() + "/config.yaml";
+        config_ = YAML::LoadFile(filePath);
         LogInfo("loadConfig success.");
         qDebug() << config_["app"]["database"]["host"].as<std::string>();
     }
@@ -646,20 +647,20 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
     // 每日创建当月份数据表和下月份数据表做冗余
     // 动态创建月份数据库表
     std::string monthSingleBoottleTB = year + month + "single_bottle";
-    std::list<std::string> fields{"`id` int UNSIGNED NOT NULL AUTO_INCREMENT",
-                                  "`qr_code_reslut` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`logistics_code_gt` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`locate_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`locate_res` float",
-                                  "`locate_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`locate_check_res` boolean",
-                                  "`code_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`logistics_code` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`logistics_code_res` boolean",
-                                  "`batch_num` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin",
-                                  "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE",
-                                  "PRIMARY KEY (`id`) USING BTREE"};
+    std::list<std::string> fields{"\"id\" SERIAL PRIMARY KEY",
+                                  "\"qr_code_reslut\" varchar(256) COLLATE utf8_bin",
+                                  "\"logistics_code_gt\" char(24) COLLATE utf8_bin",
+                                  "\"locate_camera_image\" varchar(256) COLLATE utf8_bin",
+                                  "\"locate_res\" real",
+                                  "\"locate_check_camera_image\" varchar(256) COLLATE utf8_bin",
+                                  "\"locate_check_res\" boolean",
+                                  "\"code_check_camera_image\" varchar(256) COLLATE utf8_bin",
+                                  "\"logistics_code\" char(24) COLLATE utf8_bin",
+                                  "\"logistics_code_res\" boolean",
+                                  "\"batch_num\" varchar(256) COLLATE utf8_bin",
+                                  "\"formula_name\" varchar(128) COLLATE utf8_bin",
+                                  "\"created_time\" timestamp DEFAULT CURRENT_TIMESTAMP",
+                                  "UNIQUE (\"id\")"};
     if (PgsqlHelper::getSqlHelper().createTable(monthSingleBoottleTB, std::move(fields)))
     {
         LogInfo("This month table created successfully");
@@ -679,20 +680,20 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
 
     // 动态创建下月份数据库表
     std::string lastMonthSingle = year + lastMonth + "single_bottle";
-    std::list<std::string> lastFields{"`id` int UNSIGNED NOT NULL AUTO_INCREMENT",
-                                      "`qr_code_reslut` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`logistics_code_gt` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`locate_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`locate_res` float",
-                                      "`locate_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`locate_check_res` boolean",
-                                      "`code_check_camera_image` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`logistics_code` char(24) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`logistics_code_res` boolean",
-                                      "`batch_num` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`formula_name` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin",
-                                      "`created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP UNIQUE",
-                                      "PRIMARY KEY (`id`) USING BTREE"};
+    std::list<std::string> lastFields{"\"id\" SERIAL PRIMARY KEY",
+                                      "\"qr_code_reslut\" varchar(256) COLLATE utf8_bin",
+                                      "\"logistics_code_gt\" char(24) COLLATE utf8_bin",
+                                      "\"locate_camera_image\" varchar(256) COLLATE utf8_bin",
+                                      "\"locate_res\" real",
+                                      "\"locate_check_camera_image\" varchar(256) COLLATE utf8_bin",
+                                      "\"locate_check_res\" boolean",
+                                      "\"code_check_camera_image\" varchar(256) COLLATE utf8_bin",
+                                      "\"logistics_code\" char(24) COLLATE utf8_bin",
+                                      "\"logistics_code_res\" boolean",
+                                      "\"batch_num\" varchar(256) COLLATE utf8_bin",
+                                      "\"formula_name\" varchar(128) COLLATE utf8_bin",
+                                      "\"created_time\" timestamp DEFAULT CURRENT_TIMESTAMP",
+                                      "UNIQUE (\"id\")"};
     if (PgsqlHelper::getSqlHelper().createTable(lastMonthSingle, std::move(lastFields)))
     {
         LogInfo("Last month table created successfully");
