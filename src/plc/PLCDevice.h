@@ -23,7 +23,7 @@ class PLCDevice
   public:
     explicit PLCDevice();
     ~PLCDevice();
-    void init();
+    void init(const std::string &host, uint16_t port, uint16_t ioFreq, uint16_t FIFOFreq);
     std::string readDevice(const std::string &type, const std::string &addr, const std::string &bit = "");
     bool writeDataToDevice(const std::string &type, const std::string &addr, const std::string &bit = "",
                            const std::string &value = "");

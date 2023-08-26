@@ -434,14 +434,10 @@ void AppFrame::AppFrameworkImpl::loadConfig()
         std::string filePath = qApp->applicationDirPath().toStdString() + "/config.yaml";
         config_ = std::move(YAML::LoadFile(filePath));
         LogInfo("loadConfig success.");
-        qDebug() << "database:";
-        qDebug() << "  rdbms: " << config_["app"]["database"]["rdbms"].as<std::string>();
-        qDebug() << "  host: " << config_["app"]["database"]["host"].as<std::string>();
-        qDebug() << "  port: " << config_["app"]["database"]["port"].as<uint16_t>();
-        qDebug() << "plc:";
-        qDebug() << "  type: " << config_["app"]["plc"]["type"].as<std::string>();
-        qDebug() << "  host: " << config_["app"]["plc"]["host"].as<std::string>();
-        qDebug() << "  port: " << config_["app"]["plc"]["port"].as<uint16_t>();
+        // qDebug() << "database:";
+        // qDebug() << "  rdbms: " << config_["app"]["database"]["rdbms"].as<std::string>();
+        // qDebug() << "  host: " << config_["app"]["database"]["host"].as<std::string>();
+        // qDebug() << "  port: " << config_["app"]["database"]["port"].as<uint16_t>();
     }
     catch (const YAML::Exception &e)
     {
@@ -510,8 +506,12 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
+    std::string plcIp = config_["plc"]["host"].as<std::string>();
+    uint16_t plcPort = config_["plc"]["port"].as<uint16_t>();
+    uint16_t io = config_["plc"]["io_freq"].as<uint16_t>();
+    uint16_t fifo = config_["plc"]["fifo_freq"].as<uint16_t>();
     plcDev_ = new PLCDevice;
-    plcDev_->init();
+    plcDev_->init(plcIp, plcPort, io, fifo);
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locatePhoto,
                      [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locateCheckPhoto,
@@ -604,12 +604,12 @@ void AppFrame::AppFrameworkImpl::updateVideo()
             std::string url;
             if (camId == DisplayWindows::CodeCheckCamera)
             {
-                url = config_["app"]["algorithm"]["url_ocr"].as<std::string>();
+                url = config_["algorithm"]["url_ocr"].as<std::string>();
                 LogInfo("CodeCheckCamera bottom: ", num);
             }
             else if (camId == DisplayWindows::LocationCamera)
             {
-                url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
+                url = config_["algorithm"]["url_predict"].as<std::string>();
                 LogInfo("LocationCamera bottom: ", num);
             }
             else if (camId == DisplayWindows::LocateCheckCamera)

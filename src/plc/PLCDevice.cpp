@@ -23,16 +23,15 @@ PLCDevice::~PLCDevice()
     // 加wapper 清除写缓存表
 }
 
-void PLCDevice::init()
+void PLCDevice::init(const std::string &host, uint16_t port, uint16_t ioFreq, uint16_t FIFOFreq)
 {
     ModbusInitArguments args;
-    args.ip = "127.0.0.1";
-    // args.ip = "192.168.1.10";
-    args.port = 502;
+    args.ip = host;
+    args.port = port;
     client_ = new ModbusClient(std::move(args));
     client_->addWriteCache(writeBeginAddress_, writeCacheSize_);
-    client_->addReadCache(readBeginAddress_, readCacheSize_, 500);
-    client_->addFIFOCache(FIFOBeginAddress_, FIFOCacheSize_, 50);
+    client_->addReadCache(readBeginAddress_, readCacheSize_, ioFreq);
+    client_->addFIFOCache(FIFOBeginAddress_, FIFOCacheSize_, FIFOFreq);
     client_->work();
     deviceUpdate_ = new DeviceUpdate();
     updateData();
