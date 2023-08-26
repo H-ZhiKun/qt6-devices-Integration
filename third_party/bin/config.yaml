@@ -29,3 +29,15 @@ app:
     host: localhost
     # port: plc port, 502 by default
     port: 502
+  algorithm:
+    url_ocr: 'http://192.168.101.8:5001/paddleOCR'
+    url_predict: 'http://192.168.101.8:5000/predict_tangle'
+domino:
+  host: 127.0.0.1
+  port: 9999
+cognex:
+  host: 192.168.101.111
+  port: 23
+permission:
+  host: 127.0.0.1
+  port: 61000

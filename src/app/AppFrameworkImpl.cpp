@@ -483,12 +483,18 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
 
 void AppFrame::AppFrameworkImpl::initNetworkClient()
 {
+    std::string dominoIp = config_["domino"]["host"].as<std::string>();
+    uint16_t dominoPort = config_["domino"]["port"].as<uint16_t>();
+    std::string cognexIp = config_["cognex"]["host"].as<std::string>();
+    uint16_t cognexPort = config_["cognex"]["port"].as<uint16_t>();
+    std::string permissionIp = config_["permission"]["host"].as<std::string>();
+    uint16_t permissionPort = config_["permission"]["port"].as<uint16_t>();
     domino_ = new Domino();
-    domino_->startClient("127.0.0.1", 20001);
+    domino_->startClient(dominoIp.c_str(), dominoPort);
     cognex_ = new Cognex();
-    cognex_->startClient("192.168.101.111", 23);
+    cognex_->startClient(cognexIp.c_str(), cognexPort);
     permission_ = new Permission();
-    permission_->startClient("127.0.0.1", 61000);
+    permission_->startClient(permissionIp.c_str(), permissionPort);
     httpClient_ = new HttpClient();
     QObject::connect(httpClient_, &HttpClient::responseReceived, [this](const std::string &json) {
         if (json.empty())
@@ -598,17 +604,17 @@ void AppFrame::AppFrameworkImpl::updateVideo()
             std::string url;
             if (camId == DisplayWindows::CodeCheckCamera)
             {
-                url = "http://192.168.101.8:5001/paddleOCR";
+                url = config_["app"]["algorithm"]["url_ocr"].as<std::string>();
                 LogInfo("CodeCheckCamera bottom: ", num);
             }
             else if (camId == DisplayWindows::LocationCamera)
             {
-                url = "http://192.168.101.8:5000/predict_tangle";
+                url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
                 LogInfo("LocationCamera bottom: ", num);
             }
             else if (camId == DisplayWindows::LocateCheckCamera)
             {
-                url = "http://192.168.101.8:5000/predict_tangle";
+                url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
                 LogInfo("LocateCheckCamera bottom: ", num);
             }
             invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
