@@ -495,19 +495,12 @@ void AppFrame::AppFrameworkImpl::initPLC()
 {
     plcDev_ = new PLCDevice;
     plcDev_->init();
-    // QObject::connect(plcDev_, &PLCDevice::bottomMove, [this]() {
-    //     // 瓶位移信号逻辑
-    //     Product *productNew = new Product();
-    //     // 检测是否空瓶
-    //     if (1)
-    //     {
-    //     }
-    //     else
-    //     {
-    //         productNew->setHasBottom(false);
-    //     }
-    //     productManager_->qrCodeQueue.push(productNew);
-    // });
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locatePhoto,
+                     [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locateCheckPhoto,
+                     [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeCheck,
+                     [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -623,27 +616,28 @@ void AppFrame::AppFrameworkImpl::updateVideo()
     }
 }
 
-void AppFrame::AppFrameworkImpl::updateImage(const AppFrame::DisplayWindows &WinId, const int bottomNum)
+void AppFrame::AppFrameworkImpl::updateImage(const int winint, const int bottomNum)
 {
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(mapWndDisplay_[WinId]);
+    AppFrame::DisplayWindows winId = static_cast<DisplayWindows>(winint);
+    std::list<cv::Mat> matData = baumerManager_->getImageBySN(mapWndDisplay_[winId]);
     if (matData.size() == 0)
     {
         return;
     }
     cv::Mat temp = matData.back();
-    Utils::asyncTask([this, WinId, target = std::move(temp), bottomNum] {
+    Utils::asyncTask([this, winId, target = std::move(temp), bottomNum] {
         std::string url;
-        if (WinId == DisplayWindows::CodeCheckCamera)
+        if (winId == DisplayWindows::CodeCheckCamera)
         {
             url = "http://192.168.101.8:5001/paddleOCR";
             LogInfo("CodeCheckCamera bottom: ", bottomNum);
         }
-        else if (WinId == DisplayWindows::LocationCamera)
+        else if (winId == DisplayWindows::LocationCamera)
         {
             url = "http://192.168.101.8:5000/predict_tangle";
             LogInfo("LocationCamera bottom: ", bottomNum);
         }
-        else if (WinId == DisplayWindows::LocateCheckCamera)
+        else if (winId == DisplayWindows::LocateCheckCamera)
         {
             url = "http://192.168.101.8:5000/predict_tangle";
             LogInfo("LocateCheckCamera bottom: ", bottomNum);
@@ -657,7 +651,7 @@ void AppFrame::AppFrameworkImpl::updateImage(const AppFrame::DisplayWindows &Win
             if (saveImageFlag.load(std::memory_order_acquire))
             {
                 saveImageFlag.store(false, std::memory_order_release);
-                saveImageToFile(img, WinId);
+                saveImageToFile(img, winId);
             }
         }
     });

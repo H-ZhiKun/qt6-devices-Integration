@@ -28,6 +28,10 @@ class PLCDevice
     bool writeDataToDevice(const std::string &type, const std::string &addr, const std::string &bit = "",
                            const std::string &value = "");
     const FIFOInfo &getFIFOInfo();
+    inline DeviceUpdate *getSignal()
+    {
+        return deviceUpdate_;
+    }
 
   protected:
     PLCDevice(const PLCDevice &) = delete;
@@ -42,8 +46,8 @@ class PLCDevice
     RegistersWapper regWapper_;
     std::atomic_bool updateHolder_{true};
     std::thread thUpdate_;
-    ModbusClient *client_ = nullptr;
     DeviceUpdate *deviceUpdate_ = nullptr;
+    ModbusClient *client_ = nullptr;
     const uint16_t readBeginAddress_ = 12288;
     const uint16_t readCacheSize_ = 331;
     const uint16_t writeBeginAddress_ = 12688;

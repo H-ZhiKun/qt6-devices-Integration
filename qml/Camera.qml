@@ -54,7 +54,7 @@ GroupBox {
         Text {
             x: 10
             y: -20
-            text: "窗口一"
+            text: "定位相机"
             font.pointSize: 10
         }
     }
@@ -96,7 +96,7 @@ GroupBox {
         Text {
             x: 10
             y: -20
-            text: "窗口三"
+            text: "定位复核相机"
             font.pointSize: 10
         }
     }
@@ -136,7 +136,7 @@ GroupBox {
         Text {
             x: 10
             y: -20
-            text: "窗口二"
+            text: "打码复核相机"
             font.pointSize: 10
         }
     }
