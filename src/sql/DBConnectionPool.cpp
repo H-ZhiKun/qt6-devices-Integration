@@ -12,8 +12,10 @@
 #include "Logger.h"
 #include "Utils.h"
 
-DBConnectionPool::DBConnectionPool(int maxConnections, int idleTimeout)
-    : maxConnections_(maxConnections), idleTimeout_(idleTimeout)
+DBConnectionPool::DBConnectionPool(QString host, quint16 port, QString dbName, QString user, QString password,
+                                   int maxConnections, int idleTimeout)
+    : host_(host), port_(port), dbName_(dbName), user_(user), password_(password), maxConnections_(maxConnections),
+      idleTimeout_(idleTimeout)
 {
 }
 
