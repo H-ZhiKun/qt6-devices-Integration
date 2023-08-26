@@ -180,12 +180,12 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     }
     if (FIFOGroup[2] != fifoInfo_.numPosition.load(std::memory_order_relaxed))
     {
-        emit deviceUpdate_->locatePhoto(FIFOGroup[2]);
+        emit deviceUpdate_->locatePhoto(0, FIFOGroup[2]);
         fifoInfo_.numPosition.store(FIFOGroup[2], std::memory_order_relaxed);
     }
     if (FIFOGroup[3] != fifoInfo_.numVerifyPos.load(std::memory_order_relaxed))
     {
-        emit deviceUpdate_->locateCheckPhoto(FIFOGroup[3]);
+        emit deviceUpdate_->locateCheckPhoto(2, FIFOGroup[3]);
         fifoInfo_.numVerifyPos.store(FIFOGroup[3], std::memory_order_relaxed);
     }
     if (FIFOGroup[4] != fifoInfo_.numCoding.load(std::memory_order_relaxed))
@@ -195,7 +195,7 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     }
     if (FIFOGroup[5] != fifoInfo_.numVerifyCoding.load(std::memory_order_relaxed))
     {
-        emit deviceUpdate_->codeCheck(FIFOGroup[5]);
+        emit deviceUpdate_->codeCheck(1, FIFOGroup[5]);
         fifoInfo_.numVerifyCoding.store(FIFOGroup[5], std::memory_order_relaxed);
     }
     if (FIFOGroup[12] != fifoInfo_.signalMove.load(std::memory_order_relaxed))

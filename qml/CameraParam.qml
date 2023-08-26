@@ -157,7 +157,7 @@ Window {
                 y: 5
                 width: 103
                 height: 34
-                model: ["Off", "On"]
+                model: ["软触发", "硬触发"]
             }
 
             Text {
@@ -453,10 +453,10 @@ Window {
             y: 620
             font.pointSize: 12
             onClicked: {
-                if(comboBoxWindow.currentIndex === -1){
+                if (comboBoxWindow.currentIndex === -1) {
                     saveText.text = "请绑定窗口！";
                     saveText.color = "red";
-                }else{
+                } else {
                     var json = {
                         "sn_num": currentCamera.currentText,
                         "qml_window": comboBoxWindow.currentIndex,
