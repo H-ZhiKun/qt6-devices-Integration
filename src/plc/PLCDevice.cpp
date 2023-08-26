@@ -175,7 +175,7 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
     if (FIFOGroup[1] != fifoInfo_.numQRCode.load(std::memory_order_relaxed))
     {
-        emit deviceUpdate_->bottomMove(FIFOGroup[1]);
+        deviceUpdate_->UpdateBottomMove(FIFOGroup[1]);
         fifoInfo_.numQRCode.store(FIFOGroup[1], std::memory_order_relaxed);
     }
     if (FIFOGroup[2] != fifoInfo_.numPosition.load(std::memory_order_relaxed))

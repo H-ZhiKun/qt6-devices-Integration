@@ -91,8 +91,8 @@ template <typename Mutex> class HtmlFormatSink final : public spdlog::sinks::bas
         std::time_t timeVar = 0;
         std::time(&timeVar);
         char pTimeStr[64] = {0};
-        std::strftime(pTimeStr, sizeof(pTimeStr), "%Y_%m_%d_%H_%M_%S", std::localtime(&timeVar));
-        return spdlog::fmt_lib::format(SPDLOG_FILENAME_T("{}{}.{}{}"), basename, pTimeStr, index, ext);
+        std::strftime(pTimeStr, sizeof(pTimeStr), "%Y%m%d_%H%M%S", std::localtime(&timeVar));
+        return spdlog::fmt_lib::format(SPDLOG_FILENAME_T("{}_{}{}"), basename, pTimeStr, ext);
     }
 
     spdlog::filename_t filename()
