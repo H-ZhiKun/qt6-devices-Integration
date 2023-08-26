@@ -70,11 +70,17 @@ AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 
 int AppFrame::AppFrameworkImpl::run()
 {
+    // 加载配置文件
     loadConfig();
-    // 初始化日志记录器
-    CLogger::GetLogger().initLogger(qApp->applicationDirPath().toStdString() + "/logs/log_.html", spdlog::level::debug,
-                                    10, 5);
 
+    // 初始化日志记录器
+    strAppPath_ = qApp->applicationDirPath().toStdString();
+    std::string logPath =
+        strAppPath_ + std::string("/logs/") + config_["app"]["log"]["log_file_name"].as<std::string>();
+    size_t logLevel = config_["app"]["log"]["log_level"].as<size_t>();
+    size_t logFileCount = config_["app"]["log"]["log_file_count"].as<size_t>();
+    size_t logFileSize = Utils::anyFromString<size_t>(config_["app"]["log"]["log_file_size"].as<std::string>());
+    CLogger::GetLogger().initLogger(logPath, logLevel, logFileSize, logFileCount);
     LogInfo("AppFrame Run");
     initFile();
     initSqlHelper();
@@ -446,7 +452,12 @@ void AppFrame::AppFrameworkImpl::loadConfig()
 
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
-    if (!PgsqlHelper::getSqlHelper().initSqlHelper())
+    std::string host = config_["app"]["database"]["host"].as<std::string>();
+    uint16_t port = config_["app"]["database"]["port"].as<uint16_t>();
+    std::string dbName = config_["app"]["database"]["dbname"].as<std::string>();
+    std::string user = config_["app"]["database"]["user"].as<std::string>();
+    std::string pwd = "~!dtfs@#";
+    if (!PgsqlHelper::getSqlHelper().initSqlHelper(host, port, dbName, user, pwd))
     {
         LogInfo("sqlhelper init failed.");
         memoryClean();
