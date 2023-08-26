@@ -507,9 +507,9 @@ class PgsqlHelper : public AppFrame::NonCopyable
 
     // 创建表
     QStringList fields;
-    fields << "id INT PRIMARY KEY AUTO_INCREMENT"
-           << "name VARCHAR(100) NOT NULL"
-           << "age INT NOT NULL";
+    fields << "id SERIAL PRIMARY KEY"
+       << "name VARCHAR(100) NOT NULL"
+       << "age INT NOT NULL";
     if (sqlHelper.createTable("students", fields)) {
         qDebug() << "Table created successfully";
     } else {

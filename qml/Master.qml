@@ -285,6 +285,7 @@ Rectangle {
                         sensorItem.initSensor();
                         sensorItem.openFlag = false;
                     }
+                    sensorItem.requireSensorState();
                 }
                 onEntered: {
                     sensorRec.border.color = "lightblue";
@@ -339,6 +340,7 @@ Rectangle {
                         volveItem.initValve();
                         volveItem.openFlag = false;
                     }
+                    volveItem.requireValveState();
                 }
                 onEntered: {
                     valveRec.border.color = "lightblue";
@@ -393,6 +395,7 @@ Rectangle {
                         powerItem.initPower();
                         powerItem.initFlag = false;
                     }
+                    powerItem.requirePowerState();
                 }
                 onEntered: {
                     powerRec.border.color = "lightblue";

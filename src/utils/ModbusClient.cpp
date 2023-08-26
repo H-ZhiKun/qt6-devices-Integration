@@ -105,7 +105,7 @@ void ModbusClient::addWriteCache(uint16_t addr, uint16_t size)
 bool ModbusClient::readCache(uint16_t address, uint16_t count, std::vector<uint16_t> &outData)
 {
     // 检查是否越界
-    uint16_t addr = address - rCacheInfo_.address;
+    uint16_t addr = address - 1 - rCacheInfo_.address;
     if (addr + count > rCacheInfo_.cache.size())
     {
         // 如果请求的范围超过了缓存的容量，返回一个空的结果向量
@@ -238,9 +238,10 @@ void ModbusClient::keepConnection()
             {
                 // 连接失败，等待1秒后重试
                 std::this_thread::sleep_for(std::chrono::seconds(1));
+                LogError("connect to PLC faile.");
                 continue;
             }
-
+            LogInfo("PLC connect success");
             // 设置响应超时时间
             struct timeval tv;
             tv.tv_sec = 0;
