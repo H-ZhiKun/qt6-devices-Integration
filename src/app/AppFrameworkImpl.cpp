@@ -64,8 +64,6 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 {
-    // 保证一定完成了资源清理
-    memoryClean();
 }
 
 int AppFrame::AppFrameworkImpl::run()
@@ -446,6 +444,27 @@ void AppFrame::AppFrameworkImpl::loadConfig()
     }
 }
 
+void AppFrame::AppFrameworkImpl::saveConfig()
+{
+    try
+    {
+        std::string filePath = strAppPath_ + "/config.yaml";
+        // 保存修改后的配置回文件
+        std::ofstream fout(filePath);
+        fout << config_;
+        fout.close();
+        LogInfo("saveConfig success.");
+        // qDebug() << "database:";
+        // qDebug() << "  rdbms: " << config_["app"]["database"]["rdbms"].as<std::string>();
+        // qDebug() << "  host: " << config_["app"]["database"]["host"].as<std::string>();
+        // qDebug() << "  port: " << config_["app"]["database"]["port"].as<uint16_t>();
+    }
+    catch (const YAML::Exception &e)
+    {
+        LogError("Error save YAML: {}", e.what());
+    }
+}
+
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
     std::string host = config_["app"]["database"]["host"].as<std::string>();
@@ -502,16 +521,19 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
             processHttpRes(json);
         }
     });
+    LogInfo("network client start success.");
 }
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
+    std::string plcType = config_["plc"]["type"].as<std::string>();
     std::string plcIp = config_["plc"]["host"].as<std::string>();
     uint16_t plcPort = config_["plc"]["port"].as<uint16_t>();
     uint16_t io = config_["plc"]["io_freq"].as<uint16_t>();
     uint16_t fifo = config_["plc"]["fifo_freq"].as<uint16_t>();
     plcDev_ = new PLCDevice;
     plcDev_->init(plcIp, plcPort, io, fifo);
+    LogInfo("{} PLC device start success.", plcType);
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locatePhoto,
                      [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locateCheckPhoto,
@@ -962,6 +984,7 @@ void AppFrame::AppFrameworkImpl::bindDisplay(const std::string &snId, const Disp
 void AppFrame::AppFrameworkImpl::memoryClean()
 {
     // 退出所有的子线程并回收线程栈资源，堆资源需要后续手动释放
+    saveConfig();
     bThreadHolder = false;
     mapWndDisplay_.clear();
     mapStorePainter_.clear();
@@ -983,11 +1006,6 @@ void AppFrame::AppFrameworkImpl::memoryClean()
         delete domino_;
         domino_ = nullptr;
     }
-    if (baumerManager_ != nullptr)
-    {
-        delete baumerManager_;
-        baumerManager_ = nullptr;
-    }
     if (cognex_ != nullptr)
     {
         delete cognex_;
@@ -1002,6 +1020,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     {
         delete httpClient_;
         httpClient_ = nullptr;
+    }
+    if (baumerManager_ != nullptr)
+    {
+        delete baumerManager_;
+        baumerManager_ = nullptr;
     }
 }
 

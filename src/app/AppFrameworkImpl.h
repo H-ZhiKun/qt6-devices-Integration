@@ -55,6 +55,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string writePLC(const std::string &);
     // 差异调用 接口区域
     void loadConfig();
+    void saveConfig();
     void initSqlHelper();
     void initNetworkClient();
     void initPLC();
