@@ -70,13 +70,14 @@ AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 
 int AppFrame::AppFrameworkImpl::run()
 {
+    loadConfig();
     // 初始化日志记录器
     CLogger::GetLogger().initLogger(qApp->applicationDirPath().toStdString() + "/logs/log_.html", spdlog::level::debug,
                                     10, 5);
 
     LogInfo("AppFrame Run");
     initFile();
-    // initSqlHelper();
+    initSqlHelper();
     initNetworkClient();
     initBaumerManager();
     initPLC();
@@ -420,6 +421,29 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
     return Utils::makeResponse(ret);
 }
 
+void AppFrame::AppFrameworkImpl::loadConfig()
+{
+    try
+    {
+        std::string filePath = qApp->applicationDirPath().toStdString() + "/config.yaml";
+        config_ = std::move(YAML::LoadFile(filePath));
+        LogInfo("loadConfig success.");
+        qDebug() << "database:";
+        qDebug() << "  rdbms: " << config_["app"]["database"]["rdbms"].as<std::string>();
+        qDebug() << "  host: " << config_["app"]["database"]["host"].as<std::string>();
+        qDebug() << "  port: " << config_["app"]["database"]["port"].as<uint16_t>();
+        qDebug() << "plc:";
+        qDebug() << "  type: " << config_["app"]["plc"]["type"].as<std::string>();
+        qDebug() << "  host: " << config_["app"]["plc"]["host"].as<std::string>();
+        qDebug() << "  port: " << config_["app"]["plc"]["port"].as<uint16_t>();
+    }
+    catch (const YAML::Exception &e)
+    {
+        LogError("Error parsing YAML: {}", e.what());
+        Utils::appExit(-1);
+    }
+}
+
 void AppFrame::AppFrameworkImpl::initSqlHelper()
 {
     if (!PgsqlHelper::getSqlHelper().initSqlHelper())
@@ -428,6 +452,7 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
         memoryClean();
         Utils::appExit(-1);
     }
+    LogInfo("sqlhelper init success.");
     Json::Value jsVal = CameraWapper::selectAllCamera();
     if (!jsVal.isNull())
     {
