@@ -77,7 +77,7 @@ int AppFrame::AppFrameworkImpl::run()
 
     LogInfo("AppFrame Run");
     initFile();
-    // initSqlHelper();
+    initSqlHelper();
     initNetworkClient();
     initBaumerManager();
     initPLC();
@@ -425,9 +425,17 @@ void AppFrame::AppFrameworkImpl::loadConfig()
 {
     try
     {
-        config_ = YAML::LoadFile("config.yaml");
+        std::string filePath = qApp->applicationDirPath().toStdString() + "/config.yaml";
+        config_ = std::move(YAML::LoadFile(filePath));
         LogInfo("loadConfig success.");
-        qDebug() << config_["app"]["database"]["host"].as<std::string>();
+        qDebug() << "database:";
+        qDebug() << "  rdbms: " << config_["app"]["database"]["rdbms"].as<std::string>();
+        qDebug() << "  host: " << config_["app"]["database"]["host"].as<std::string>();
+        qDebug() << "  port: " << config_["app"]["database"]["port"].as<uint16_t>();
+        qDebug() << "plc:";
+        qDebug() << "  type: " << config_["app"]["plc"]["type"].as<std::string>();
+        qDebug() << "  host: " << config_["app"]["plc"]["host"].as<std::string>();
+        qDebug() << "  port: " << config_["app"]["plc"]["port"].as<uint16_t>();
     }
     catch (const YAML::Exception &e)
     {
@@ -444,6 +452,7 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
         memoryClean();
         Utils::appExit(-1);
     }
+    LogInfo("sqlhelper init success.");
     Json::Value jsVal = CameraWapper::selectAllCamera();
     if (!jsVal.isNull())
     {

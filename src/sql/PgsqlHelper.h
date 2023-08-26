@@ -3,6 +3,7 @@
 #include "NonCopyable.h"
 #include "PgsqlConnectionPool.h"
 #include "json/json.h"
+#include <QFile>
 #include <QJsonDocument>
 #include <QSqlDriver>
 #include <QSqlError>
@@ -25,17 +26,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
     }
     bool initSqlHelper()
     {
-        bool init = true;
-        auto db = pool_->getConnection();
-        if (db == nullptr)
-        {
-            init = false;
-        }
-        else
-        {
-            pool_->releaseConnection(db);
-        }
-        return init;
+        return pool_->getCount();
     }
     bool createTable(const std::string &tableName, std::list<std::string> &&fields)
     {
@@ -483,6 +474,25 @@ class PgsqlHelper : public AppFrame::NonCopyable
         pool_->releaseConnection(connect);
         return fieldName;
     }
+    bool execSql(const QString &sql)
+    {
+        QSqlDatabase *connect = pool_->getConnection();
+        if (connect == nullptr)
+        {
+            LogError("Sql poll init failed!");
+            return false;
+        }
+        QSqlQuery query(*connect);
+        query.prepare(sql);
+        if (!query.exec())
+        {
+            qDebug() << query.lastError().text();
+            LogError("query lastError: {}", query.lastError().text().toStdString());
+            return false;
+        }
+        pool_->releaseConnection(connect);
+        return true;
+    }
 
   private:
     PgsqlHelper()
@@ -492,76 +502,3 @@ class PgsqlHelper : public AppFrame::NonCopyable
     QString connectionName_;
     DBConnectionPool *pool_;
 };
-/*
-    //-----------------使用示例------------------//
-
-    // 创建数据库连接池
-    继承 DBConnectionPool
-    重写 DBConnectionPool createConnection
-
-    创建不同版本的连接池类。
-    //注意pool由helper管理释放，不需要手动释放
-
-    // 创建 SqlHelper 对象
-    SqlHelper sqlHelper(new YourConnectionPool(5, 5000));
-
-    // 创建表
-    QStringList fields;
-    fields << "id INT PRIMARY KEY AUTO_INCREMENT"
-           << "name VARCHAR(100) NOT NULL"
-           << "age INT NOT NULL";
-    if (sqlHelper.createTable("students", fields)) {
-        qDebug() << "Table created successfully";
-    } else {
-        qDebug() << "Failed to create table";
-    }
-
-    // 插入数据
-    QList<QVariantMap> dataList;
-    QVariantMap data1;
-    data1["name"] = "John";
-    data1["age"] = 25;
-    dataList.append(data1);
-
-    QVariantMap data2;
-    data2["name"] = "Jane";
-    data2["age"] = 30;
-    dataList.append(data2);
-
-    if (sqlHelper.insertData("students", dataList)) {
-        qDebug() << "Data inserted successfully";
-    } else {
-        qDebug() << "Failed to insert data";
-    }
-
-    // 更新数据
-    QVariantMap updateData;
-    updateData["age"] = 26;
-    if (sqlHelper.updateData("students", updateData, "name = 'John'")) {
-        qDebug() << "Data updated successfully";
-    } else {
-        qDebug() << "Failed to update data";
-    }
-
-    // 删除数据
-    if (sqlHelper.deleteData("students", "name = 'Jane'")) {
-        qDebug() << "Data deleted successfully";
-    } else {
-        qDebug() << "Failed to delete data";
-    }
-
-// 查询数据
-QSqlRecord record = sqlHelper.selectData("students", "", "name");
-if (record.isEmpty())
-{
-    qDebug() << "No data found";
-}
-else
-{
-    while (record.next())
-    {
-        qDebug() << "ID:" << record.value("id").toInt() << "Name:" << record.value("name").toString()
-                 << "Age:" << record.value("age").toInt();
-    }
-}
-*/
