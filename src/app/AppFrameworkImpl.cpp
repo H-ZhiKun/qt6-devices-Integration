@@ -623,12 +623,12 @@ void AppFrame::AppFrameworkImpl::updateVideo()
     }
 }
 
-void AppFrame::AppFrameworkImpl::updateImage(AppFrame::DisplayWindows WinId, int bottomNum)
+void AppFrame::AppFrameworkImpl::updateImage(const AppFrame::DisplayWindows &WinId, const int bottomNum)
 {
     std::list<cv::Mat> matData = baumerManager_->getImageBySN(mapWndDisplay_[WinId]);
     if (matData.size() == 0)
     {
-        continue;
+        return;
     }
     cv::Mat temp = matData.back();
     Utils::asyncTask([this, WinId, target = std::move(temp), bottomNum] {
@@ -661,7 +661,6 @@ void AppFrame::AppFrameworkImpl::updateImage(AppFrame::DisplayWindows WinId, int
             }
         }
     });
-}
 }
 
 void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
