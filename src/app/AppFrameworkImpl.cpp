@@ -506,19 +506,6 @@ void AppFrame::AppFrameworkImpl::initPLC()
 {
     plcDev_ = new PLCDevice;
     plcDev_->init();
-    // QObject::connect(plcDev_, &PLCDevice::bottomMove, [this]() {
-    //     // 瓶位移信号逻辑
-    //     Product *productNew = new Product();
-    //     // 检测是否空瓶
-    //     if (1)
-    //     {
-    //     }
-    //     else
-    //     {
-    //         productNew->setHasBottom(false);
-    //     }
-    //     productManager_->qrCodeQueue.push(productNew);
-    // });
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
