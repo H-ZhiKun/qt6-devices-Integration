@@ -1,4 +1,5 @@
 #pragma once
+#include "DeviceUpdate.h"
 #include "ModbusClient.h"
 #include "RegistersWapper.h"
 #include <iostream>
@@ -42,6 +43,7 @@ class PLCDevice
     std::atomic_bool updateHolder_{true};
     std::thread thUpdate_;
     ModbusClient *client_ = nullptr;
+    DeviceUpdate *deviceUpdate_ = nullptr;
     const uint16_t readBeginAddress_ = 12288;
     const uint16_t readCacheSize_ = 331;
     const uint16_t writeBeginAddress_ = 12688;

@@ -15,20 +15,26 @@ PLCDevice::~PLCDevice()
         delete client_;
         client_ = nullptr;
     }
+    if (deviceUpdate_)
+    {
+        delete deviceUpdate_;
+        deviceUpdate_ = nullptr;
+    }
     // 加wapper 清除写缓存表
 }
 
 void PLCDevice::init()
 {
     ModbusInitArguments args;
-    // args.ip = "127.0.0.1";
-    args.ip = "192.168.1.10";
+    args.ip = "127.0.0.1";
+    // args.ip = "192.168.1.10";
     args.port = 502;
     client_ = new ModbusClient(std::move(args));
     client_->addWriteCache(writeBeginAddress_, writeCacheSize_);
     client_->addReadCache(readBeginAddress_, readCacheSize_, 500);
     client_->addFIFOCache(FIFOBeginAddress_, FIFOCacheSize_, 50);
     client_->work();
+    deviceUpdate_ = new DeviceUpdate();
     updateData();
 }
 
@@ -150,7 +156,7 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
                 {
                     // 计算 key
                     const std::string key = fmt::format("4{}_{}", baseAddress + i, j);
-                    std::cout << "PLC Address = " << key << std::endl;
+                    // std::cout << "PLC Address = " << key << std::endl;
 
                     auto finder = regWapper_.mapAlertInfo.find(key);
                     if (finder != regWapper_.mapAlertInfo.end())
@@ -167,14 +173,42 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
-    fifoInfo_.numQRCode.store(FIFOGroup[1], std::memory_order_relaxed);
-    fifoInfo_.numPosition.store(FIFOGroup[2], std::memory_order_relaxed);
-    fifoInfo_.numVerifyPos.store(FIFOGroup[3], std::memory_order_relaxed);
-    fifoInfo_.numCoding.store(FIFOGroup[4], std::memory_order_relaxed);
-    fifoInfo_.numVerifyCoding.store(FIFOGroup[5], std::memory_order_relaxed);
+    if (FIFOGroup[1] != fifoInfo_.numQRCode.load(std::memory_order_relaxed))
+    {
+        emit deviceUpdate_->bottomMove(FIFOGroup[1]);
+        fifoInfo_.numQRCode.store(FIFOGroup[1], std::memory_order_relaxed);
+    }
+    if (FIFOGroup[2] != fifoInfo_.numPosition.load(std::memory_order_relaxed))
+    {
+        emit deviceUpdate_->locatePhoto(FIFOGroup[2]);
+        fifoInfo_.numPosition.store(FIFOGroup[2], std::memory_order_relaxed);
+    }
+    if (FIFOGroup[3] != fifoInfo_.numVerifyPos.load(std::memory_order_relaxed))
+    {
+        emit deviceUpdate_->locateCheckPhoto(FIFOGroup[3]);
+        fifoInfo_.numVerifyPos.store(FIFOGroup[3], std::memory_order_relaxed);
+    }
+    if (FIFOGroup[4] != fifoInfo_.numCoding.load(std::memory_order_relaxed))
+    {
+        emit deviceUpdate_->codeLogistics(FIFOGroup[4]);
+        fifoInfo_.numCoding.store(FIFOGroup[4], std::memory_order_relaxed);
+    }
+    if (FIFOGroup[5] != fifoInfo_.numVerifyCoding.load(std::memory_order_relaxed))
+    {
+        emit deviceUpdate_->codeCheck(FIFOGroup[5]);
+        fifoInfo_.numVerifyCoding.store(FIFOGroup[5], std::memory_order_relaxed);
+    }
+    if (FIFOGroup[12] != fifoInfo_.signalMove.load(std::memory_order_relaxed))
+    {
+        emit deviceUpdate_->bottomMove(FIFOGroup[12]);
+        fifoInfo_.signalMove.store(FIFOGroup[12], std::memory_order_relaxed);
+    }
+    if (FIFOGroup[13] != fifoInfo_.signalSearchCoding.load(std::memory_order_relaxed))
+    {
+        emit deviceUpdate_->codeSerch(FIFOGroup[13]);
+        fifoInfo_.signalSearchCoding.store(FIFOGroup[13], std::memory_order_relaxed);
+    }
 
-    fifoInfo_.signalMove.store(FIFOGroup[12], std::memory_order_relaxed);
-    fifoInfo_.signalSearchCoding.store(FIFOGroup[13], std::memory_order_relaxed);
     // std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding
     //           << Utils::getCurrentTime(true) << std::endl;
 }
