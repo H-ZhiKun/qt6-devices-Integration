@@ -8,6 +8,12 @@ class DeviceUpdate : public QObject
     explicit DeviceUpdate(QObject *parent = nullptr);
     ~DeviceUpdate();
     void UpdateBottomMove(int);
+    void UpdateReadQRCode(int);
+    void UpdateLocatePhoto(int, int);
+    void UpdateLocateCheckPhoto(int, int);
+    void UpdateCodeLogistics(int);
+    void UpdateCodeCheck(int, int);
+    void UpdateCodeSerch(int);
   signals:
     void bottomMove(int);            // 瓶位移动信号
     void readQRCode(int);            // 二维码读取信号
