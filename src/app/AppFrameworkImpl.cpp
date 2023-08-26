@@ -502,6 +502,31 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
             processHttpRes(json);
         }
     });
+    // 获取到二维码并发送
+    QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
+        Product *curProduct = productList_.back();
+        if (value == curProduct->getQrCodeRes())
+        {
+            return;
+        }
+        else
+        {
+            curProduct->setQrCodeRes(value);
+            permission_->sendQRCode(value);
+        }
+    });
+    // 获取到物流码并存储
+    QObject::connect(permission_, &Permission::codeRight, [this](const std::string code1, const std::string code2) {
+        for (auto &value : productList_)
+        {
+            if (value->getLogisticsGT1().empty() && !(value->getQrCodeRes().empty()))
+            {
+                value->setLogisticsGT1(code1);
+                value->setLogisticsGT2(code2);
+                break;
+            }
+        }
+    });
 }
 
 void AppFrame::AppFrameworkImpl::initPLC()
@@ -518,6 +543,13 @@ void AppFrame::AppFrameworkImpl::initPLC()
                      [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeCheck,
                      [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
+
+    // 获得读二维码信号
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::readQRCode, [this](int bottomNum) {
+        Product *newProduct = new Product();
+        productList_.push_back(newProduct);
+        cognex_->scanCode();
+    });
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -1003,6 +1035,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
         delete httpClient_;
         httpClient_ = nullptr;
     }
+    for (auto &ptr_ : productList_)
+    {
+        delete ptr_;
+        ptr_ = nullptr;
+    }
 }
 
 void AppFrame::AppFrameworkImpl::timerTask()
@@ -1069,16 +1106,16 @@ void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
 {
     // 调用yolo或者ocr处理过程
     Json::Value jsVal = Utils::stringToJson(jsonData);
-    std::string type = jsVal["type"].asString();
-    if (type == "")
+    std::string type = jsVal["model"].asString();
+    if (type == "paddleOCR")
     {
         // Utils::asyncTask([this] { processPaddleOCR(); });
     }
-    else if (type == "")
+    else if (type == "tangleCheck")
     {
         // Utils::asyncTask([this] { processYoloTangle(); });
     }
-    else if (type == "")
+    else if (type == "tangle")
     {
         // Utils::asyncTask([this] { processYoloTangle(); });
     }
@@ -1125,27 +1162,6 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument, 
 
 void AppFrame::AppFrameworkImpl::runMainProcess()
 {
-    // while (1 == plcDev_->shift.load())
-    // {
-    //     if (productManager_->qrCodeQueue.size() > ProductManager::getQRCodeMaxSize())
-    //     {
-    //         // 二维码队列满，取出一个进行打码
-    //         Product *qrProduct = productManager_->qrCodeQueue.front();
-    //         productManager_->qrCodeQueue.pop();
-    //         // 定位检测点队列
-    //         productManager_->locateQueue.push(qrProduct);
-    //         // 以下异步执行
-    //         // 是否有瓶
-    //         if (qrProduct->getHasBottom())
-    //         {
-    //             // 发送二维码读取信号并于防伪系统做比较
-    //         }
-    //         else
-    //         {
-    //             // 不发送二维码读取信号
-    //         }
-    //     }
-    // }
 }
 
 void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument, cv::Mat matImage, const int bottomNum)
