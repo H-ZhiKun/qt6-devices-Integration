@@ -45,3 +45,40 @@ cognex:
 permission:
   host: 127.0.0.1
   port: 61000
+baumer:
+  # interface: The static IP address of the NIC
+  interface: 192.168.60.60
+  # display_window: LocationCamera = 0;CodeCheckCamera = 1;LocateCheckCamera = 2.
+  # trigger_mode: software = 0;hardware=1;
+  # expose: expose time unit millisecond
+  # gain: range 0 ~ 100
+  # width: capture image width px
+  # height: capture image height px
+  paramters:
+    - sn_number: 700009429371
+      display_window: 0
+      trigger_mode: 1
+      expose: 0.4
+      gain: 1
+      width: 800
+      height: 800
+      offset_x: 1
+      offset_y: 1
+    - sn_number: 700009842699
+      display_window: 1
+      trigger_mode: 1
+      expose: 0.4
+      gain: 1
+      width: 800
+      height: 800
+      offset_x: 1
+      offset_y: 1
+    - sn_number: 700009842711
+      display_window: 1
+      trigger_mode: 1
+      expose: 0.4
+      gain: 1
+      width: 800
+      height: 800
+      offset_x: 1
+      offset_y: 1
