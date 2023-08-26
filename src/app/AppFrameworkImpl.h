@@ -8,6 +8,7 @@
 #include "PLCDevice.h"
 #include "Permission.h"
 #include "PgsqlHelper.h"
+#include <Product.h>
 #include <QDir>
 #include <QQmlApplicationEngine>
 #include <memory>
@@ -94,6 +95,7 @@ class AppFrameworkImpl final : public AppFramework
     QString saveImageDir;
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
+    std::list<Product *> productList_;
     // Module 组装区域
     // tcp client begin
     Domino *domino_ = nullptr;
