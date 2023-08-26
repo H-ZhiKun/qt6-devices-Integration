@@ -161,8 +161,7 @@ void BaumerManager::initializeBGAPI()
         {
             BGAPI2::System *system_pointer = sys_iter->second;
             BGAPI2::String tl_type = system_pointer->GetTLType();
-
-            if (!system_pointer->IsOpen())
+            if (!system_pointer->IsOpen() && tl_type == "GEV")
             {
                 system_pointer->Open();
             }
@@ -172,6 +171,9 @@ void BaumerManager::initializeBGAPI()
             for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin(); ifc_iter != interface_list->end();
                  ifc_iter++)
             {
+                std::string id = ifc_iter->second->GetID().get();
+                std::string name = ifc_iter->second->GetDisplayName().get();
+                std::string type = ifc_iter->second->GetTLType().get();
                 if (!ifc_iter->second->IsOpen())
                 {
                     ifc_iter->second->Open();
@@ -206,24 +208,23 @@ void BaumerManager::deinitializeBGAPI()
         for (BGAPI2::SystemList::iterator sys_iter = system_list->begin(); sys_iter != system_list->end(); sys_iter++)
         {
             BGAPI2::System *system_pointer = sys_iter->second;
-            BGAPI2::InterfaceList *interface_list = system_pointer->GetInterfaces();
-            interface_list->Refresh(100);
-            for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin(); ifc_iter != interface_list->end();
-                 ifc_iter++)
+            BGAPI2::String tl_type = system_pointer->GetTLType();
+            if (system_pointer->IsOpen() && tl_type == "GEV")
             {
-                if (ifc_iter->second->IsOpen())
+                BGAPI2::InterfaceList *interface_list = system_pointer->GetInterfaces();
+                interface_list->Refresh(100);
+                for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin();
+                     ifc_iter != interface_list->end(); ifc_iter++)
                 {
-                    ifc_iter->second->RegisterPnPEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
-                    // ifc_iter->second->UnregisterPnPEvent();
-                    ifc_iter->second->Close();
+                    if (ifc_iter->second->IsOpen())
+                    {
+                        ifc_iter->second->RegisterPnPEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
+                        ifc_iter->second->UnregisterPnPEvent();
+                        ifc_iter->second->Close();
+                    }
                 }
+                // system_pointer->Close();
             }
-        }
-        system_list->Refresh();
-        for (BGAPI2::SystemList::iterator sys_iter = system_list->begin(); sys_iter != system_list->end(); sys_iter++)
-        {
-            if (sys_iter->second->IsOpen())
-                sys_iter->second->Close();
         }
     }
     catch (BGAPI2::Exceptions::IException &ex)
@@ -234,7 +235,7 @@ void BaumerManager::deinitializeBGAPI()
     }
     try
     {
-        BGAPI2::SystemList::ReleaseInstance();
+        // BGAPI2::SystemList::ReleaseInstance();
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
