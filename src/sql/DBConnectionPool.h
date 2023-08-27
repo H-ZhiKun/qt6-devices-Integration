@@ -12,7 +12,10 @@ class DBConnectionPool
   public:
     explicit DBConnectionPool(int maxConnections = 5, int idleTimeout = 5000);
     virtual ~DBConnectionPool();
-
+    int getCount()
+    {
+        return count_;
+    }
     QSqlDatabase *getConnection();
     void releaseConnection(QSqlDatabase *db);
 

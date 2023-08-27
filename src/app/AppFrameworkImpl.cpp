@@ -82,6 +82,7 @@ int AppFrame::AppFrameworkImpl::run()
     initBaumerManager();
     initPLC();
     timerTask();
+    // setCameraParam(R"("sn_num":"123455", "qml_window":"0")");
     return 0;
 }
 
@@ -426,9 +427,16 @@ void AppFrame::AppFrameworkImpl::loadConfig()
     try
     {
         std::string filePath = qApp->applicationDirPath().toStdString() + "/config.yaml";
-        config_ = YAML::LoadFile(filePath);
+        config_ = std::move(YAML::LoadFile(filePath));
         LogInfo("loadConfig success.");
-        qDebug() << config_["app"]["database"]["host"].as<std::string>();
+        qDebug() << "database:";
+        qDebug() << "  rdbms: " << config_["app"]["database"]["rdbms"].as<std::string>();
+        qDebug() << "  host: " << config_["app"]["database"]["host"].as<std::string>();
+        qDebug() << "  port: " << config_["app"]["database"]["port"].as<uint16_t>();
+        qDebug() << "plc:";
+        qDebug() << "  type: " << config_["app"]["plc"]["type"].as<std::string>();
+        qDebug() << "  host: " << config_["app"]["plc"]["host"].as<std::string>();
+        qDebug() << "  port: " << config_["app"]["plc"]["port"].as<uint16_t>();
     }
     catch (const YAML::Exception &e)
     {
@@ -445,6 +453,7 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
         memoryClean();
         Utils::appExit(-1);
     }
+    LogInfo("sqlhelper init success.");
     Json::Value jsVal = CameraWapper::selectAllCamera();
     if (!jsVal.isNull())
     {
@@ -622,7 +631,7 @@ void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
     Json::Value dataEle;
     // 与PLC通信得到数据
     float num = atoi(minute.c_str());
-    dataEle["id"] = 0;
+    // dataEle["id"] = 0;
     dataEle["positive_active_energy"] = 34.54;
     dataEle["reverse_active_energy"] = 43.5452;
     dataEle["a_phase_voltage"] = num;
@@ -647,20 +656,21 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
     // 每日创建当月份数据表和下月份数据表做冗余
     // 动态创建月份数据库表
     std::string monthSingleBoottleTB = year + month + "single_bottle";
-    std::list<std::string> fields{"\"id\" SERIAL PRIMARY KEY",
-                                  "\"qr_code_reslut\" varchar(256) COLLATE utf8_bin",
-                                  "\"logistics_code_gt\" char(24) COLLATE utf8_bin",
-                                  "\"locate_camera_image\" varchar(256) COLLATE utf8_bin",
-                                  "\"locate_res\" real",
-                                  "\"locate_check_camera_image\" varchar(256) COLLATE utf8_bin",
-                                  "\"locate_check_res\" boolean",
-                                  "\"code_check_camera_image\" varchar(256) COLLATE utf8_bin",
-                                  "\"logistics_code\" char(24) COLLATE utf8_bin",
-                                  "\"logistics_code_res\" boolean",
-                                  "\"batch_num\" varchar(256) COLLATE utf8_bin",
-                                  "\"formula_name\" varchar(128) COLLATE utf8_bin",
-                                  "\"created_time\" timestamp DEFAULT CURRENT_TIMESTAMP",
-                                  "UNIQUE (\"id\")"};
+    std::list<std::string> fields{"id SERIAL PRIMARY KEY",
+                                  "qr_code_result varchar(256)",
+                                  "logistics_code_gt char(24)",
+                                  "locate_camera_image varchar(256)",
+                                  "locate_res real",
+                                  "locate_check_camera_image varchar(256)",
+                                  "locate_check_res boolean",
+                                  "code_check_camera_image varchar(256)",
+                                  "logistics_code char(24)",
+                                  "logistics_code_res boolean",
+                                  "batch_num varchar(256)",
+                                  "formula_name varchar(128)",
+                                  "created_time timestamp DEFAULT CURRENT_TIMESTAMP",
+                                  "UNIQUE (id)"};
+
     if (PgsqlHelper::getSqlHelper().createTable(monthSingleBoottleTB, std::move(fields)))
     {
         LogInfo("This month table created successfully");
@@ -680,20 +690,20 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
 
     // 动态创建下月份数据库表
     std::string lastMonthSingle = year + lastMonth + "single_bottle";
-    std::list<std::string> lastFields{"\"id\" SERIAL PRIMARY KEY",
-                                      "\"qr_code_reslut\" varchar(256) COLLATE utf8_bin",
-                                      "\"logistics_code_gt\" char(24) COLLATE utf8_bin",
-                                      "\"locate_camera_image\" varchar(256) COLLATE utf8_bin",
-                                      "\"locate_res\" real",
-                                      "\"locate_check_camera_image\" varchar(256) COLLATE utf8_bin",
-                                      "\"locate_check_res\" boolean",
-                                      "\"code_check_camera_image\" varchar(256) COLLATE utf8_bin",
-                                      "\"logistics_code\" char(24) COLLATE utf8_bin",
-                                      "\"logistics_code_res\" boolean",
-                                      "\"batch_num\" varchar(256) COLLATE utf8_bin",
-                                      "\"formula_name\" varchar(128) COLLATE utf8_bin",
-                                      "\"created_time\" timestamp DEFAULT CURRENT_TIMESTAMP",
-                                      "UNIQUE (\"id\")"};
+    std::list<std::string> lastFields{"id SERIAL PRIMARY KEY",
+                                      "qr_code_reslut varchar(256)",
+                                      "logistics_code_gt char(24)",
+                                      "locate_camera_image varchar(256)",
+                                      "locate_res real",
+                                      "locate_check_camera_image varchar(256)",
+                                      "locate_check_res boolean",
+                                      "code_check_camera_image varchar(256)",
+                                      "logistics_code char(24)",
+                                      "logistics_code_res boolean",
+                                      "batch_num varchar(256)",
+                                      "formula_name varchar(128)",
+                                      "created_time timestamp DEFAULT CURRENT_TIMESTAMP",
+                                      "UNIQUE (id)"};
     if (PgsqlHelper::getSqlHelper().createTable(lastMonthSingle, std::move(lastFields)))
     {
         LogInfo("Last month table created successfully");
