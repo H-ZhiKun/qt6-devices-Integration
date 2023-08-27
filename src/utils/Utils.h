@@ -144,5 +144,6 @@ class Utils
 
     static cv::Mat qImageToMat(QImage &qim);
     static std::vector<std::string> splitString(const std::string &input, const std::string &delimiter);
-    static std::string makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum);
+    static std::string makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum,
+                                             const std::string &imageName, const std::string &modelName);
 };
