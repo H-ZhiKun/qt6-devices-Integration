@@ -560,11 +560,11 @@ void AppFrame::AppFrameworkImpl::initPLC()
     plcDev_->init(plcIp, plcPort, io, fifo);
     LogInfo("{} PLC device start success.", plcType);
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locatePhoto,
-                     [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
+                     [this](int winInt, int bottomNum) { refreshImage(winInt, bottomNum); });
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locateCheckPhoto,
-                     [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
+                     [this](int winInt, int bottomNum) { refreshImage(winInt, bottomNum); });
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeCheck,
-                     [this](int winInt, int bottomNum) { updateImage(winInt, bottomNum); });
+                     [this](int winInt, int bottomNum) { refreshImage(winInt, bottomNum); });
 
     // 获得读二维码信号
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::readQRCode, [this](int bottomNum) {
@@ -687,7 +687,7 @@ void AppFrame::AppFrameworkImpl::updateVideo()
     }
 }
 
-void AppFrame::AppFrameworkImpl::updateImage(const int winint, const int bottomNum)
+void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottomNum)
 {
     AppFrame::DisplayWindows winId = static_cast<DisplayWindows>(winint);
     std::list<cv::Mat> matData = baumerManager_->getImageBySN(mapWndDisplay_[winId]);
@@ -702,16 +702,48 @@ void AppFrame::AppFrameworkImpl::updateImage(const int winint, const int bottomN
         {
             url = "http://192.168.101.8:5001/paddleOCR";
             LogInfo("CodeCheckCamera bottom: ", bottomNum);
-        }
+            for (auto &product_ : productList_)
+            {
+                if (product_->getCodeCheckImage() == nullptr)
+                {
+                    product_->setCodeCheckImage(target);
+                    // 1 保存数据
+
+                    // 2 清理数据
+                    productList_.pop_front();
+                    break;
+                }
+            }
+                }
         else if (winId == DisplayWindows::LocationCamera)
         {
             url = "http://192.168.101.8:5000/predict_tangle";
             LogInfo("LocationCamera bottom: ", bottomNum);
+            for (auto &product_ : productList_)
+            {
+                if (product_->getLocateImage() == nullptr)
+                {
+                    product_->setLocateImage(target);
+                    break;
+                }
+            }
+            // 测试
+            plcDev_->writeDataToDevice("r", "13002", "", "50");
         }
         else if (winId == DisplayWindows::LocateCheckCamera)
         {
             url = "http://192.168.101.8:5000/predict_tangle";
             LogInfo("LocateCheckCamera bottom: ", bottomNum);
+            for (auto &product_ : productList_)
+            {
+                if (product_->getLocateCheckImage() == nullptr)
+                {
+                    product_->setLocateCheckImage(target);
+                    break;
+                }
+            }
+            // 测试
+            plcDev_->writeDataToDevice("b", "13004", "0", "1");
         }
         invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
                   Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum)));
@@ -724,6 +756,7 @@ void AppFrame::AppFrameworkImpl::updateImage(const int winint, const int bottomN
                 saveImageFlag.store(false, std::memory_order_release);
                 saveImageToFile(img, winId);
             }
+            invokeCpp(mapStorePainter_[winId], "updateImage", Q_ARG(QImage, img));
         }
     });
 }

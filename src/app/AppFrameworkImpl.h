@@ -73,7 +73,7 @@ class AppFrameworkImpl final : public AppFramework
     void updateAlertData();                                                     // 更新报警信息
     void updateFormulaData();                                                   // 初始化配方界面
     void updateVideo();                                                         // 实时视频
-    void updateImage(const int winint, const int bottomNum);                    // 实时图像
+    void refreshImage(const int winint, const int bottomNum);                   // 实时图像
     void updateByMinute(const std::string &minute);                             // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();

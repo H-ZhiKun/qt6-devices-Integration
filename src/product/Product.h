@@ -28,17 +28,50 @@ class Product
     {
         formulaName = str;
     }
-    void setLocateImage(const std::string &str)
+    void setLocateImageName(const std::string &str)
     {
-        locateImage = str;
+        locateImageName = str;
     }
-    void setLocateCheckImage(const std::string &str)
+    void setLocateCheckImageName(const std::string &str)
     {
-        locateCheckImage = str;
+        locateCheckImageName = str;
     }
-    void setCodeCheckImage(const std::string &str)
+    void setCodeCheckImageName(const std::string &str)
     {
-        codeCheckImage = str;
+        codeCheckImageName = str;
+    }
+    void setLocateImage(const cv::Mat &image)
+    {
+        if (locateImage == nullptr)
+        {
+            locateImage = new cv::Mat(image.clone());
+        }
+        else
+        {
+            *locateImage = image;
+        }
+    }
+    void setLocateCheckImage(const cv::Mat &image)
+    {
+        if (locateCheckImage == nullptr)
+        {
+            locateCheckImage = new cv::Mat(image.clone());
+        }
+        else
+        {
+            *locateCheckImage = image;
+        }
+    }
+    void setCodeCheckImage(const cv::Mat &image)
+    {
+        if (codeCheckImage == nullptr)
+        {
+            codeCheckImage = new cv::Mat(image.clone());
+        }
+        else
+        {
+            *codeCheckImage = image;
+        }
     }
     void setLocateRes(const float res)
     {
@@ -77,15 +110,27 @@ class Product
     {
         return formulaName;
     }
-    std::string &getLocateImage()
+    std::string &getLocateImageName()
+    {
+        return locateImageName;
+    }
+    std::string &getLocateCheckImageName()
+    {
+        return locateCheckImageName;
+    }
+    std::string &getCodeCheckImageName()
+    {
+        return codeCheckImageName;
+    }
+    cv::Mat *getLocateImage()
     {
         return locateImage;
     }
-    std::string &getLocateCheckImage()
+    cv::Mat *getLocateCheckImage()
     {
         return locateCheckImage;
     }
-    std::string &getCodeCheckImage()
+    cv::Mat *getCodeCheckImage()
     {
         return codeCheckImage;
     }
@@ -107,17 +152,20 @@ class Product
     }
 
   private:
-    std::string qrCodeRes;             // 二维码读码结果
-    std::string logistics1;            // 物流码真实值1
-    std::string logistics2;            // 物流码真实值2
-    std::string logisticsPredict;      // 物流码预测值
-    std::string batchNum;              // 批号
-    std::string formulaName;           // 配方名
-    std::string locateImage;           // 定位图像
-    std::string locateCheckImage;      // 定位复核图像
-    std::string codeCheckImage;        // 打码复核图像
-    float locateRes;                   // 定位结果
-    bool locateCheckRes;               // 定位复核结果
-    bool logisticsRes;                 // 物流码比较结果
-    std::atomic_bool hasBottom = true; // 是否有瓶
+    std::string qrCodeRes;               // 二维码读码结果
+    std::string logistics1;              // 物流码真实值1
+    std::string logistics2;              // 物流码真实值2
+    std::string logisticsPredict;        // 物流码预测值
+    std::string batchNum;                // 批号
+    std::string formulaName;             // 配方名
+    std::string locateImageName;         // 定位图像
+    std::string locateCheckImageName;    // 定位复核图像
+    std::string codeCheckImageName;      // 打码复核图像
+    float locateRes;                     // 定位结果
+    bool locateCheckRes;                 // 定位复核结果
+    bool logisticsRes;                   // 物流码比较结果
+    std::atomic_bool hasBottom = true;   // 是否有瓶
+    cv::Mat *locateImage = nullptr;      // 定位图像
+    cv::Mat *locateCheckImage = nullptr; // 定位复核图像
+    cv::Mat *codeCheckImage = nullptr;   // 打码复核图像
 };
