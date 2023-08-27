@@ -18,6 +18,13 @@ app:
     # dbname: Database name
     dbname: integration
     # user: 'postgres' by default
-    user: ''
+    user: 'postgres'
     # passwd: release '' by default,password security considerations
-    passwd: ''
+    passwd: '123456'
+  plc:
+    # type: circle or line
+    type: circle
+    # host: plc address,192.168.1.10 by default
+    host: localhost
+    # port: plc port, 502 by default
+    port: 502
