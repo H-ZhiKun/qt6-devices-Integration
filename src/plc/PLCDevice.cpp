@@ -53,7 +53,7 @@ std::string PLCDevice::readDevice(const std::string &type, const std::string &ad
             }
             else if (type == "r")
             {
-                uint32_t combinedValue = (static_cast<uint32_t>(data[1]) << 16) | static_cast<uint32_t>(data[0]);
+                uint32_t combinedValue = (static_cast<uint32_t>(data[0]) << 16) | static_cast<uint32_t>(data[1]);
                 ret = fmt::format("{:.2f}", static_cast<float>(combinedValue) / 100.0);
             }
             else if (type == "n")
@@ -90,8 +90,8 @@ bool PLCDevice::writeDataToDevice(const std::string &type, const std::string &ad
         {
             plcAddr = Utils::anyFromString<uint16_t>(addr);
             uint32_t uint32Val = Utils::anyFromString<float>(value) * 100;
-            data[0] = (uint16_t)uint32Val;
-            data[1] = (uint16_t)(uint32Val >> 16);
+            data[1] = (uint16_t)uint32Val;
+            data[0] = (uint16_t)(uint32Val >> 16);
             regType = WriteRegisterType::RegReal;
         }
 

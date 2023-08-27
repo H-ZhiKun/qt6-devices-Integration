@@ -50,6 +50,11 @@ void TCPClient::startClient(const QString &host, quint16 port)
     connectToServer();
 }
 
+bool TCPClient::getConnect()
+{
+    return bconnect_;
+}
+
 void TCPClient::connectToServer(const QString &host, quint16 port)
 {
     if (!host.isEmpty())
@@ -114,11 +119,13 @@ void TCPClient::onConnected()
     if (reconnectTimer)
         reconnectTimer->stop();
     pingEnable(true);
+    bconnect_ = true;
 }
 
 void TCPClient::onDisconnected()
 {
     LogError("Disconnected from {}", serverHost.toStdString());
+    bconnect_ = false;
     // 断开连接后启动重连计时器
     if (reconnectTimer)
         reconnectTimer->start();
@@ -127,6 +134,7 @@ void TCPClient::onDisconnected()
 
 void TCPClient::onError(QAbstractSocket::SocketError errCode)
 {
+    bconnect_ = false;
     pingEnable(false);
     LogError("{} Socket error: {}", serverHost.toStdString(), socketErrorToString(errCode).toStdString());
     // 发生错误后启动重连计时器

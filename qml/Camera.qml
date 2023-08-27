@@ -526,6 +526,28 @@ GroupBox {
         }
     }
 
+    Button {
+        id: button2
+        x: 424
+        y: 570
+        width: 112
+        height: 32
+        text: qsTr("点动模式")
+        property bool pointMode: false
+        onClicked: {
+            pointMode = !pointMode;
+            var json = {};
+            if (pointMode) {
+                json["point_b_12992_00"] = "1";
+                text = "点动中";
+            } else {
+                json["point_b_12992_00"] = "0";
+                text = "点动模式";
+            }
+            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+        }
+    }
+
     Connections {
         target: appMetaFlash // C++ 对象实例
         function onPageMainChange(value) {
