@@ -74,7 +74,7 @@ baumer:
       offset_x: 1
       offset_y: 1
     - sn_number: 700009842711
-      display_window: 1
+      display_window: 2
       trigger_mode: 1
       expose: 0.4
       gain: 1
