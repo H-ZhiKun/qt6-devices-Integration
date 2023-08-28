@@ -52,7 +52,7 @@ Window {
                 y: 3
                 width: 144
                 height: 34
-                currentIndex: -1
+                currentIndex: 0
                 model: ["定位相机", "打码复核相机", "定位复核相机"]
 
                 onCurrentValueChanged: {
