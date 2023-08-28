@@ -238,7 +238,7 @@ void ModbusClient::keepConnection()
             {
                 // 连接失败，等待1秒后重试
                 std::this_thread::sleep_for(std::chrono::seconds(1));
-                LogError("connect to PLC faile.");
+                // LogError("connect to PLC faile.");
                 continue;
             }
             LogInfo("PLC connect success");

@@ -404,7 +404,7 @@ void Camera::initParams()
 {
     writeParam(SFNC_EXPOSUREAUTO, 0);
     writeParam(SFNC_GAINAUTO, 0);
-    jsReadOnly_["fps"] = cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_FRAMERATE)->GetInt();
+    // jsReadOnly_["fps"] = cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_FRAMERATE)->GetInt();
     jsReadOnly_["max_width"] = cameraPtr_->GetRemoteNode(SFNC_WIDTHMAX)->GetInt();
     jsReadOnly_["max_height"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHTMAX)->GetInt();
     jsReadOnly_["width_increment"] = cameraPtr_->GetRemoteNode(SFNC_WIDTH)->GetIntInc();
