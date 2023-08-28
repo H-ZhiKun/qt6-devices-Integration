@@ -108,6 +108,7 @@ void BaumerManager::searchCamera()
                 LogError("Error function: {}", ex.GetFunctionName().get());
                 LogError("Error description: {}", ex.GetErrorDescription().get());
             }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
         bSearch = false;
     });

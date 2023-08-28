@@ -1019,7 +1019,6 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     bThreadHolder = false;
     mapWndDisplay_.clear();
     mapStorePainter_.clear();
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // 等到子线程回收资源
     for (auto &ptr : lvFulltimeThread_)
     {
         ptr.join();
