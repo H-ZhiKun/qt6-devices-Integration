@@ -743,8 +743,8 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
 
 void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
 {
-    // cv::Mat temp = cv::imread("F:/deviceintegration/build/Debug/algorimTest.jpg");
-    cv::Mat test(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+    // cv::Mat temp = cv::imread("D:/test.jpg");
+    cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
     Utils::asyncTask([this, target = std::move(temp), bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
@@ -1163,7 +1163,7 @@ void AppFrame::AppFrameworkImpl::processHttpResTest(const std::string &jsonData)
     QString qString = QString::fromStdString(jsonData);
     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
     QString type = jsonDocu["model"].toString();
-    // cv::Mat test = cv::imread("F:/deviceintegration/build/Debug/algorimTest.jpg");
+    // cv::Mat test = cv::imread("D:/test.jpg");
     cv::Mat test(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
     Utils::asyncTask([this, jsonDocu, test] { processYoloTangleTest(jsonDocu, test); });
 }
