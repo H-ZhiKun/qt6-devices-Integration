@@ -10,7 +10,6 @@ QSqlDatabase *PgsqlConnectionPool::createConnection()
     db->setDatabaseName(dbName_);
     db->setUserName(user_);     // PostgreSQL 默认用户名是 "postgres"
     db->setPassword(password_); // 注意使用的密码"~!dtfs@#"
-
     if (!db->open())
     {
         QSqlError error = db->lastError();

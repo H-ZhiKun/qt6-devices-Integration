@@ -419,7 +419,8 @@ std::vector<std::string> Utils::splitString(const std::string &input, const std:
     return tokens;
 }
 
-std::string Utils::makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum)
+std::string Utils::makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum,
+                                         const std::string &imageName, const std::string &modelName)
 {
     // 将图像转换为QByteArray
     std::vector<uint8_t> buffer;
@@ -428,7 +429,7 @@ std::string Utils::makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_
 
     Json::Value jsVal;
     jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
-    jsVal["imageName"] = getCurrentTime(true);
+    jsVal["imageName"] = imageName;
     jsVal["imageWidth"] = std::to_string(algoImage.cols);
     jsVal["imageHeight"] = std::to_string(algoImage.rows);
     return jsonToString(jsVal);

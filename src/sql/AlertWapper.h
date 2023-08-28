@@ -49,8 +49,8 @@ class AlertWapper
     static void modifyAllStatus()
     {
         Json::Value item;
-        item["state"] = 0;
-        std::string condition = "state = 1";
+        item["state"] = "False";
+        std::string condition = "state = TRUE";
         PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
     }
     static void updateRealtimeAlert(std::map<std::string, std::string> &mapAlert)
