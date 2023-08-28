@@ -41,8 +41,6 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::getCameraParam, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::SetCameraParam,
                         std::bind(&AppFrameworkImpl::setCameraParam, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::GetCameraList,
-                        std::bind(&AppFrameworkImpl::getCameraList, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::InsertUser,
                         std::bind(&AppFrameworkImpl::insertUser, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::SelectUserID,
@@ -182,42 +180,12 @@ void AppFrame::AppFrameworkImpl::updateUserData()
     }
 }
 
-std::string AppFrame::AppFrameworkImpl::getCameraList(const std::string &value)
-{
-    Json::Value jsRet;
-    bool ret = false;
-    auto ids = baumerManager_->getCameraList();
-    for (auto &id : ids)
-    {
-        jsRet["cameraId"].append(id);
-        ret = true;
-    }
-    return Utils::makeResponse(ret, std::move(jsRet));
-}
-
 std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
 {
     bool ret = false;
     auto params = Utils::stringToJson(value);
-    std::string snNumber = params["sn"].asString();
-    Json::Value jsVal = baumerManager_->getCameraParam(snNumber);
-    if (!jsVal.isNull())
-    {
-        std::shared_lock lock(mtxSNPainter_);
-        jsVal["qml_window"] = -1;
-        for (auto &[wnd, cameraId] : mapWndDisplay_)
-        {
-            if (snNumber == cameraId)
-            {
-                jsVal["qml_window"] = static_cast<uint16_t>(wnd);
-            }
-        }
-        ret = true;
-    }
-    else
-    {
-        return "";
-    }
+    uint8_t winId = params["qml_window"].asInt();
+    Json::Value jsVal = baumerManager_->getCamera(winId);
     return Utils::makeResponse(ret, std::move(jsVal));
 }
 
@@ -225,18 +193,12 @@ std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
 {
     bool ret = false;
     Json::Value jsParams = Utils::stringToJson(value);
-    if (!jsParams.isNull() && jsParams.isMember("sn_num"))
+    std::string des;
+    if (!jsParams.isNull())
     {
-        std::string snNum = jsParams["sn_num"].asString();
-        uint16_t window = jsParams["qml_window"].asUInt();
-        bindDisplay(snNum, static_cast<DisplayWindows>(window));
-        auto rs1 = baumerManager_->setCameraParam(jsParams);
-        auto jsStore = baumerManager_->getCameraParam(snNum);
-        jsStore["qml_window"] = window;
-        auto rs2 = CameraWapper::modifyCamera(jsStore);
-        ret = rs1 && rs2;
+        ret = baumerManager_->setCamera(jsParams, des);
     }
-    return Utils::makeResponse(ret);
+    return Utils::makeResponse(ret, {}, std::move(des));
 }
 
 std::string AppFrame::AppFrameworkImpl::insertUser(const std::string &value)
@@ -702,7 +664,7 @@ void AppFrame::AppFrameworkImpl::updateFormulaData()
 void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottomNum)
 {
     AppFrame::DisplayWindows winId = static_cast<DisplayWindows>(winint);
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(mapWndDisplay_[winId]);
+    std::list<cv::Mat> matData = baumerManager_->getImageBySN(winint);
     if (matData.size() == 0)
     {
         return;
@@ -915,8 +877,8 @@ void AppFrame::AppFrameworkImpl::updatePowerRealData()
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
     Json::Value jsVal = CameraWapper::selectAllCamera();
-    baumerManager_ = new BaumerManager(jsVal);
-    baumerManager_->start();
+    baumerManager_ = new BaumerManager();
+    baumerManager_->start(config_);
 }
 
 // void AppFrame::AppFrameworkImpl::initHttp()
@@ -1070,20 +1032,6 @@ void AppFrame::AppFrameworkImpl::initFile()
 //     return;
 // }
 
-void AppFrame::AppFrameworkImpl::bindDisplay(const std::string &snId, const DisplayWindows &painterId)
-{
-    std::unique_lock lock(mtxSNPainter_);
-    auto iter = mapWndDisplay_.begin();
-    for (; iter != mapWndDisplay_.end(); ++iter)
-    {
-        if (iter->second == snId)
-        {
-            iter->second = "";
-        }
-    }
-    mapWndDisplay_[painterId] = snId;
-}
-
 void AppFrame::AppFrameworkImpl::memoryClean()
 {
     // 退出所有的子线程并回收线程栈资源，堆资源需要后续手动释放
@@ -1091,7 +1039,6 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     bThreadHolder = false;
     mapWndDisplay_.clear();
     mapStorePainter_.clear();
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // 等到子线程回收资源
     for (auto &ptr : lvFulltimeThread_)
     {
         ptr.join();

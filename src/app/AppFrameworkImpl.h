@@ -42,7 +42,6 @@ class AppFrameworkImpl final : public AppFramework
     std::string modifyFormula(const std::string &);
     std::string insertFormula(const std::string &);
     std::string selectFormula(const std::string &);
-    std::string getCameraList(const std::string &);
     std::string getCameraParam(const std::string &);
     std::string setCameraParam(const std::string &);
     std::string insertUser(const std::string &);

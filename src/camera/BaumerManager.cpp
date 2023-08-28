@@ -16,40 +16,19 @@ void BGAPI2CALL PnPEventHandler(void *callBackOwner, BGAPI2::Events::PnPEvent *p
         if (EventTypeStr == "removed")
         {
             // 回调删除出错相机
-            qDebug() << "camera remove singal: " << SNNumber;
+            LogInfo("camera callback remove: {}", SNNumber);
             pManager->removeCamera(SNNumber);
         }
         else if (EventTypeStr == "added")
         {
-            //   改为主动添加
-            // qDebug() << "camera add  singal" << SNNumber;
-            // pManager->searchCamera();
+            LogInfo("camera callback add: {}", SNNumber);
+            pManager->searchCamera();
         }
     }
 }
 
-BaumerManager::BaumerManager(Json::Value jsParam)
+BaumerManager::BaumerManager()
 {
-    mapStringToParams_["max_width"] = CameraParams::MaxWidth;
-    mapStringToParams_["max_height"] = CameraParams::MaxHeight;
-    mapStringToParams_["trigger_mode"] = CameraParams::TriggerMode;
-    mapStringToParams_["expose"] = CameraParams::ExposureTime;
-    mapStringToParams_["max_expose"] = CameraParams::MaxExposureTime;
-    mapStringToParams_["fps"] = CameraParams::FPS;
-    mapStringToParams_["gain"] = CameraParams::Gain;
-    mapStringToParams_["width"] = CameraParams::RoiWidth;
-    mapStringToParams_["height"] = CameraParams::RoiHeight;
-    mapStringToParams_["offset_x"] = CameraParams::OffsetX;
-    mapStringToParams_["offset_y"] = CameraParams::OffsetY;
-    for (auto &[key, value] : mapStringToParams_)
-    {
-        mapParamsToString_[value] = key;
-    }
-    for (auto &item : jsParam)
-    {
-        std::string sn = item["sn_num"].asString();
-        mapParams_[sn] = item;
-    }
 }
 
 BaumerManager::~BaumerManager()
@@ -57,99 +36,104 @@ BaumerManager::~BaumerManager()
     stop();
 }
 
-void BaumerManager::start()
+void BaumerManager::start(const YAML::Node &launchConfig)
 {
+    MACAddress = launchConfig["baumer"]["interface"].as<std::string>();
+    std::transform(MACAddress.begin(), MACAddress.end(), MACAddress.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    std::replace(MACAddress.begin(), MACAddress.end(), '-', ':');
+    lvParams_.resize(launchConfig["baumer"]["paramters"].size());
+    lvSNNumber_.resize(launchConfig["baumer"]["paramters"].size());
+    lvCameras_.resize(launchConfig["baumer"]["paramters"].size());
+    for (const auto &item : launchConfig["baumer"]["paramters"])
+    {
+        uint8_t winNumber = item["display_window"].as<uint8_t>();
+        Json::Value jsVal;
+        jsVal["trigger_mode"] = item["trigger_mode"].as<uint16_t>();
+        jsVal["expose"] = item["expose"].as<double>();
+        jsVal["gain"] = item["gain"].as<uint16_t>();
+        jsVal["width"] = item["width"].as<uint16_t>();
+        jsVal["height"] = item["height"].as<uint16_t>();
+        jsVal["offset_x"] = item["offset_x"].as<uint16_t>();
+        jsVal["offset_y"] = item["offset_y"].as<uint16_t>();
+        lvParams_[winNumber] = std::move(jsVal);
+        lvSNNumber_[winNumber] = std::move(item["sn_number"].as<std::string>());
+    }
     initializeBGAPI();
-    thSearchDev_ = std::thread([this] {
-        while (managerRun_)
-        {
-            searchCamera();
-        }
-    });
+    searchCamera();
 }
 
 void BaumerManager::searchCamera()
 {
-    try
-    {
-        BGAPI2::SystemList *system_list = BGAPI2::SystemList::GetInstance();
-        system_list->Refresh();
-        for (BGAPI2::SystemList::iterator sys_iter = system_list->begin(); sys_iter != system_list->end(); sys_iter++)
+    static bool bSearch = false;
+    if (bSearch)
+        return;
+    bSearch = true;
+    Utils::asyncTask([this] {
+        while (true)
         {
-            BGAPI2::System *system_pointer = sys_iter->second;
-            BGAPI2::String tl_type = system_pointer->GetTLType();
-            if (system_pointer->IsOpen())
+            int count = 0;
+            for (auto camera : lvCameras_)
             {
-                BGAPI2::InterfaceList *interface_list = system_pointer->GetInterfaces();
-                interface_list->Refresh(500);
-                for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin();
-                     ifc_iter != interface_list->end(); ifc_iter++)
+                if (camera)
                 {
-                    if (ifc_iter->second->IsOpen())
+                    count++;
+                }
+            }
+            if (count == lvCameras_.size())
+            {
+                break;
+            }
+            try
+            {
+                if (pInterface_)
+                {
+                    BGAPI2::DeviceList *device_list = pInterface_->GetDevices();
+                    device_list->Refresh(100);
+                    for (BGAPI2::DeviceList::iterator device_iter = device_list->begin();
+                         device_iter != device_list->end(); device_iter++)
                     {
-                        BGAPI2::DeviceList *device_list = ifc_iter->second->GetDevices();
-                        device_list->Refresh(500);
-
-                        for (BGAPI2::DeviceList::iterator device_iter = device_list->begin();
-                             device_iter != device_list->end(); device_iter++)
+                        std::string number = device_iter->second->GetSerialNumber().get();
+                        std::string status = device_iter->second->GetAccessStatus().get();
+                        if (status == "RW" && !device_iter->second->IsOpen())
                         {
-                            std::string SN = device_iter->second->GetSerialNumber().get();
-                            auto dev = device_iter->second;
-                            std::string status = dev->GetAccessStatus().get();
-                            if (!SN.empty() && status == "RW")
-                            {
-                                addCamera(SN, dev);
-                            }
+                            addCamera(number, device_iter->second);
                         }
                     }
                 }
             }
+            catch (BGAPI2::Exceptions::IException &ex)
+            {
+                LogError("Error Type: {}", ex.GetType().get());
+                LogError("Error function: {}", ex.GetFunctionName().get());
+                LogError("Error description: {}", ex.GetErrorDescription().get());
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-    }
-    catch (BGAPI2::Exceptions::IException &ex)
-    {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+        bSearch = false;
+    });
 }
 
 void BaumerManager::stop()
 {
-    managerRun_ = false;
-    thSearchDev_.join();
-    if (mapCameras_.size() > 0)
+    if (lvCameras_.size() > 0)
     {
-        std::unique_lock lock(mtxCamera_);
-        for (auto [SN, camera] : mapCameras_)
+        std::lock_guard lock(mtxCamera_);
+        for (auto &camera : lvCameras_)
         {
             delete camera;
+            camera = nullptr;
         }
-        mapCameras_.clear();
+        lvCameras_.clear();
     }
     deinitializeBGAPI();
 }
 
-std::list<cv::Mat> BaumerManager::getImageBySN(const std::string &SN)
+std::list<cv::Mat> BaumerManager::getImageBySN(uint8_t number)
 {
-    if (!SN.empty())
-    {
-        std::shared_lock lock(mtxCamera_);
-        auto iter = mapCameras_.find(SN);
-        if (iter != mapCameras_.end() && iter->second != nullptr)
-        {
-            return iter->second->getImage();
-        }
-    }
-    return {};
+    std::lock_guard lock(mtxCamera_);
+    return lvCameras_[number]->getImage();
 };
-
-std::list<std::string> BaumerManager::getCameraList()
-{
-    std::shared_lock lock(mtxSN_);
-    return lvSNNumber;
-}
 
 void BaumerManager::initializeBGAPI()
 {
@@ -161,233 +145,175 @@ void BaumerManager::initializeBGAPI()
         {
             BGAPI2::System *system_pointer = sys_iter->second;
             BGAPI2::String tl_type = system_pointer->GetTLType();
-            if (!system_pointer->IsOpen() && tl_type == "GEV")
+            if (tl_type != "GEV")
             {
-                system_pointer->Open();
+                continue;
             }
-
+            system_pointer->Open();
+            pSystem_ = system_pointer;
             BGAPI2::InterfaceList *interface_list = system_pointer->GetInterfaces();
-            interface_list->Refresh(500);
+            interface_list->Refresh(100);
             for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin(); ifc_iter != interface_list->end();
                  ifc_iter++)
             {
-                std::string id = ifc_iter->second->GetID().get();
+                ifc_iter->second->Open();
                 std::string name = ifc_iter->second->GetDisplayName().get();
-                std::string type = ifc_iter->second->GetTLType().get();
-                if (!ifc_iter->second->IsOpen())
+                std::string ip = ifc_iter->second->GetNode("GevInterfaceSubnetIPAddress")->GetValue().get();
+                std::string mac = ifc_iter->second->GetNode("GevInterfaceMACAddress")->GetValue().get();
+                std::string mask = ifc_iter->second->GetNode("GevInterfaceSubnetMask")->GetValue().get();
+                // 为相机对应数据流注册掉线触发事件
+                if (mac != MACAddress)
                 {
-                    ifc_iter->second->Open();
-                    // 为相机对应数据流注册掉线触发事件
-                    ifc_iter->second->RegisterPnPEvent(BGAPI2::Events::EVENTMODE_EVENT_HANDLER);
-                    ifc_iter->second->RegisterPnPEventHandler(this, (Events::PnPEventHandler)&PnPEventHandler);
-                }
-                BGAPI2::DeviceList *device_list = ifc_iter->second->GetDevices();
-                device_list->Refresh(500);
-                if (device_list->size() == 0)
-                {
+                    LogInfo("interface not matched: ");
+                    LogInfo("ignore ip: {}", ip);
+                    LogInfo("ignore MAC: {}", mac);
                     ifc_iter->second->Close();
+                    continue;
                 }
+                ifc_iter->second->RegisterPnPEvent(BGAPI2::Events::EVENTMODE_EVENT_HANDLER);
+                ifc_iter->second->RegisterPnPEventHandler(this, (Events::PnPEventHandler)&PnPEventHandler);
+                LogInfo("interface founded: ");
+                LogInfo("founded ip: {}", ip);
+                LogInfo("founded MAC: {}", mac);
+                pInterface_ = ifc_iter->second;
+                break;
             }
         }
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 void BaumerManager::deinitializeBGAPI()
 {
     try
     {
-        BGAPI2::SystemList *system_list = BGAPI2::SystemList::GetInstance();
-        system_list->Refresh();
-        for (BGAPI2::SystemList::iterator sys_iter = system_list->begin(); sys_iter != system_list->end(); sys_iter++)
+        if (pInterface_ != nullptr)
         {
-            BGAPI2::System *system_pointer = sys_iter->second;
-            BGAPI2::String tl_type = system_pointer->GetTLType();
-            if (system_pointer->IsOpen() && tl_type == "GEV")
-            {
-                BGAPI2::InterfaceList *interface_list = system_pointer->GetInterfaces();
-                interface_list->Refresh(100);
-                for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin();
-                     ifc_iter != interface_list->end(); ifc_iter++)
-                {
-                    if (ifc_iter->second->IsOpen())
-                    {
-                        ifc_iter->second->RegisterPnPEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
-                        ifc_iter->second->UnregisterPnPEvent();
-                        ifc_iter->second->Close();
-                    }
-                }
-                // system_pointer->Close();
-            }
+            pInterface_->UnregisterPnPEvent();
+            pInterface_->Close();
         }
+        if (pSystem_ != nullptr)
+        {
+            pSystem_->Close();
+        }
+        BGAPI2::SystemList::ReleaseInstance();
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
-    }
-    try
-    {
-        // BGAPI2::SystemList::ReleaseInstance();
-    }
-    catch (BGAPI2::Exceptions::IException &ex)
-    {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
 }
 
-void BaumerManager::addCamera(const std::string &snNumber, BGAPI2::Device *dev)
+bool BaumerManager::addCamera(const std::string &snNumber, BGAPI2::Device *dev)
 {
-    if (managerRun_ == false)
-        return;
-    auto iter = mapCameras_.find(snNumber);
-    if (iter == mapCameras_.end())
+    bool ret = false;
+    uint8_t index = 0;
+    for (; index < lvSNNumber_.size(); index++)
     {
-        Camera *camera_obj = new Camera(dev);
-        if (camera_obj->getInitialized())
+        if (lvSNNumber_[index] == snNumber)
         {
-            std::unique_lock lock(mtxCamera_);
-            mapCameras_[snNumber] = camera_obj;
-            qDebug() << "camera added " << snNumber;
-        }
-        else
-        {
-            if (camera_obj)
+            if (lvCameras_[index])
+            {
+                return true;
+            }
+            std::lock_guard lock(mtxCamera_);
+            Camera *camera_obj = new Camera(dev);
+            if (!camera_obj->getInitialized())
             {
                 delete camera_obj;
                 camera_obj = nullptr;
+                return false;
             }
-        }
-        if (camera_obj != nullptr)
-        {
-            addSNNumber(snNumber);
-            auto iter = mapParams_.find(snNumber);
-            if (iter != mapParams_.end())
-            {
-                setCameraParam(iter->second);
-            }
-            else
-            {
-                updateLocalParams(snNumber, camera_obj);
-            }
+            lvCameras_[index] = camera_obj;
+            LogInfo("sn number {}, add success.", snNumber);
+            ret = true;
+            break;
         }
     }
-    else
+    if (ret)
     {
-        if (!iter->second->getInitialized())
-        {
-
-            delete iter->second;
-            std::unique_lock lock(mtxCamera_);
-            mapCameras_.erase(iter);
-            qDebug() << "camera removed: " << snNumber;
-        }
+        std::string des;
+        setCamera(lvParams_[index], des);
     }
+    return ret;
 }
 
 void BaumerManager::removeCamera(const std::string &snNumber)
 {
-    if (managerRun_ == false)
-        return;
-    std::unique_lock lock(mtxCamera_);
-    auto iter = mapCameras_.find(snNumber);
-    if (iter != mapCameras_.end())
+    for (uint8_t index = 0; index < lvSNNumber_.size(); index++)
     {
-        iter->second->stopStream();
-        iter->second->startStream();
-        // delete iter->second;
-        // mapCameras_.erase(iter);
-    }
-}
-
-void BaumerManager::addSNNumber(const std::string &snNumber)
-{
-    if (std::find(lvSNNumber.begin(), lvSNNumber.end(), snNumber) == lvSNNumber.end())
-    {
-        std::unique_lock lock(mtxSN_);
-        lvSNNumber.push_back(snNumber);
-    }
-}
-
-void BaumerManager::updateLocalParams(const std::string &SN, Camera *pCamera)
-{
-    Json::Value dist;
-    dist["sn_num"] = SN;
-    for (auto iter = mapParamsToString_.begin(); iter != mapParamsToString_.end(); iter++)
-    {
-        uint64_t value = pCamera->getParams(iter->first);
-        if (CameraParams::ExposureTime == iter->first || CameraParams::MaxExposureTime == iter->first)
+        if (lvSNNumber_[index] == snNumber)
         {
-            dist[iter->second] = static_cast<double>(value) / 1000.0;
-        }
-        else
-        {
-            dist[iter->second] = value;
+            std::lock_guard lock(mtxCamera_);
+            delete lvCameras_[index];
+            lvCameras_[index] = nullptr;
+            LogInfo("sn number {}, remove success.", snNumber);
         }
     }
-    mapParams_[SN] = std::move(dist);
 }
 
-bool BaumerManager::setCameraParam(const Json::Value &param)
+bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
 {
-    bool ret = false;
-    if (param.isNull())
-    {
-        return ret;
-    }
-    std::string snNum = param["sn_num"].asString();
+    bool ret = true;
+    uint8_t index = param["qml_window"].asInt();
     Camera *pCamera = nullptr;
-    if (!snNum.empty())
+    if (index < lvCameras_.size())
     {
-        std::shared_lock lock(mtxCamera_);
-        pCamera = mapCameras_[snNum];
+        std::lock_guard lock(mtxCamera_);
+        pCamera = lvCameras_[index];
     }
     if (pCamera == nullptr)
     {
-        return ret;
+        des = "camera init error.";
+        return false;
     }
     pCamera->stopStream();
     for (auto it = param.begin(); it != param.end(); ++it)
     {
         const std::string &key = it.key().asString();
         const std::string &strValue = it->asString();
-        auto finded = mapStringToParams_.find(key);
-        if (finded != mapStringToParams_.end())
+        uint16_t value = 0;
+        if (key == "expose")
         {
-            uint64_t value = 0;
-            if (finded->second == CameraParams::ExposureTime || finded->second == CameraParams::MaxExposureTime)
-            {
-                value = Utils::anyFromString<double>(strValue) * 1000.0;
-            }
-            else
-            {
-                value = Utils::anyFromString<uint64_t>(strValue);
-            }
-            ret = pCamera->setParams(finded->second, value);
+            double temp = Utils::anyFromString<double>(strValue);
+            lvParams_[index][key] = temp;
+            value = temp * 1000.0;
+        }
+        else
+        {
+            value = Utils::anyFromString<uint64_t>(strValue);
+            lvParams_[index][key] = value;
+        }
+        if (!pCamera->setParams(key, value))
+        {
+            des = key + "set error.";
+            ret = false;
+            break;
         }
     }
     pCamera->startStream();
-    ret = true;
-    updateLocalParams(snNum, pCamera);
     return ret;
 }
 
-Json::Value BaumerManager::getCameraParam(const std::string &SN)
+Json::Value BaumerManager::getCamera(uint8_t number)
 {
-    Json::Value jsVal;
-    auto iter = mapParams_.find(SN);
-    if (iter != mapParams_.end())
+    Json::Value ret;
+    if (number < lvCameras_.size())
     {
-        jsVal = iter->second;
+        std::lock_guard lock(mtxCamera_);
+        ret = lvCameras_[number]->getROParams();
     }
-    return jsVal;
+    auto &temp = lvParams_[number];
+    for (const auto &key : temp.getMemberNames())
+    {
+        ret[key] = temp[key];
+    }
+    return ret;
 }

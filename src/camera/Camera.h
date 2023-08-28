@@ -6,6 +6,7 @@
 
 #include "LockFreeQueue.h"
 #include "bgapi2_genicam/bgapi2_genicam.hpp"
+#include "json/json.h"
 #include <QImage>
 #include <functional>
 #include <mutex>
@@ -16,24 +17,6 @@
 #include <thread>
 #include <vector>
 
-// 表示一个BGAPI相机对象和其他相机特定信息的类
-enum class CameraParams
-{
-    TriggerMode = 0,
-    ExposureTime,
-    MaxExposureTime,
-    AutoExposureTime,
-    Gain,
-    AutoGain,
-    MaxWidth,
-    MaxHeight,
-    RoiWidth,
-    RoiHeight,
-    OffsetX,
-    OffsetY,
-    FPS
-};
-
 class Camera
 {
   public:
@@ -41,22 +24,19 @@ class Camera
     virtual ~Camera();
 
     bool getInitialized();
-    std::string getSNNumber(); // 获取 SN 序列号
-
     void storeImg(unsigned char *bayerRG8Data, const std::string &pixFormat, uint64_t width, uint64_t height,
                   uint64_t frameId);
     std::list<cv::Mat> getImage();
-
-    bool setParams(CameraParams key, uint64_t value);
-    uint64_t getParams(CameraParams key);
     bool startStream(); // 打开图像采集流
     bool stopStream();  // 打开图像采集流
+    const Json::Value &getROParams();
+
+    bool setParams(const std::string &key, uint64_t value);
+
   private:
     void initialize();         // 初始化入口
     bool openDevice();         // 打开相机
     bool addBuffersToStream(); // 为相机添加缓存
-
-    void keepCaptureRunning(); // 保持采集
 
     void deinitialize();           // 资源回收入口
     void clearBuffersFromStream(); // 清理相机缓存buffer
@@ -66,21 +46,16 @@ class Camera
     cv::Mat mono10ToMat(unsigned char *buffer, uint64_t width, uint64_t height);
     cv::Mat mono8ToMat(unsigned char *buffer, uint64_t width, uint64_t height);
 
-    int64_t switchParams(const std::string &key, uint64_t value = 0, bool bReadOnly = true);
-    uint64_t readMaxValue(const std::string &key);
+    bool writeParam(const std::string &key, uint64_t value);
     void initParams();
 
   private:
     bool bActive_ = false;                 // 相机是否采集
-    bool bInited_ = false;                 // 相机初始化完成
     bool bOpen_ = false;                   // 相机打开状态
     LockFreeQueue<cv::Mat> matBuffers_;    // 图像对象 缓冲区
     BGAPI2::Device *cameraPtr_ = nullptr;  // BGAPI相机对象
     BGAPI2::DataStream *stream_ = nullptr; // 流对象
-    bool chunk_was_active_ = false;        // 初始化时指示块模式是否处于活动状态的标志
-    std::thread thObserver_;
-    std::atomic_bool bHolder_ = true;
     std::list<BGAPI2::Buffer *> streamBuffers_;
-    std::unordered_map<CameraParams, uint64_t> mapCameraParams_;
-    std::unordered_map<CameraParams, std::string> mapCameraString_;
+    std::unordered_map<std::string, std::string> mapCameraString_;
+    Json::Value jsReadOnly_;
 };
