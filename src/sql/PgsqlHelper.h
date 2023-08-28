@@ -155,6 +155,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
             {
                 query.addBindValue(params[i].toString());
             }
+            qDebug() << sql;
         }
 
         if (!query.exec())
@@ -207,7 +208,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
         sql.chop(2); // 去除最后的逗号和空格
         sql += QString(" WHERE ") + condition.c_str();
         query.prepare(sql);
-        qDebug() << "sql update: " << sql;
         for (int i = 0; i < params.size(); ++i)
         {
             query.addBindValue(params[i].toString());
@@ -219,6 +219,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
             ret = false;
         }
         pool_->releaseConnection(connect);
+        qDebug() << "sql update: " << sql;
         return ret;
     }
 
@@ -436,7 +437,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
     }
 
     QString selectOneData(const std::string &tableName, const std::string &selectItem,
-                          const std::string &condition = "", const std::string &orderBy = "") //ok
+                          const std::string &condition = "", const std::string &orderBy = "") // ok
     {
         Json::Value jsVal;
         QString fieldName = "";

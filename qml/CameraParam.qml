@@ -457,20 +457,36 @@ Window {
                     saveText.text = "请绑定窗口！";
                     saveText.color = "red";
                 }else{
+                    // var json = {
+                    //     "sn_num": currentCamera.currentText,
+                    //     "qml_window": comboBoxWindow.currentIndex,
+                    //     "fps": sliderFPS.value,
+                    //     "trigger_mode": comboBoxTrigger.currentIndex,
+                    //     "expose": sliderExpose.value,
+                    //     "gain": sliderGain.value,
+                    //     "width": sliderWidth.value,
+                    //     "height": sliderHeight.value,
+                    //     "offset_x": sliderOffsetX.value,
+                    //     "offset_y": sliderOffsetY.value,
+                    //     "max_width": parseInt(textWidthMax.text),
+                    //     "max_height": parseInt(textHeightMax.text)
+                    // };
+
                     var json = {
-                        "sn_num": currentCamera.currentText,
-                        "qml_window": comboBoxWindow.currentIndex,
-                        "fps": sliderFPS.value,
-                        "trigger_mode": comboBoxTrigger.currentIndex,
-                        "expose": sliderExpose.value,
-                        "gain": sliderGain.value,
-                        "width": sliderWidth.value,
-                        "height": sliderHeight.value,
-                        "offset_x": sliderOffsetX.value,
-                        "offset_y": sliderOffsetY.value,
-                        "max_width": parseInt(textWidthMax.text),
-                        "max_height": parseInt(textHeightMax.text)
+                        "sn_num": 1,
+                        "qml_window": 1,
+                        "fps": 1,
+                        "trigger_mode": 1,
+                        "expose": 1,
+                        "gain": 1,
+                        "width": 1,
+                        "height": 1,
+                        "offset_x": 1,
+                        "offset_y": 1,
+                        "max_width": 1,
+                        "max_height": 1
                     };
+
                     // 将json对象转换为JSON字符串
                     var jsonString = JSON.stringify(json);
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SetCameraParam, jsonString);
