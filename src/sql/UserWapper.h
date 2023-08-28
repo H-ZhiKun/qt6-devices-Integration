@@ -3,7 +3,7 @@
 #include "Utils.h"
 class UserWapper
 {
-#define TABLE_USER_NAME "user"
+#define TABLE_USER_NAME "users"
     // #define KEY "kungegeinijiami"
     // #define IV "danzongchusihua"
   public:
