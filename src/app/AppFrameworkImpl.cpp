@@ -41,8 +41,6 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::getCameraParam, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::SetCameraParam,
                         std::bind(&AppFrameworkImpl::setCameraParam, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::GetCameraList,
-                        std::bind(&AppFrameworkImpl::getCameraList, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::InsertUser,
                         std::bind(&AppFrameworkImpl::insertUser, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::SelectUserID,
@@ -181,42 +179,12 @@ void AppFrame::AppFrameworkImpl::updateUserData()
     }
 }
 
-std::string AppFrame::AppFrameworkImpl::getCameraList(const std::string &value)
-{
-    Json::Value jsRet;
-    bool ret = false;
-    auto ids = baumerManager_->getCameraList();
-    for (auto &id : ids)
-    {
-        jsRet["cameraId"].append(id);
-        ret = true;
-    }
-    return Utils::makeResponse(ret, std::move(jsRet));
-}
-
 std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
 {
     bool ret = false;
     auto params = Utils::stringToJson(value);
-    std::string snNumber = params["sn"].asString();
-    Json::Value jsVal = baumerManager_->getCameraParam(snNumber);
-    if (!jsVal.isNull())
-    {
-        std::shared_lock lock(mtxSNPainter_);
-        jsVal["qml_window"] = -1;
-        for (auto &[wnd, cameraId] : mapWndDisplay_)
-        {
-            if (snNumber == cameraId)
-            {
-                jsVal["qml_window"] = static_cast<uint16_t>(wnd);
-            }
-        }
-        ret = true;
-    }
-    else
-    {
-        return "";
-    }
+    uint8_t winId = params["qml_window"].asInt();
+    Json::Value jsVal = baumerManager_->getCamera(winId);
     return Utils::makeResponse(ret, std::move(jsVal));
 }
 
@@ -224,18 +192,12 @@ std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
 {
     bool ret = false;
     Json::Value jsParams = Utils::stringToJson(value);
-    if (!jsParams.isNull() && jsParams.isMember("sn_num"))
+    std::string des;
+    if (!jsParams.isNull())
     {
-        std::string snNum = jsParams["sn_num"].asString();
-        uint16_t window = jsParams["qml_window"].asUInt();
-        bindDisplay(snNum, static_cast<DisplayWindows>(window));
-        auto rs1 = baumerManager_->setCameraParam(jsParams);
-        auto jsStore = baumerManager_->getCameraParam(snNum);
-        jsStore["qml_window"] = window;
-        auto rs2 = CameraWapper::modifyCamera(jsStore);
-        ret = rs1 && rs2;
+        ret = baumerManager_->setCamera(jsParams, des);
     }
-    return Utils::makeResponse(ret);
+    return Utils::makeResponse(ret, {}, std::move(des));
 }
 
 std::string AppFrame::AppFrameworkImpl::insertUser(const std::string &value)
@@ -636,61 +598,61 @@ void AppFrame::AppFrameworkImpl::updateFormulaData()
 
 void AppFrame::AppFrameworkImpl::updateVideo()
 {
-    std::shared_lock lock(mtxSNPainter_);
-    for (const auto &[key, value] : mapWndDisplay_)
-    {
-        auto camId = key;
-        std::string sn = value;
-        if (sn.empty())
-        {
-            invokeCpp(mapStorePainter_[camId], "stopPainting");
-            continue;
-        }
-        std::list<cv::Mat> matData = baumerManager_->getImageBySN(sn);
-        if (matData.size() == 0)
-        {
-            continue;
-        }
-        cv::Mat temp = matData.back();
-        Utils::asyncTask([this, camId, target = std::move(temp)] {
-            const FIFOInfo &it = plcDev_->getFIFOInfo();
-            int num = it.numPosition;
-            std::string url;
-            if (camId == DisplayWindows::CodeCheckCamera)
-            {
-                url = config_["algorithm"]["url_ocr"].as<std::string>();
-                LogInfo("CodeCheckCamera bottom: ", num);
-            }
-            else if (camId == DisplayWindows::LocationCamera)
-            {
-                url = config_["algorithm"]["url_predict"].as<std::string>();
-                LogInfo("LocationCamera bottom: ", num);
-            }
-            else if (camId == DisplayWindows::LocateCheckCamera)
-            {
-                url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
-                LogInfo("LocateCheckCamera bottom: ", num);
-            }
-            invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                      Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, num)));
-            QImage img = Utils::matToQImage(target);
-            if (img.isNull() == false)
-            {
-                if (saveImageFlag.load(std::memory_order_acquire))
-                {
-                    saveImageFlag.store(false, std::memory_order_release);
-                    saveImageToFile(img, camId);
-                }
-                invokeCpp(mapStorePainter_[camId], "updateImage", Q_ARG(QImage, img));
-            }
-        });
-    }
+    // std::shared_lock lock(mtxSNPainter_);
+    // for (const auto &[key, value] : mapWndDisplay_)
+    // {
+    //     auto camId = key;
+    //     std::string sn = value;
+    //     if (sn.empty())
+    //     {
+    //         invokeCpp(mapStorePainter_[camId], "stopPainting");
+    //         continue;
+    //     }
+    //     std::list<cv::Mat> matData = baumerManager_->getImageBySN(sn);
+    //     if (matData.size() == 0)
+    //     {
+    //         continue;
+    //     }
+    //     cv::Mat temp = matData.back();
+    //     Utils::asyncTask([this, camId, target = std::move(temp)] {
+    //         const FIFOInfo &it = plcDev_->getFIFOInfo();
+    //         int num = it.numPosition;
+    //         std::string url;
+    //         if (camId == DisplayWindows::CodeCheckCamera)
+    //         {
+    //             url = config_["algorithm"]["url_ocr"].as<std::string>();
+    //             LogInfo("CodeCheckCamera bottom: ", num);
+    //         }
+    //         else if (camId == DisplayWindows::LocationCamera)
+    //         {
+    //             url = config_["algorithm"]["url_predict"].as<std::string>();
+    //             LogInfo("LocationCamera bottom: ", num);
+    //         }
+    //         else if (camId == DisplayWindows::LocateCheckCamera)
+    //         {
+    //             url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
+    //             LogInfo("LocateCheckCamera bottom: ", num);
+    //         }
+    //         invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+    //                   Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, num)));
+    //         QImage img = Utils::matToQImage(target);
+    //         if (img.isNull() == false)
+    //         {
+    //             if (saveImageFlag.load(std::memory_order_acquire))
+    //             {
+    //                 saveImageFlag.store(false, std::memory_order_release);
+    //                 saveImageToFile(img, camId);
+    //             }
+    //             invokeCpp(mapStorePainter_[camId], "updateImage", Q_ARG(QImage, img));
+    //         }
+    //     });
+    // }
 }
 
 void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottomNum)
 {
     AppFrame::DisplayWindows winId = static_cast<DisplayWindows>(winint);
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(mapWndDisplay_[winId]);
+    std::list<cv::Mat> matData = baumerManager_->getImageBySN(winint);
     if (matData.size() == 0)
     {
         return;
@@ -714,7 +676,7 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
                     break;
                 }
             }
-                }
+        }
         else if (winId == DisplayWindows::LocationCamera)
         {
             url = "http://192.168.101.8:5000/predict_tangle";
@@ -877,8 +839,8 @@ void AppFrame::AppFrameworkImpl::updatePowerRealData()
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
     Json::Value jsVal = CameraWapper::selectAllCamera();
-    baumerManager_ = new BaumerManager(jsVal);
-    baumerManager_->start();
+    baumerManager_ = new BaumerManager();
+    baumerManager_->start(config_);
 }
 
 // void AppFrame::AppFrameworkImpl::initHttp()
@@ -1031,20 +993,6 @@ void AppFrame::AppFrameworkImpl::initFile()
 //     }
 //     return;
 // }
-
-void AppFrame::AppFrameworkImpl::bindDisplay(const std::string &snId, const DisplayWindows &painterId)
-{
-    std::unique_lock lock(mtxSNPainter_);
-    auto iter = mapWndDisplay_.begin();
-    for (; iter != mapWndDisplay_.end(); ++iter)
-    {
-        if (iter->second == snId)
-        {
-            iter->second = "";
-        }
-    }
-    mapWndDisplay_[painterId] = snId;
-}
 
 void AppFrame::AppFrameworkImpl::memoryClean()
 {

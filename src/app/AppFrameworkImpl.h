@@ -42,7 +42,6 @@ class AppFrameworkImpl final : public AppFramework
     std::string modifyFormula(const std::string &);
     std::string insertFormula(const std::string &);
     std::string selectFormula(const std::string &);
-    std::string getCameraList(const std::string &);
     std::string getCameraParam(const std::string &);
     std::string setCameraParam(const std::string &);
     std::string insertUser(const std::string &);
@@ -64,17 +63,16 @@ class AppFrameworkImpl final : public AppFramework
     void initBaumerManager();
     void initFile();
 
-    void bindDisplay(const std::string &snId, const DisplayWindows &painterId); // 绑定展示窗口和SN号
-    void updateRealData();                                                      // 主界面实时更新数据
-    void updateProduceRealData();                                               // 生产数据界面实时更新数据
-    void updateSensorRealData();                                                // 传感器界面实时更新数据
-    void updateValveRealData();                                                 // 阀门界面实时更新数据
-    void updatePowerRealData();                                                 // 电机界面实时更新数据
-    void updateAlertData();                                                     // 更新报警信息
-    void updateFormulaData();                                                   // 初始化配方界面
-    void updateVideo();                                                         // 实时视频
-    void refreshImage(const int winint, const int bottomNum);                   // 实时图像
-    void updateByMinute(const std::string &minute);                             // 每分钟更新
+    void updateRealData();                                    // 主界面实时更新数据
+    void updateProduceRealData();                             // 生产数据界面实时更新数据
+    void updateSensorRealData();                              // 传感器界面实时更新数据
+    void updateValveRealData();                               // 阀门界面实时更新数据
+    void updatePowerRealData();                               // 电机界面实时更新数据
+    void updateAlertData();                                   // 更新报警信息
+    void updateFormulaData();                                 // 初始化配方界面
+    void updateVideo();                                       // 实时视频
+    void refreshImage(const int winint, const int bottomNum); // 实时图像
+    void updateByMinute(const std::string &minute);           // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();
     void timerTask(); // 定时任务
