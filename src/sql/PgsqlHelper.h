@@ -25,8 +25,10 @@ class PgsqlHelper : public AppFrame::NonCopyable
     {
         delete pool_;
     }
-    bool initSqlHelper()
+    bool initSqlHelper(const std::string &host, uint16_t port, const std::string &dbName, const std::string &user,
+                       const std::string &password)
     {
+        pool_ = new PgsqlConnectionPool(host.c_str(), port, dbName.c_str(), user.c_str(), password.c_str(), 20, 5000);
         return pool_->getCount();
     }
     bool createTable(const std::string &tableName, std::list<std::string> &&fields) // ok
@@ -499,8 +501,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
   private:
     PgsqlHelper()
     {
-        pool_ = new PgsqlConnectionPool(20, 5000);
     }
     QString connectionName_;
-    DBConnectionPool *pool_;
+    DBConnectionPool *pool_ = nullptr;
 };

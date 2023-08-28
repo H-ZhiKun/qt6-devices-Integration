@@ -271,6 +271,7 @@ GroupBox {
                     hoverEnabled: true
                     onClicked: {
                         bar.currentIndex = 0;
+                        requireValveState();
                     }
                     onEntered: {
                         volveTab1Rec.border.color = "lightblue";
@@ -310,6 +311,7 @@ GroupBox {
                             initValve();
                             pageFlag = false;
                         }
+                        requireValveState();
                     }
                     onEntered: {
                         volveTab2Rec.border.color = "lightblue";
@@ -390,6 +392,100 @@ GroupBox {
                     baseIndex: 26
                     model: 4
                     listName: valveControllWin.objName
+                }
+            }
+        }
+    }
+
+    function requireValveState() {
+        var myJsonObject = {};
+        var i = 0;
+        var j = 0;
+        for (i = 0; i < 5; i++) {
+            if (valveListView1.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView1.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView2.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView2.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView3.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView3.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView4.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView4.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView5.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView5.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 4; i++) {
+            if (valveListView6.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView6.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        var strSend = JSON.stringify(myJsonObject);
+        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ReadPLC, strSend);
+        var result = JSON.parse(jsRet);
+        if (result.ok === true) {
+            var keys = Object.values(result.details);
+            for (var k = 0; k < keys.length; k++) {
+                var key = keys[k];
+                if (k < 5) {
+                    console.log("keys: ", key);
+                    if (key === "0") {
+                        valveListView1.itemAtIndex(k).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView1.itemAtIndex(k).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 5 && k < 10) {
+                    if (key === "0") {
+                        valveListView2.itemAtIndex(k - 5).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView2.itemAtIndex(k - 5).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 10 && k < 15) {
+                    if (key === "0") {
+                        valveListView3.itemAtIndex(k - 10).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView3.itemAtIndex(k - 10).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 15 && k < 20) {
+                    if (key === "0") {
+                        valveListView4.itemAtIndex(k - 15).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView4.itemAtIndex(k - 15).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 20 && k < 25) {
+                    if (key === "0") {
+                        valveListView5.itemAtIndex(k - 20).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView5.itemAtIndex(k - 20).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 25 && k < 30) {
+                    if (key === "0") {
+                        valveListView6.itemAtIndex(k - 25).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView6.itemAtIndex(k - 25).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
                 }
             }
         }

@@ -54,7 +54,7 @@ GroupBox {
         Text {
             x: 10
             y: -20
-            text: "窗口一"
+            text: "定位相机"
             font.pointSize: 10
         }
     }
@@ -96,7 +96,7 @@ GroupBox {
         Text {
             x: 10
             y: -20
-            text: "窗口三"
+            text: "定位复核相机"
             font.pointSize: 10
         }
     }
@@ -136,7 +136,7 @@ GroupBox {
         Text {
             x: 10
             y: -20
-            text: "窗口二"
+            text: "打码复核相机"
             font.pointSize: 10
         }
     }
@@ -523,6 +523,28 @@ GroupBox {
             } else {
                 console.log("save failed");
             }
+        }
+    }
+
+    Button {
+        id: button2
+        x: 424
+        y: 570
+        width: 112
+        height: 32
+        text: qsTr("点动模式")
+        property bool pointMode: false
+        onClicked: {
+            pointMode = !pointMode;
+            var json = {};
+            if (pointMode) {
+                json["point_b_12992_00"] = "1";
+                text = "点动中";
+            } else {
+                json["point_b_12992_00"] = "0";
+                text = "点动模式";
+            }
+            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
         }
     }
 

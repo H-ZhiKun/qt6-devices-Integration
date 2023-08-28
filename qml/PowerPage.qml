@@ -471,22 +471,26 @@ GroupBox {
                 onPressed: {
                     allAutoColor.color = Qt.rgba(153 / 255, 153 / 255, 153 / 255, 1);
                 }
+                onReleased: {
+                    allAutoColor.color = Qt.rgba(204 / 255, 204 / 255, 204 / 255, 1);
+                }
                 onClicked: {
-                    var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+                    var json = {
+                        "addr": "Auto_b_12704_11",
+                        "values": "1"
+                    };
+                    var strSend = JSON.stringify(json);
+                    var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePlcRealData, strSend);
                     var result = JSON.parse(jsRet);
-                    if (result.ok === true) {
-                        setInfo.text = "保存成功！";
-                        setInfo.color = "green";
+                    if (result.ok) {
+                        allAutoColor.color = Qt.rgba(153 / 255, 153 / 255, 153 / 255, 1);
+                        allAutoColor.colorState = true;
+                        allAutoColor.border.width = 2;
+                        powerAuto.checked = true;
+                        allAutoButton.text = "全部自动中";
                     } else {
-                        setInfo.text = "保存失败！";
-                        setInfo.color = "red";
+                        console.log("all auto filed!");
                     }
-                    allAutoColor.color = Qt.rgba(153 / 255, 153 / 255, 153 / 255, 1);
-                    allAutoColor.colorState = true;
-                    allAutoColor.border.width = 2;
-                    powerAuto.checked = true;
-                    allAutoButton.text = "全部自动中";
-                    //plc逻辑
                 }
             }
         }
@@ -507,11 +511,19 @@ GroupBox {
             flat: false
             font.pointSize: 12
             focusPolicy: Qt.NoFocus
+            enabled: false
             onClicked: {
-                enabled = false;
-                // 全部回0函数调用
-                // appMetaflash.axiseBackZero()
-                enabled = true;
+                var json = {
+                    "addr": "Zero_b_12704_12",
+                    "values": "1"
+                };
+                var strSend = JSON.stringify(json);
+                var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePlcRealData, strSend);
+                var result = JSON.parse(jsRet);
+                if (result.ok) {
+                } else {
+                    console.log("back to zero filed!");
+                }
             }
         }
     }
@@ -565,6 +577,7 @@ GroupBox {
                     hoverEnabled: true
                     onClicked: {
                         bar.currentIndex = 0;
+                        requirePowerState();
                     }
                     onEntered: {
                         powerTab1Rec.border.color = "lightblue";
@@ -604,6 +617,7 @@ GroupBox {
                             initPower();
                             pageFlag = false;
                         }
+                        requirePowerState();
                     }
                     onEntered: {
                         powerTab2Rec.border.color = "lightblue";
@@ -692,6 +706,112 @@ GroupBox {
         color: "red"
     }
 
+    function requirePowerState() {
+        var myJsonObject = {};
+        var i = 0;
+        var j = 0;
+        for (i = 0; i < 5; i++) {
+            if (valveListView1.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView1.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView2.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView2.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView3.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView3.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView4.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView4.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView5.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView5.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (valveListView6.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView6.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 3; i++) {
+            if (valveListView7.itemAtIndex(i) !== null) {
+                myJsonObject[valveListView7.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        var strSend = JSON.stringify(myJsonObject);
+        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ReadPLC, strSend);
+        var result = JSON.parse(jsRet);
+        if (result.ok === true) {
+            var keys = Object.values(result.details);
+            for (var k = 0; k < keys.length; k++) {
+                var key = keys[k];
+                if (k < 5) {
+                    console.log("keys: ", key);
+                    if (key === "0") {
+                        valveListView1.itemAtIndex(k).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView1.itemAtIndex(k).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 5 && k < 10) {
+                    if (key === "0") {
+                        valveListView2.itemAtIndex(k - 5).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView2.itemAtIndex(k - 5).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 10 && k < 15) {
+                    if (key === "0") {
+                        valveListView3.itemAtIndex(k - 10).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView3.itemAtIndex(k - 10).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 15 && k < 20) {
+                    if (key === "0") {
+                        valveListView4.itemAtIndex(k - 15).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView4.itemAtIndex(k - 15).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 20 && k < 25) {
+                    if (key === "0") {
+                        valveListView5.itemAtIndex(k - 20).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView5.itemAtIndex(k - 20).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 25 && k < 30) {
+                    if (key === "0") {
+                        valveListView6.itemAtIndex(k - 25).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView6.itemAtIndex(k - 25).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 30 && k < 35) {
+                    if (key === "0") {
+                        valveListView7.itemAtIndex(k - 30).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        valveListView7.itemAtIndex(k - 30).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+            }
+        }
+    }
     // 这样写的原因： 地址不连续，建立映射关系
     function initPower() {
         var item0 = valveListView1.itemAtIndex(0);

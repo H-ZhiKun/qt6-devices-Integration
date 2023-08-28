@@ -10,9 +10,9 @@ void Cognex::dealing(std::vector<unsigned char> buffer)
     QString result = QString::fromStdString(str);
     if (!result.isEmpty())
     {
-        qDebug("scanCode 1:", result);
         QStringList parts = result.split(',');
         qDebug() << "scanCode" << parts.first(); // 返回第一个逗号前的内容
+        emit finishReadQRCode(parts.first().toStdString());
     }
     else
     {

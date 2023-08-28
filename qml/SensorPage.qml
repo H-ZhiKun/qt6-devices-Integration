@@ -223,6 +223,7 @@ GroupBox {
                     hoverEnabled: true
                     onClicked: {
                         bar.currentIndex = 0;
+                        requireSensorState();
                     }
                     onEntered: {
                         sensorTab1Rec.border.color = "lightblue";
@@ -262,6 +263,7 @@ GroupBox {
                             initSensor();
                             pageFlag1 = false;
                         }
+                        requireSensorState();
                     }
                     onEntered: {
                         sensorTab2Rec.border.color = "lightblue";
@@ -302,6 +304,7 @@ GroupBox {
                             initSensor();
                             pageFlag2 = false;
                         }
+                        requireSensorState();
                     }
                     onEntered: {
                         sensorTab3Rec.border.color = "lightblue";
@@ -341,6 +344,7 @@ GroupBox {
                             initSensor();
                             pageFlag3 = false;
                         }
+                        requireSensorState();
                     }
                     onEntered: {
                         sensorTab4Rec.border.color = "lightblue";
@@ -485,6 +489,218 @@ GroupBox {
             }
         }
     }
+
+    function requireSensorState() {
+        var myJsonObject = {};
+        var i = 0;
+        var j = 0;
+        for (i = 0; i < 5; i++) {
+            if (sensorListView1.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView1.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView2.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView2.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView3.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView3.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView4.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView4.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView5.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView5.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView6.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView6.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView7.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView7.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView8.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView8.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView9.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView9.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView10.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView10.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView11.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView11.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView12.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView12.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView13.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView13.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 5; i++) {
+            if (sensorListView14.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView14.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        for (i = 0; i < 2; i++) {
+            if (sensorListView15.itemAtIndex(i) !== null) {
+                myJsonObject[sensorListView15.itemAtIndex(i).stateAddr] = j.toString();
+                j = j + 1;
+            }
+        }
+        var strSend = JSON.stringify(myJsonObject);
+        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ReadPLC, strSend);
+        var result = JSON.parse(jsRet);
+        if (result.ok === true) {
+            var keys = Object.values(result.details);
+            for (var k = 0; k < keys.length; k++) {
+                var key = keys[k];
+                if (k < 5) {
+                    console.log("keys: ", key);
+                    if (key === "0") {
+                        sensorListView1.itemAtIndex(k).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView1.itemAtIndex(k).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 5 && k < 10) {
+                    if (key === "0") {
+                        sensorListView2.itemAtIndex(k - 5).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView2.itemAtIndex(k - 5).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 10 && k < 15) {
+                    if (key === "0") {
+                        sensorListView3.itemAtIndex(k - 10).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView3.itemAtIndex(k - 10).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 15 && k < 20) {
+                    if (key === "0") {
+                        sensorListView4.itemAtIndex(k - 15).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView4.itemAtIndex(k - 15).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 20 && k < 25) {
+                    if (key === "0") {
+                        sensorListView5.itemAtIndex(k - 20).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView5.itemAtIndex(k - 20).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 25 && k < 30) {
+                    if (key === "0") {
+                        sensorListView6.itemAtIndex(k - 25).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView6.itemAtIndex(k - 25).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 30 && k < 35) {
+                    if (key === "0") {
+                        sensorListView7.itemAtIndex(k - 30).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView7.itemAtIndex(k - 30).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 35 && k < 40) {
+                    if (key === "0") {
+                        sensorListView8.itemAtIndex(k - 35).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView8.itemAtIndex(k - 35).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 40 && k < 45) {
+                    if (key === "0") {
+                        sensorListView9.itemAtIndex(k - 40).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView9.itemAtIndex(k - 40).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 45 && k < 50) {
+                    if (key === "0") {
+                        sensorListView10.itemAtIndex(k - 45).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView10.itemAtIndex(k - 45).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 50 && k < 55) {
+                    if (key === "0") {
+                        sensorListView11.itemAtIndex(k - 50).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView11.itemAtIndex(k - 50).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 55 && k < 60) {
+                    if (key === "0") {
+                        sensorListView12.itemAtIndex(k - 55).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView12.itemAtIndex(k - 55).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 60 && k < 65) {
+                    if (key === "0") {
+                        sensorListView13.itemAtIndex(k - 60).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView13.itemAtIndex(k - 60).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 65 && k < 70) {
+                    if (key === "0") {
+                        sensorListView14.itemAtIndex(k - 65).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView14.itemAtIndex(k - 65).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+                if (k >= 70 && k < 75) {
+                    if (key === "0") {
+                        sensorListView15.itemAtIndex(k - 70).imageSource = "file:///" + appdir + "/ico/red.png";
+                    } else {
+                        sensorListView15.itemAtIndex(k - 70).imageSource = "file:///" + appdir + "/ico/green.png";
+                    }
+                }
+            }
+        }
+    }
+
     function initSensor() {
         var item0 = sensorListView1.itemAtIndex(0);
         var item1 = sensorListView1.itemAtIndex(1);

@@ -15,20 +15,25 @@ PLCDevice::~PLCDevice()
         delete client_;
         client_ = nullptr;
     }
+    if (deviceUpdate_)
+    {
+        delete deviceUpdate_;
+        deviceUpdate_ = nullptr;
+    }
     // 加wapper 清除写缓存表
 }
 
-void PLCDevice::init()
+void PLCDevice::init(const std::string &host, uint16_t port, uint16_t ioFreq, uint16_t FIFOFreq)
 {
     ModbusInitArguments args;
-    // args.ip = "127.0.0.1";
-    args.ip = "192.168.1.10";
-    args.port = 502;
+    args.ip = host;
+    args.port = port;
     client_ = new ModbusClient(std::move(args));
     client_->addWriteCache(writeBeginAddress_, writeCacheSize_);
-    client_->addReadCache(readBeginAddress_, readCacheSize_, 500);
-    client_->addFIFOCache(FIFOBeginAddress_, FIFOCacheSize_, 50);
+    client_->addReadCache(readBeginAddress_, readCacheSize_, ioFreq);
+    client_->addFIFOCache(FIFOBeginAddress_, FIFOCacheSize_, FIFOFreq);
     client_->work();
+    deviceUpdate_ = new DeviceUpdate();
     updateData();
 }
 
@@ -48,7 +53,7 @@ std::string PLCDevice::readDevice(const std::string &type, const std::string &ad
             }
             else if (type == "r")
             {
-                uint32_t combinedValue = (static_cast<uint32_t>(data[1]) << 16) | static_cast<uint32_t>(data[0]);
+                uint32_t combinedValue = (static_cast<uint32_t>(data[0]) << 16) | static_cast<uint32_t>(data[1]);
                 ret = fmt::format("{:.2f}", static_cast<float>(combinedValue) / 100.0);
             }
             else if (type == "n")
@@ -85,8 +90,8 @@ bool PLCDevice::writeDataToDevice(const std::string &type, const std::string &ad
         {
             plcAddr = Utils::anyFromString<uint16_t>(addr);
             uint32_t uint32Val = Utils::anyFromString<float>(value) * 100;
-            data[0] = (uint16_t)uint32Val;
-            data[1] = (uint16_t)(uint32Val >> 16);
+            data[1] = (uint16_t)uint32Val;
+            data[0] = (uint16_t)(uint32Val >> 16);
             regType = WriteRegisterType::RegReal;
         }
 
@@ -150,7 +155,7 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
                 {
                     // 计算 key
                     const std::string key = fmt::format("4{}_{}", baseAddress + i, j);
-                    std::cout << "PLC Address = " << key << std::endl;
+                    // std::cout << "PLC Address = " << key << std::endl;
 
                     auto finder = regWapper_.mapAlertInfo.find(key);
                     if (finder != regWapper_.mapAlertInfo.end())
@@ -167,14 +172,42 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
-    fifoInfo_.numQRCode.store(FIFOGroup[1], std::memory_order_relaxed);
-    fifoInfo_.numPosition.store(FIFOGroup[2], std::memory_order_relaxed);
-    fifoInfo_.numVerifyPos.store(FIFOGroup[3], std::memory_order_relaxed);
-    fifoInfo_.numCoding.store(FIFOGroup[4], std::memory_order_relaxed);
-    fifoInfo_.numVerifyCoding.store(FIFOGroup[5], std::memory_order_relaxed);
+    if (FIFOGroup[1] != fifoInfo_.numQRCode)
+    {
+        deviceUpdate_->UpdateReadQRCode(FIFOGroup[1]);
+        fifoInfo_.numQRCode = FIFOGroup[1];
+    }
+    if (FIFOGroup[2] != fifoInfo_.numPosition)
+    {
+        emit deviceUpdate_->UpdateLocatePhoto(0, FIFOGroup[2]);
+        fifoInfo_.numPosition = FIFOGroup[2];
+    }
+    if (FIFOGroup[3] != fifoInfo_.numVerifyPos)
+    {
+        emit deviceUpdate_->UpdateLocateCheckPhoto(2, FIFOGroup[3]);
+        fifoInfo_.numVerifyPos = FIFOGroup[3];
+    }
+    if (FIFOGroup[4] != fifoInfo_.numCoding)
+    {
+        emit deviceUpdate_->UpdateCodeLogistics(FIFOGroup[4]);
+        fifoInfo_.numCoding = FIFOGroup[4];
+    }
+    if (FIFOGroup[5] != fifoInfo_.numVerifyCoding)
+    {
+        emit deviceUpdate_->UpdateCodeCheck(1, FIFOGroup[5]);
+        fifoInfo_.numVerifyCoding = FIFOGroup[5];
+    }
+    if (FIFOGroup[12] != fifoInfo_.signalMove)
+    {
+        emit deviceUpdate_->UpdateBottomMove(FIFOGroup[12]);
+        fifoInfo_.signalMove = FIFOGroup[12];
+    }
+    if (FIFOGroup[13] != fifoInfo_.signalSearchCoding)
+    {
+        emit deviceUpdate_->UpdateCodeSerch(FIFOGroup[13]);
+        fifoInfo_.signalSearchCoding = FIFOGroup[13];
+    }
 
-    fifoInfo_.signalMove.store(FIFOGroup[12], std::memory_order_relaxed);
-    fifoInfo_.signalSearchCoding.store(FIFOGroup[13], std::memory_order_relaxed);
     // std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding
     //           << Utils::getCurrentTime(true) << std::endl;
 }

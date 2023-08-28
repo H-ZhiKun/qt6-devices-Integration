@@ -157,7 +157,7 @@ Window {
                 y: 5
                 width: 103
                 height: 34
-                model: ["Off", "On"]
+                model: ["软触发", "硬触发"]
             }
 
             Text {
@@ -453,38 +453,23 @@ Window {
             y: 620
             font.pointSize: 12
             onClicked: {
-                if(comboBoxWindow.currentIndex === -1){
+                if (comboBoxWindow.currentIndex === -1) {
                     saveText.text = "请绑定窗口！";
                     saveText.color = "red";
-                }else{
-                    // var json = {
-                    //     "sn_num": currentCamera.currentText,
-                    //     "qml_window": comboBoxWindow.currentIndex,
-                    //     "fps": sliderFPS.value,
-                    //     "trigger_mode": comboBoxTrigger.currentIndex,
-                    //     "expose": sliderExpose.value,
-                    //     "gain": sliderGain.value,
-                    //     "width": sliderWidth.value,
-                    //     "height": sliderHeight.value,
-                    //     "offset_x": sliderOffsetX.value,
-                    //     "offset_y": sliderOffsetY.value,
-                    //     "max_width": parseInt(textWidthMax.text),
-                    //     "max_height": parseInt(textHeightMax.text)
-                    // };
-
+                } else {
                     var json = {
-                        "sn_num": 1,
-                        "qml_window": 1,
-                        "fps": 1,
-                        "trigger_mode": 1,
-                        "expose": 1,
-                        "gain": 1,
-                        "width": 1,
-                        "height": 1,
-                        "offset_x": 1,
-                        "offset_y": 1,
-                        "max_width": 1,
-                        "max_height": 1
+                        "sn_num": currentCamera.currentText,
+                        "qml_window": comboBoxWindow.currentIndex,
+                        "fps": sliderFPS.value,
+                        "trigger_mode": comboBoxTrigger.currentIndex,
+                        "expose": sliderExpose.value,
+                        "gain": sliderGain.value,
+                        "width": sliderWidth.value,
+                        "height": sliderHeight.value,
+                        "offset_x": sliderOffsetX.value,
+                        "offset_y": sliderOffsetY.value,
+                        "max_width": parseInt(textWidthMax.text),
+                        "max_height": parseInt(textHeightMax.text)
                     };
 
                     // 将json对象转换为JSON字符串
