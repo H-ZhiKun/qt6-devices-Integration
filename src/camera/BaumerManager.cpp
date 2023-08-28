@@ -132,7 +132,11 @@ void BaumerManager::stop()
 std::list<cv::Mat> BaumerManager::getImageBySN(uint8_t number)
 {
     std::lock_guard lock(mtxCamera_);
-    return lvCameras_[number]->getImage();
+    if (lvCameras_[number])
+    {
+        return lvCameras_[number]->getImage();
+    }
+    return {};
 };
 
 void BaumerManager::initializeBGAPI()
@@ -308,7 +312,10 @@ Json::Value BaumerManager::getCamera(uint8_t number)
     if (number < lvCameras_.size())
     {
         std::lock_guard lock(mtxCamera_);
-        ret = lvCameras_[number]->getROParams();
+        if (lvCameras_[number])
+        {
+            ret = lvCameras_[number]->getROParams();
+        }
     }
     auto &temp = lvParams_[number];
     for (const auto &key : temp.getMemberNames())
