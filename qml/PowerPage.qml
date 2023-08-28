@@ -402,12 +402,14 @@ GroupBox {
                         }
                         var directAddr = singalComponent.curItem.directAddr;
                         var locateAddr = singalComponent.curItem.locateAddr;
+                        var startAddr = singalComponent.curItem.startAddr;
                         var json = {
                             [handMoveAddr]: "1",
                             [setLocateAddr]: setPositionParam.text,
                             [setSpeedAddr]: setSpeedParam.text,
                             [directAddr]: switchPowerDirection.checked ? "0" : "1",
-                            [locateAddr]: comboBox.currentIndex === 1 ? "1" : "0"
+                            [locateAddr]: comboBox.currentIndex === 1 ? "1" : "0",
+                            [startAddr]: powerSwitch.checked ? "1" : "0"
                         };
                         var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
                         var result = JSON.parse(jsRet);
@@ -1333,15 +1335,15 @@ GroupBox {
             item30.itemName = "M071";
             item30.stateAddr = "M071_b_12315_00";
             item30.modeAddr = "M071_b_12317_15";
-            item30.realLocateAddr = "M071_r_12322";
-            item30.realSpeedAddr = "M071_r_12324";
+            item30.realLocateAddr = "M071_r_12326";
+            item30.realSpeedAddr = "M071_r_12328";
             item30.locateAddr = "M071_b_12690_00";
             item30.handMoveAddr = "M071_b_12690_01";
             item30.startAddr = "M071_b_12690_02";
             item30.jogAddr = "M071_b_12690_03";
             item30.directAddr = "M071_b_12690_04";
-            item30.setLocateAddr = "M071_r_12709";
-            item30.setSpeedAddr = "M071_r_12711";
+            item30.setLocateAddr = "M071_r_12713";
+            item30.setSpeedAddr = "M071_r_12715";
         }
         if (item31 === null) {
             console.log("M081 no item");

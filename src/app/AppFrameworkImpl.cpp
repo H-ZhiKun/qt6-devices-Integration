@@ -605,19 +605,19 @@ void AppFrame::AppFrameworkImpl::updateProduceRealData()
 {
     Json::Value jsProduceVal;
     /*生产数据界面实时更新数据*/
-    jsProduceVal["positive_active_energy"] = "3.22"; // 正向有功电能
-    jsProduceVal["reverse_active_energy"] = "4.22";  // 反向有功电能
-    jsProduceVal["a_phase_voltage"] = "3.45";        // A相电压
-    jsProduceVal["b_phase_voltage"] = "3.54";        // B相电压
-    jsProduceVal["c_phase_voltage"] = "3.36";        // C相电压
-    jsProduceVal["temperature"] = "45.7";            // 温度
-    jsProduceVal["total_active_power"] = "2045";     // 总有功功率
-    jsProduceVal["total_apparent_power"] = "5424";   // 总视在功率
-    jsProduceVal["total_active_energy"] = "54.5";    // 总有功电能
-    jsProduceVal["a_direction_current"] = "12.4";    // A向电流
-    jsProduceVal["b_direction_current"] = "15.3";    // B向电流
-    jsProduceVal["c_direction_current"] = "14.5";    // C向电流
-    jsProduceVal["humidity"] = "91.3%";              // 湿度
+    jsProduceVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
+    jsProduceVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
+    jsProduceVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
+    jsProduceVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
+    jsProduceVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
+    jsProduceVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
+    jsProduceVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
+    jsProduceVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
+    jsProduceVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
+    jsProduceVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
+    jsProduceVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
+    jsProduceVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
+    jsProduceVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
 
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));

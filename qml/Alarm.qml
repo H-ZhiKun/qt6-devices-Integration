@@ -188,10 +188,18 @@ GroupBox {
                 text = "取消静音";
                 voiceState = true;
                 icon.source = "file:///" + appdir + "/ico/jingyin.png";
+                var json = {
+                    "voice_b_12689_00": "1"
+                };
+                var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
             } else {
                 text = "静音";
                 voiceState = false;
                 icon.source = "file:///" + appdir + "/ico/yinliangda.png";
+                var json = {
+                    "voice_b_12689_00": "0"
+                };
+                var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
             }
         }
     }
