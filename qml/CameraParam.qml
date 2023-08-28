@@ -471,6 +471,7 @@ Window {
                         "max_width": parseInt(textWidthMax.text),
                         "max_height": parseInt(textHeightMax.text)
                     };
+
                     // 将json对象转换为JSON字符串
                     var jsonString = JSON.stringify(json);
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SetCameraParam, jsonString);

@@ -3,6 +3,7 @@
 #include "NonCopyable.h"
 #include "PgsqlConnectionPool.h"
 #include "json/json.h"
+#include <QDebug>
 #include <QFile>
 #include <QJsonDocument>
 #include <QSqlDriver>
@@ -30,7 +31,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         pool_ = new PgsqlConnectionPool(host.c_str(), port, dbName.c_str(), user.c_str(), password.c_str(), 20, 5000);
         return pool_->getCount();
     }
-    bool createTable(const std::string &tableName, std::list<std::string> &&fields)
+    bool createTable(const std::string &tableName, std::list<std::string> &&fields) // ok
     {
         bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
@@ -41,15 +42,14 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QSqlQuery query(*connect);
 
         // 构建创建表的SQL语句
-        QString sql = fmt::format("CREATE TABLE IF NOT EXISTS `{}` (", tableName.c_str()).c_str();
+        QString sql = fmt::format("CREATE TABLE IF NOT EXISTS \"{}\" (", tableName.c_str()).c_str();
         for (const auto &field : fields)
         {
             sql += field.c_str() + QString(", ");
         }
         sql.chop(2); // 去除最后的逗号和空格
         sql += ")";
-        sql += " ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = DYNAMIC;";
-
+        sql += ";";
         if (!query.exec(sql))
         {
             LogError("Failed to create table: {}", query.lastError().text().toStdString());
@@ -60,7 +60,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         return ret;
     }
 
-    bool insertData(const std::string &tableName, const Json::Value &&jsValue)
+    bool insertData(const std::string &tableName, const Json::Value &&jsValue) // ok
     {
         bool ret = true;
 
@@ -81,7 +81,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         if (jsValue.isArray())
         {
             // 构建批量插入数据的SQL语句
-            QString sql = fmt::format("INSERT INTO `{}` (", tableName.c_str()).c_str();
+            QString sql = fmt::format("INSERT INTO \"{}\" (", tableName.c_str()).c_str();
             QString values;
             QVariantList params;
             bool bAddfield = false;
@@ -98,7 +98,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
                 {
                     if (!bAddfield)
                     {
-                        sql += QString("`") + iter.name().c_str() + "`, ";
+                        sql += QString(iter.name().c_str()) + ", ";
                     }
                     valuePlaceholders += "?, ";
                     QVariant curVal;
@@ -120,7 +120,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
             values.chop(2); // 去除最后的逗号和空格
             sql += ") VALUES " + values;
             query.prepare(sql);
-
             for (int i = 0; i < params.size(); ++i)
             {
                 query.addBindValue(params[i].toString());
@@ -136,7 +135,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
             QString valuePlaceholders;
             for (auto iter = jsValue.begin(); iter != jsValue.end(); ++iter)
             {
-                sql += QString("`") + iter.name().c_str() + "`, ";
+                sql += QString(iter.name().c_str()) + ", ";
                 valuePlaceholders += "?, ";
                 QVariant curVal;
                 if (iter->isBool())
@@ -154,11 +153,11 @@ class PgsqlHelper : public AppFrame::NonCopyable
             sql.chop(2); // 去除最后的逗号和空格
             sql += ") VALUES " + values;
             query.prepare(sql);
-
             for (int i = 0; i < params.size(); ++i)
             {
                 query.addBindValue(params[i].toString());
             }
+            qDebug() << sql;
         }
 
         if (!query.exec())
@@ -211,7 +210,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
         sql.chop(2); // 去除最后的逗号和空格
         sql += QString(" WHERE ") + condition.c_str();
         query.prepare(sql);
-        qDebug() << "sql update: " << sql;
         for (int i = 0; i < params.size(); ++i)
         {
             query.addBindValue(params[i].toString());
@@ -223,10 +221,11 @@ class PgsqlHelper : public AppFrame::NonCopyable
             ret = false;
         }
         pool_->releaseConnection(connect);
+        qDebug() << "sql update: " << sql;
         return ret;
     }
 
-    bool upsertData(const std::string &tableName, const Json::Value &&data)
+    bool upsertData(const std::string &tableName, const Json::Value &&data) // ok
     {
         bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
@@ -237,7 +236,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         QVariantList params;
 
         // 构建UPSERT语句
-        QString upsertSql = fmt::format("INSERT INTO `{}` (", tableName.c_str()).c_str();
+        QString upsertSql = fmt::format("INSERT INTO \"{}\" (", tableName.c_str()).c_str();
         QString updateSql = ") VALUES (";
         for (auto it = data.begin(); it != data.end(); ++it)
         {
@@ -256,7 +255,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         }
         upsertSql.chop(2); // 去除最后的逗号和空格
         updateSql.chop(2); // 去除最后的逗号和空格
-        upsertSql += updateSql + ") ON DUPLICATE KEY UPDATE ";
+        upsertSql += updateSql + ");";
         for (auto it = data.begin(); it != data.end(); ++it)
         {
             upsertSql += it.name() + " = VALUES(" + it.name() + "), ";
@@ -275,11 +274,12 @@ class PgsqlHelper : public AppFrame::NonCopyable
             LogError("Failed to upsert data: {}", query.lastError().text().toStdString());
             ret = false;
         }
+        std::cout << upsertSql.toStdString() << std::endl;
         pool_->releaseConnection(connect);
         return ret;
     }
 
-    bool deleteData(const std::string &tableName, const std::string &condition)
+    bool deleteData(const std::string &tableName, const std::string &condition) // ok
     {
         bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
@@ -298,11 +298,13 @@ class PgsqlHelper : public AppFrame::NonCopyable
             LogError("Failed to delete data: {}", query.lastError().text().toStdString());
             ret = false;
         }
+
         pool_->releaseConnection(connect);
+        std::cout << sql.toStdString() << std::endl;
         return ret;
     }
 
-    Json::Value selectData(const std::string &tableName, const std::string &&condition,
+    Json::Value selectData(const std::string &tableName, const std::string &&condition, // ok
                            const std::string &&orderBy = "")
     {
         Json::Value jsVal;
@@ -351,7 +353,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
     }
 
     Json::Value selectDataPaged(const std::string &tableName, const int pageSize, const int pageNumber,
-                                const std::string &&condition = "", const std::string &&orderBy = "")
+                                const std::string &&condition = "", const std::string &&orderBy = "") // ok
     {
         Json::Value jsVal;
 
@@ -437,7 +439,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
     }
 
     QString selectOneData(const std::string &tableName, const std::string &selectItem,
-                          const std::string &condition = "", const std::string &orderBy = "")
+                          const std::string &condition = "", const std::string &orderBy = "") // ok
     {
         Json::Value jsVal;
         QString fieldName = "";
