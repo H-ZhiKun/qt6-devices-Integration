@@ -26,7 +26,7 @@ plc:
   # type: circle or line
   type: circle
   # host: plc address,192.168.1.10 by default
-  host: 192.168.1.10
+  host: 192.168.123.10
   # port: plc port, 502 by default
   port: 502
   # io_freq read registers freq, the read interval milliseconds
