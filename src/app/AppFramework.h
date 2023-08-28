@@ -21,7 +21,6 @@ enum class ExpectedFunction
     InsertFormula = 4,  // 插入某个配方数据
     GetCameraParam = 5, // 查询某个相机数据
     SetCameraParam = 6, // 修改相机数据
-    GetCameraList = 7,  // 获取相机列表
     InsertUser = 8,     // 新建用户
     SelectUserID = 9,   // 查询用户ID
     SelectUser = 10,    // 查询用户
