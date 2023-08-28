@@ -13,12 +13,7 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
     }
     ~LockFreeQueue()
     {
-        T output;
-        while (this->dequeue(output))
-        {
-        }
-        BufferNode *front = head_.load(std::memory_order_relaxed);
-        delete front;
+        clear();
     }
 
     void enqueue(T &&input)
@@ -62,6 +57,15 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
     uint16_t getSize()
     {
         return size_;
+    }
+    void clear()
+    {
+        T output;
+        while (this->dequeue(output))
+        {
+        }
+        BufferNode *front = head_.load(std::memory_order_relaxed);
+        delete front;
     }
 
   private:
