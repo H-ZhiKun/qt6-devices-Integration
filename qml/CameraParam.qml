@@ -6,8 +6,8 @@ Window {
     objectName: "cameraPageWin"
     modality: Qt.WindowModal
     //固定窗口大小
-    minimumWidth: 500
-    maximumWidth: 500
+    minimumWidth: 420
+    maximumWidth: 420
     minimumHeight: 690
     maximumHeight: 690
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
@@ -28,7 +28,7 @@ Window {
             x: 15
             y: 0
             width: parent.width - 30
-            height: 130
+            height: 210
             title: "相机选择"
             background: Rectangle {
                 anchors.fill: parent
@@ -91,7 +91,7 @@ Window {
             Label {
                 id: textWidthMax
                 objectName: "textWidthMax"
-                x: 113
+                x: 120
                 y: 58
                 width: 80
                 font.pointSize: 12
@@ -106,19 +106,82 @@ Window {
 
             Label {
                 id: textHeightMax
-                objectName: "textHeightMax"
-                x: 315
+                x: 323
                 y: 58
                 width: 80
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 18
+                y: 98
+                text: qsTr("Width 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textWidthIncrement
+                x: 120
+                y: 98
+                width: 80
+                text: widthIncrement
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 220
+                y: 98
+                text: qsTr("Height 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textHeightIncrement
+                x: 323
+                y: 98
+                width: 80
+                text: heightIncrement
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 18
+                y: 138
+                text: qsTr("OffsetX 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textOffsetxIncrement
+                x: 120
+                y: 138
+                width: 80
+                text: offsetxIncrement
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 220
+                y: 138
+                text: qsTr("OffsetY 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textOffsetyIncrement
+                x: 323
+                y: 138
+                width: 80
+                text: offsetyIncrement
                 font.pointSize: 12
             }
         }
 
         GroupBox {
             x: 15
-            y: 150
+            y: 230
             width: parent.width - 30
-            height: 450
+            height: 350
             title: "参数"
             background: Rectangle {
                 anchors.fill: parent
@@ -130,8 +193,8 @@ Window {
             }
 
             Text {
-                x: 220
-                y: 13
+                x: 18
+                y: 10
                 text: "触发模式"
                 font.pointSize: 12
             }
@@ -139,113 +202,111 @@ Window {
             ComboBox {
                 id: comboBoxTrigger
                 objectName: "textExposure"
-                x: 305
-                y: 5
-                width: 103
+                x: 215
+                y: -3
+                width: 105
                 height: 34
                 model: ["连续采集", "触发采集"]
             }
 
             Text {
                 x: 18
-                y: 113
+                y: 50
                 text: "曝光时间(ms)"
                 font.pointSize: 12
             }
 
             TextField {
                 id: textInputExpose
-                x: 340
-                y: 113
+                x: 215
+                y: 45
                 clip: true
-                width: 70
+                width: 105
                 height: 30
                 font.pointSize: 12
             }
 
             Text {
                 x: 18
-                y: 163
+                y: 90
                 text: "增益Gain(db)"
                 font.pointSize: 12
             }
 
             TextField {
                 id: textInputGain
-                x: 340
-                y: 163
+                x: 215
+                y: 85
                 clip: true
-                width: 70
+                width: 105
                 height: 30
                 font.pointSize: 12
             }
 
             Text {
                 x: 18
-                y: 213
+                y: 130
                 text: "Width"
                 font.pointSize: 12
             }
 
             TextField {
                 id: textInputWidth
-                x: 340
-                y: 213
+                x: 215
+                y: 125
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderWidth.value
                 font.pointSize: 12
             }
 
             Text {
                 x: 18
-                y: 263
+                y: 170
                 text: "Height"
                 font.pointSize: 12
             }
 
             TextField {
                 id: textInputHeight
-                x: 340
-                y: 263
+                x: 215
+                y: 165
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderHeight.value
                 font.pointSize: 12
             }
 
             Text {
                 x: 18
-                y: 313
+                y: 210
                 text: "OffsetX"
                 font.pointSize: 12
             }
 
             TextField {
                 id: textInputOffsetX
-                x: 340
-                y: 313
+                x: 215
+                y: 205
                 clip: true
-                width: 70
+                width: 105
                 height: 30
                 font.pointSize: 12
             }
 
             Text {
                 x: 18
-                y: 363
+                y: 250
                 text: "OffsetY"
                 font.pointSize: 12
             }
 
             TextField {
                 id: textInputOffsetY
-                x: 340
-                y: 363
+                x: 215
+                y: 245
                 clip: true
-                width: 70
+                width: 105
                 height: 30
                 font.pointSize: 12
             }
@@ -256,9 +317,10 @@ Window {
             objectName: "saveCameraSet"
             text: "保存设置"
             icon.source: "file:///" + appdir + "/ico/baocun.png"
-            x: 353
+            x: 280
             y: 620
             font.pointSize: 12
+            height: 40
             onClicked: {
                 if (comboBoxWindow.currentIndex === -1) {
                     saveText.text = "请绑定窗口！";
