@@ -78,6 +78,9 @@ Window {
                         textInputHeight.text = details.height;
                         textInputOffsetX.text = details.offset_x;
                         textInputOffsetY.text = details.offset_y;
+                    } else {
+                        saveText.text = result.description;
+                        saveText.color = "red";
                     }
                 }
             }
@@ -305,7 +308,7 @@ Window {
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SetCameraParam, jsonString);
                     var result = JSON.parse(jsRet);
                     if (result.ok === false) {
-                        saveText.text = "修改失败！";
+                        saveText.text = result.description;
                         saveText.color = "red";
                     } else {
                         saveText.text = "保存成功！";

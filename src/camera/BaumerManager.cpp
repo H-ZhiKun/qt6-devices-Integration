@@ -308,16 +308,19 @@ bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
 
 Json::Value BaumerManager::getCamera(uint8_t number)
 {
-    Json::Value ret;
+    Json::Value ret = lvParams_[number];
+    Json::Value temp;
     if (number < lvCameras_.size())
     {
         std::lock_guard lock(mtxCamera_);
         if (lvCameras_[number])
         {
-            ret = lvCameras_[number]->getROParams();
+            temp = lvCameras_[number]->getROParams();
+        }
+        {
+            return {};
         }
     }
-    auto &temp = lvParams_[number];
     for (const auto &key : temp.getMemberNames())
     {
         ret[key] = temp[key];

@@ -186,7 +186,12 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
     auto params = Utils::stringToJson(value);
     uint8_t winId = params["qml_window"].asInt();
     Json::Value jsVal = baumerManager_->getCamera(winId);
-    return Utils::makeResponse(ret, std::move(jsVal));
+    std::string des;
+    if (jsVal.isNull())
+    {
+        des = "camera init failed";
+    }
+    return Utils::makeResponse(ret, std::move(jsVal), std::move(des));
 }
 
 std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
