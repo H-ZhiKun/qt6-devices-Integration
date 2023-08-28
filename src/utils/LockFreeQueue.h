@@ -23,10 +23,6 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
 
     void enqueue(T &&input)
     {
-        if (size_ > 50)
-        {
-            return;
-        }
         BufferNode *node{new BufferNode(std::move(input))};
         BufferNode *prevhead{head_.exchange(node, std::memory_order_acq_rel)};
         prevhead->next_.store(node, std::memory_order_release);
@@ -34,10 +30,6 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
     }
     void enqueue(const T &input)
     {
-        if (size_ > 50)
-        {
-            return;
-        }
         BufferNode *node{new BufferNode(input)};
         BufferNode *prevhead{head_.exchange(node, std::memory_order_acq_rel)};
         prevhead->next_.store(node, std::memory_order_release);
@@ -69,7 +61,7 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
     }
     uint16_t getSize()
     {
-        return size_.load();
+        return size_;
     }
 
   private:
