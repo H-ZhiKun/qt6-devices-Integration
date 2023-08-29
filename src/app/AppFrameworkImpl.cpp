@@ -574,7 +574,10 @@ void AppFrame::AppFrameworkImpl::updateRealData()
     jsMainVal["count_pause_waste"] = 0;     // 暂停、终止废品数
     jsMainVal["equipmentSteps"] = "未启动"; // 设备步骤
     jsMainVal["produceState"] = 3;          // 生产状态
-
+    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
+    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
+    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
+    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageMain), Q_ARG(QString, Utils::jsonToString(jsMainVal).c_str()));
 }
