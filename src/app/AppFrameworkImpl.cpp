@@ -181,13 +181,18 @@ void AppFrame::AppFrameworkImpl::updateUserData()
 std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
 {
     bool ret = false;
+    qDebug() << value;
     auto params = Utils::stringToJson(value);
-    uint8_t winId = params["qml_window"].asInt();
+    uint8_t winId = params["display_window"].asInt();
     Json::Value jsVal = baumerManager_->getCamera(winId);
     std::string des;
     if (jsVal.isNull())
     {
         des = "camera init failed";
+    }
+    else
+    {
+        ret = true;
     }
     return Utils::makeResponse(ret, std::move(jsVal), std::move(des));
 }
@@ -195,6 +200,7 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
 std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
 {
     bool ret = false;
+    qDebug() << value;
     Json::Value jsParams = Utils::stringToJson(value);
     std::string des;
     if (!jsParams.isNull())
@@ -472,14 +478,15 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
         }
         else
         {
-            // processHttpRes(json);
-            processHttpResTest(json);
+            processHttpRes(json);
+            // processHttpResTest(json);
         }
     });
     LogInfo("network client start success.");
     // 获取到二维码并发送
     QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
         Product *curProduct = productList_.back();
+        LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
         if (value == curProduct->qrCodeRes)
         {
             return;
@@ -508,7 +515,6 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
             {
                 value->logistics1 = code1;
                 value->logistics2 = code2;
-                domino_->dominoPrint(code1, code2);
                 break;
             }
         }
@@ -550,6 +556,8 @@ void AppFrame::AppFrameworkImpl::initPLC()
             {
                 pro_->isCode = true;
             }
+            domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
+            LogInfo("bottom {}: send data to domino, in {}", bottomNum, Utils::getCurrentTime(true));
         }
     });
 }
@@ -673,22 +681,24 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
     std::list<cv::Mat> matData = baumerManager_->getImageBySN(winint);
     if (matData.size() == 0)
     {
+        qDebug() << fmt::format("refreshImage mat null wind = {}, bottomNum = {}", winint, bottomNum);
         return;
     }
+    qDebug() << "Get image size = " << matData.size();
     cv::Mat temp = matData.back();
-    Utils::asyncTask([this, winId, target = std::move(temp), bottomNum] {
+    Utils::asyncTask([this, winId, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
         std::string modelName;
         if (winId == DisplayWindows::CodeCheckCamera)
         {
             url = config_["algorithm"]["url_ocr"].as<std::string>();
-            LogInfo("CodeCheckCamera bottom: ", bottomNum);
+            LogInfo("CodeCheckCamera bottom: {}", bottomNum);
             for (auto &product_ : productList_)
             {
                 if (product_->codeCheckImage == nullptr && !product_->logistics1.empty())
                 {
-                    product_->codeCheckImage = new cv::Mat(target);
+                    product_->codeCheckImage = new cv::Mat(temp);
                     product_->codeCheckImageName = imageName + "1";
                     modelName = "paddleOCR";
                     // 1 保存数据
@@ -699,12 +709,12 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
         {
             url = config_["algorithm"]["url_predict"].as<std::string>();
             ;
-            LogInfo("LocationCamera bottom: ", bottomNum);
+            LogInfo("LocationCamera bottom: {}", bottomNum);
             for (auto &product_ : productList_)
             {
                 if (product_->locateImage == nullptr)
                 {
-                    product_->locateImage = new cv::Mat(target);
+                    product_->locateImage = new cv::Mat(temp);
                     product_->locateImageName = imageName + "0";
                     modelName = "tangle";
                     break;
@@ -717,12 +727,12 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
         {
             url = config_["algorithm"]["url_predict"].as<std::string>();
             ;
-            LogInfo("LocateCheckCamera bottom: ", bottomNum);
+            LogInfo("LocateCheckCamera bottom: {}", bottomNum);
             for (auto &product_ : productList_)
             {
                 if (product_->locateCheckImage == nullptr)
                 {
-                    product_->locateCheckImage = new cv::Mat(target);
+                    product_->locateCheckImage = new cv::Mat(temp);
                     product_->locateCheckImageName = imageName + "2";
                     modelName = "tangleCheck";
                     break;
@@ -732,8 +742,8 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
             // plcDev_->writeDataToDevice("b", "13004", "0", "1");
         }
         invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                  Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
-        QImage img = Utils::matToQImage(target);
+                  Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, modelName)));
+        QImage img = Utils::matToQImage(temp);
         if (img.isNull() == false)
         {
             // 保存图像
@@ -1142,7 +1152,7 @@ void AppFrame::AppFrameworkImpl::timerTask()
     // }));
 }
 
-void AppFrame::AppFrameworkImpl::processHttpRes(std::string &jsonData)
+void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
 {
     // 调用yolo或者ocr处理过程
     QString qString = QString::fromStdString(jsonData);
@@ -1150,10 +1160,12 @@ void AppFrame::AppFrameworkImpl::processHttpRes(std::string &jsonData)
     QString type = jsonDocu["model"].toString();
     if (type == "paddleOCR")
     {
+        LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
         Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
     }
     else if (type == "tangle")
     {
+        LogInfo("recieve tangle algorithm return, in {}", Utils::getCurrentTime(true));
         Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
     }
 }

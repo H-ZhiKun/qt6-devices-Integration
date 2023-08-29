@@ -174,36 +174,43 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
     if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
+        LogInfo("numQRCode emit.");
         deviceUpdate_->UpdateReadQRCode(FIFOGroup[1]);
         fifoInfo_.numQRCode = FIFOGroup[1];
     }
     if (FIFOGroup[2] != fifoInfo_.numPosition)
     {
+        LogInfo("numPosition emit.");
         emit deviceUpdate_->UpdateLocatePhoto(0, FIFOGroup[2]);
         fifoInfo_.numPosition = FIFOGroup[2];
     }
     if (FIFOGroup[3] != fifoInfo_.numVerifyPos)
     {
+        LogInfo("numVerifyPos emit.");
         emit deviceUpdate_->UpdateLocateCheckPhoto(2, FIFOGroup[3]);
         fifoInfo_.numVerifyPos = FIFOGroup[3];
     }
     if (FIFOGroup[4] != fifoInfo_.numCoding)
     {
+        LogInfo("numCoding emit.");
         emit deviceUpdate_->UpdateCodeLogistics(FIFOGroup[4]);
         fifoInfo_.numCoding = FIFOGroup[4];
     }
     if (FIFOGroup[5] != fifoInfo_.numVerifyCoding)
     {
+        LogInfo("numVerifyCoding emit.");
         emit deviceUpdate_->UpdateCodeCheck(1, FIFOGroup[5]);
         fifoInfo_.numVerifyCoding = FIFOGroup[5];
     }
     if (FIFOGroup[12] != fifoInfo_.signalMove)
     {
+        LogInfo("signalMove emit.");
         emit deviceUpdate_->UpdateBottomMove(FIFOGroup[12]);
         fifoInfo_.signalMove = FIFOGroup[12];
     }
     if (FIFOGroup[13] != fifoInfo_.signalSearchCoding)
     {
+        LogInfo("signalSearchCoding emit.");
         emit deviceUpdate_->UpdateCodeSerch(FIFOGroup[13]);
         fifoInfo_.signalSearchCoding = FIFOGroup[13];
     }

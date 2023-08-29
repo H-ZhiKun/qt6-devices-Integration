@@ -76,8 +76,8 @@ class AppFrameworkImpl final : public AppFramework
     void updateByMinute(const std::string &minute);                                              // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();
-    void timerTask();                           // 定时任务
-    void processHttpRes(std::string &jsonData); // 处理http 返回参数
+    void timerTask();                                 // 定时任务
+    void processHttpRes(const std::string &jsonData); // 处理http 返回参数
     void processHttpResTest(const std::string &jsonData);
     void processPaddleOCR(QJsonDocument);  // 处理检测算法
     void processYoloTangle(QJsonDocument); // 处理角度预测算法

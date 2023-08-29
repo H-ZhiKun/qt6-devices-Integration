@@ -71,6 +71,7 @@ void TCPClient::sendData(const QByteArray &data)
 {
     if (tcpSocket && tcpSocket->state() == QAbstractSocket::ConnectedState)
     {
+        qDebug() << "DOMINO SEND: " << data;
         tcpSocket->write(data);
         tcpSocket->flush();
     }

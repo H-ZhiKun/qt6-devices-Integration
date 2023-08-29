@@ -270,10 +270,10 @@ bool Camera::getInitialized()
 void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint64_t width, uint64_t height,
                       uint64_t frameId)
 {
-    if (matBuffers_.getSize() > 10)
-    {
-        matBuffers_.clear();
-    }
+    // if (matBuffers_.getSize() > 10)
+    // {
+    //     matBuffers_.clear();
+    // }
     cv::Mat mat;
     if (pixFormat == "BayerRG8")
     {
@@ -359,7 +359,10 @@ bool Camera::setParams(const std::string &key, uint64_t value)
     {
         return writeParam(iter->second, value);
     }
-    return false;
+    else
+    {
+        return true;
+    }
 }
 
 const Json::Value &Camera::getROParams()

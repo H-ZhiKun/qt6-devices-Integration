@@ -53,32 +53,32 @@ baumer:
   # expose: expose time unit millisecond
   # gain: range 0 ~ 100
   # width: capture image width px
-  # height: capture image height px
+  # height: capture image height px700009842711
   paramters:
-    - sn_number: 700009429371
+    - sn_number: 700009842711
       display_window: 0
       trigger_mode: 1
       expose: 0.4
-      gain: 1
-      width: 800
-      height: 800
-      offset_x: 1
-      offset_y: 1
+      gain: 2
+      width: 1024
+      height: 1024
+      offset_x: 544
+      offset_y: 580
     - sn_number: 700009842699
       display_window: 1
       trigger_mode: 1
-      expose: 0.4
+      expose: 0.8
       gain: 1
       width: 800
       height: 800
-      offset_x: 1
-      offset_y: 1
-    - sn_number: 700009842711
+      offset_x: 0
+      offset_y: 0
+    - sn_number: 700009429371
       display_window: 2
       trigger_mode: 1
-      expose: 0.4
-      gain: 1
+      expose: 0.8
+      gain: 2
       width: 800
       height: 800
-      offset_x: 1
-      offset_y: 1
+      offset_x: 800
+      offset_y: 650

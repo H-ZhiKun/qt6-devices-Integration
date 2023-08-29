@@ -1,6 +1,7 @@
 #pragma once
+#include "Logger.h"
+#include "Utils.h"
 #include <QObject>
-
 class DeviceUpdate : public QObject
 {
     Q_OBJECT

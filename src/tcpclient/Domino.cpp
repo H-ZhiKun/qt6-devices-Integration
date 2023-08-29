@@ -46,7 +46,21 @@ void Domino::pingBehavior()
 
 void Domino::dominoCheck()
 {
-    sendData(QByteArray(reinterpret_cast<const char *>(cmdCheck.data()), static_cast<int>(cmdCheck.size())));
+    const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const int charactersLength = characters.length();
+
+    std::string randomString1;
+    std::string randomString2;
+    for (int i = 0; i < 12; ++i)
+    {
+        int randomIndex1 = rand() % charactersLength;
+        int randomIndex2 = rand() % charactersLength;
+        randomString1 += characters[randomIndex1];
+        randomString2 += characters[randomIndex2];
+    }
+
+    dominoPrint(randomString1, randomString2);
+    // sendData(QByteArray(reinterpret_cast<const char *>(cmdCheck.data()), static_cast<int>(cmdCheck.size())));
 }
 
 void Domino::dominoPrint(std::string code1, std::string code2)
@@ -57,7 +71,7 @@ void Domino::dominoPrint(std::string code1, std::string code2)
         cmdPrint[index] = val;
         index++;
     }
-    index = 15;
+    index = 16;
     for (unsigned char val : code2)
     {
         cmdPrint[index] = val;

@@ -16,7 +16,7 @@ Window {
     property int heightIncrement: 1
     property int offsetxIncrement: 1
     property int offsetyIncrement: 1
-    property int maxExpose: 1
+    property int maxExpose: 1000000
     title: "相机参数设置"
 
     Rectangle {
@@ -57,11 +57,12 @@ Window {
 
                 onCurrentValueChanged: {
                     var json = {
-                        "DisplayWindows": currentCamera.currentIndex
+                        "display_window": currentCamera.currentIndex
                     };
                     var strSend = JSON.stringify(json);
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.GetCameraParam, strSend);
                     var result = JSON.parse(jsRet);
+                    //console.log(result);
                     if (result.ok === true) {
                         var details = result.details;
                         textWidthMax.text = details.max_width;
@@ -72,7 +73,7 @@ Window {
                         offsetxIncrement = details.offsetx_increment;
                         offsetyIncrement = details.offsety_increment;
                         textInputExpose.text = details.expose;
-                        maxExpose = details.max_expose;
+                        // maxExpose = details.max_expose;
                         textInputGain.text = details.gain;
                         textInputWidth.text = details.width;
                         textInputHeight.text = details.height;
@@ -325,57 +326,56 @@ Window {
             font.pointSize: 12
             height: 40
             onClicked: {
-                if (comboBoxWindow.currentIndex === -1) {
-                    saveText.text = "请绑定窗口！";
+                // if (comboBoxWindow.currentIndex === -1) {
+                //     saveText.text = "请绑定窗口！";
+                //     saveText.color = "red";
+                // } else {
+                //     if (Number(textInputExpose.text) > maxExpose || Number(textInputExpose.text) < 0) {
+                //         saveText.text = "曝光参数超出阈值！";
+                //         saveText.color = "red";
+                //         return;
+                //     }
+                //     if (Number(textInputWidth.text) > Number(textWidthMax.text) || Number(textInputWidth.text) < 0) {
+                //         saveText.text = "宽度参数超出阈值！";
+                //         saveText.color = "red";
+                //         return;
+                //     }
+                //     if (Number(textInputHeight.text) > Number(textHeightMax.text) || Number(textInputHeight.text) < 0) {
+                //         saveText.text = "长度参数超出阈值！";
+                //         saveText.color = "red";
+                //         return;
+                //     }
+                //     if (Number(textInputOffsetX.text) % offsetxIncrement != 0) {
+                //         saveText.text = "offsetx参数不符合步进！";
+                //         saveText.color = "red";
+                //         return;
+                //     }
+                //     if (Number(textInputOffsetY.text) % offsetyIncrement != 0) {
+                //         saveText.text = "offsety参数不符合步进！";
+                //         saveText.color = "red";
+                //         return;
+                //     }
+                var json = {
+                    "display_window": currentCamera.currentIndex,
+                    "trigger_mode": comboBoxTrigger.currentIndex,
+                    "expose": textInputExpose.text,
+                    "gain": textInputGain.text,
+                    "width": textInputWidth.text,
+                    "height": textInputHeight.text,
+                    "offset_x": textInputOffsetX.text,
+                    "offset_y": textInputOffsetY.text
+                };
+
+                // 将json对象转换为JSON字符串
+                var jsonString = JSON.stringify(json);
+                var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SetCameraParam, jsonString);
+                var result = JSON.parse(jsRet);
+                if (result.ok === false) {
+                    saveText.text = result.description;
                     saveText.color = "red";
                 } else {
-                    if (Number(textInputExpose.text) > maxExpose || Number(textInputExpose.text) < 0) {
-                        saveText.text = "曝光参数超出阈值！";
-                        saveText.color = "red";
-                        return;
-                    }
-                    if (Number(textInputWidth.text) > Number(textWidthMax.text) || Number(textInputWidth.text) < 0) {
-                        saveText.text = "宽度参数超出阈值！";
-                        saveText.color = "red";
-                        return;
-                    }
-                    if (Number(textInputHeight.text) > Number(textHeightMax.text) || Number(textInputHeight.text) < 0) {
-                        saveText.text = "长度参数超出阈值！";
-                        saveText.color = "red";
-                        return;
-                    }
-                    if (Number(textInputOffsetX.text) % offsetxIncrement != 0) {
-                        saveText.text = "offsetx参数不符合步进！";
-                        saveText.color = "red";
-                        return;
-                    }
-                    if (Number(textInputOffsetY.text) % offsetyIncrement != 0) {
-                        saveText.text = "offsety参数不符合步进！";
-                        saveText.color = "red";
-                        return;
-                    }
-                    var json = {
-                        "DisplayWindows": currentCamera.currentIndex,
-                        "trigger_mode": comboBoxTrigger.currentIndex,
-                        "expose": textInputExpose.text,
-                        "gain": textInputGain.text,
-                        "width": textInputWidth.text,
-                        "height": textInputHeight.text,
-                        "offset_x": textInputOffsetX.text,
-                        "offset_y": textInputOffsetY.text
-                    };
-
-                    // 将json对象转换为JSON字符串
-                    var jsonString = JSON.stringify(json);
-                    var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SetCameraParam, jsonString);
-                    var result = JSON.parse(jsRet);
-                    if (result.ok === false) {
-                        saveText.text = result.description;
-                        saveText.color = "red";
-                    } else {
-                        saveText.text = "保存成功！";
-                        saveText.color = "green";
-                    }
+                    saveText.text = "保存成功！";
+                    saveText.color = "green";
                 }
             }
         }
