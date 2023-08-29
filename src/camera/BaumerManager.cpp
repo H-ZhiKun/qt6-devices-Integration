@@ -283,7 +283,7 @@ void BaumerManager::saveConfig(YAML::Node &launchConfig)
 bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
 {
     bool ret = true;
-    uint8_t index = param["qml_window"].asInt();
+    uint8_t index = param["display_window"].asInt();
     Camera *pCamera = nullptr;
     if (index < lvCameras_.size())
     {
@@ -334,6 +334,7 @@ Json::Value BaumerManager::getCamera(uint8_t number)
         {
             temp = lvCameras_[number]->getROParams();
         }
+        else
         {
             return {};
         }
