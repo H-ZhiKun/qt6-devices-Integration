@@ -128,7 +128,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         else if (jsValue.isObject())
         {
             // 直接插入单个对象
-            QString sql = "INSERT INTO " + QString::fromStdString(tableName) + " (";
+            QString sql = "INSERT INTO " + QString::fromStdString(tableName) + "(";
             QString values;
             QVariantList params;
 
