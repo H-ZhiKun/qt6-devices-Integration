@@ -20,19 +20,11 @@ CREATE TABLE IF NOT EXISTS operation_logs (
 );
 
 -- Table structure for system_user
-CREATE TABLE IF NOT EXISTS "users"  (
-  "id" serial NOT NULL PRIMARY KEY,
-  "name" varchar(32) NOT NULL UNIQUE,
-  "password" varchar(32) NOT NULL,
-	"camera_permission" smallint,
-	"data_permission" smallint,
-	"alarm_permission" smallint,
-	"formula_permission" smallint,
-	"sensor_permission" smallint,
-	"valve_permission" smallint,
-	"power_permission" smallint,
-	"log_permission" smallint,
-	"user_manage_permission" smallint,
+CREATE TABLE IF NOT EXISTS users (
+  id serial PRIMARY KEY,
+  username varchar(10) NOT NULL UNIQUE,
+  password varchar(64) NOT NULL,
+  permissions jsonb,
   created_time timestamp DEFAULT CURRENT_TIMESTAMP,
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
