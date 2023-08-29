@@ -32,6 +32,7 @@ class PLCDevice
     {
         return deviceUpdate_;
     }
+    bool getConnect();
 
   protected:
     PLCDevice(const PLCDevice &) = delete;
