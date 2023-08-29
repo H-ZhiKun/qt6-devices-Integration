@@ -7,8 +7,8 @@ GroupBox {
     //x:0
     //y:0
     id: cameraPage
-    width: 1110  //Screen.desktopAvailableWidth
-    height: 640  //Screen.desktopAvailableHeight
+    width: 1110 //Screen.desktopAvailableWidth
+    height: 640 //Screen.desktopAvailableHeight
     visible: true
     property int cbxLastIndex: 0
     background: Rectangle {
@@ -43,14 +43,14 @@ GroupBox {
             color: "#dd000000"
             source: rectLocatinCamera
         }
-        ImagePainter {
-            id: locationCamera
-            objectName: "locationCamera"
-            anchors.fill: parent
-            anchors.margins: 8
-            //anchors.topMargin: 20
-        }
 
+               ImagePainter {
+                   id: locationCamera
+                   objectName: "locationCamera"
+                   anchors.fill: parent
+                   anchors.margins: 8
+                   //anchors.topMargin: 20
+               }
         Text {
             x: 10
             y: -20
@@ -85,14 +85,13 @@ GroupBox {
             source: rectframe1
         }
 
-        ImagePainter {
-            id: locateCheckCamera
-            objectName: "locateCheckCamera"
-            anchors.fill: parent
-            anchors.margins: 8
-            //anchors.topMargin: 35
-        }
-
+               ImagePainter {
+                   id: locateCheckCamera
+                   objectName: "locateCheckCamera"
+                   anchors.fill: parent
+                   anchors.margins: 8
+                   //anchors.topMargin: 35
+               }
         Text {
             x: 10
             y: -20
@@ -125,14 +124,14 @@ GroupBox {
             color: "#dd000000"
             source: rectframe2
         }
-        ImagePainter {
-            id: codeCheckCamera
-            objectName: "codeCheckCamera"
-            anchors.fill: parent
-            anchors.margins: 8
-            //anchors.topMargin: 35
-        }
 
+               ImagePainter {
+                   id: codeCheckCamera
+                   objectName: "codeCheckCamera"
+                   anchors.fill: parent
+                   anchors.margins: 8
+                   //anchors.topMargin: 35
+               }
         Text {
             x: 10
             y: -20
@@ -389,7 +388,7 @@ GroupBox {
 
     Text {
         x: 425
-        y: 373
+        y: 336
         text: qsTr("生产状态：")
         font.pointSize: 13
     }
@@ -397,7 +396,7 @@ GroupBox {
     Text {
         id: textPrepare
         x: 515
-        y: 389
+        y: 352
         text: qsTr("准备")
         color: textProduceState === 0 ? "green" : "gray"
         font.pointSize: 11
@@ -406,7 +405,7 @@ GroupBox {
     Text {
         id: textRun
         x: 572
-        y: 389
+        y: 352
         text: qsTr("运行")
         color: textProduceState === 1 ? "green" : "gray"
         font.pointSize: 11
@@ -415,7 +414,7 @@ GroupBox {
     Text {
         id: textPause
         x: 629
-        y: 389
+        y: 352
         text: qsTr("暂停")
         color: textProduceState === 2 ? "green" : "gray"
         font.pointSize: 11
@@ -424,7 +423,7 @@ GroupBox {
     Text {
         id: textStop
         x: 686
-        y: 389
+        y: 352
         text: qsTr("终止")
         color: textProduceState === 3 ? "red" : "gray"
         font.pointSize: 11
@@ -432,7 +431,7 @@ GroupBox {
 
     Text {
         x: 425
-        y: 450
+        y: 413
         text: qsTr("设备步骤：")
         font.pointSize: 13
     }
@@ -440,7 +439,7 @@ GroupBox {
     Text {
         id: equipmentSteps
         x: 515
-        y: 451
+        y: 414
         text: textEquipmentSteps
         font.pointSize: 11
     }
@@ -448,7 +447,7 @@ GroupBox {
     Image {
         id: producePrepare
         x: 515
-        y: 359
+        y: 322
         width: 30
         height: 30
         property int state: 0
@@ -460,7 +459,7 @@ GroupBox {
     Image {
         id: produceRun
         x: 572
-        y: 359
+        y: 322
         width: 30
         height: 30
         mipmap: true
@@ -471,7 +470,7 @@ GroupBox {
     Image {
         id: producePause
         x: 629
-        y: 359
+        y: 322
         width: 30
         height: 30
         mipmap: true
@@ -482,86 +481,173 @@ GroupBox {
     Image {
         id: produceStop
         x: 686
-        y: 359
+        y: 322
         width: 30
         height: 30
         mipmap: true
-        source: textProduceState === 3 ? "file:///" + appdir + "/ico/tingzhi.png" : "file:///" + appdir + "/ico/zhongzhiblack.png"
+        source: textProduceState === 3 ? "file:///" + appdir + "/ico/tingzhi.png" : "file:///"
+                                         + appdir + "/ico/zhongzhiblack.png"
         fillMode: Image.PreserveAspectFit
     }
 
     Button {
         id: button
-        x: 425
-        y: 513
+        x: 399
+        y: 455
         width: 111
         height: 37
         text: qsTr("相机参数设置")
-        onClicked: {
-            var component = Qt.createComponent("CameraParam.qml");
-            var window = component.createObject(cameraPage);
-            window.show();
-        }
+               onClicked: {
+                   var component = Qt.createComponent("CameraParam.qml")
+                   var window = component.createObject(cameraPage)
+                   window.show()
+               }
     }
 
     Button {
         id: button1
-        x: 560
-        y: 512
+        x: 402
+        y: 571
         width: 108
         height: 38
         text: qsTr("保存图像")
-        onClicked: {
-            var json = {
-                "name": "保存图像"
-            };
-            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.CollectImage, JSON.stringify(json));
-            var result = JSON.parse(jsRet);
-            if (result.ok === true) {
-                // 保存成功
-                console.log("save success");
-            } else {
-                console.log("save failed");
-            }
-        }
+               onClicked: {
+
+                   var json = {
+                       "name": "保存图像"
+                   }
+                   var jsRet = appMetaFlash.qmlCallExpected(
+                               MainWindow.ExpectedFunction.CollectImage,
+                               JSON.stringify(json))
+                   var result = JSON.parse(jsRet)
+                   if (result.ok === true) {
+                       // 保存成功
+                       console.log("save success")
+                   } else {
+                       console.log("save failed")
+                   }
+               }
     }
 
     Button {
         id: button2
-        x: 424
-        y: 570
+        x: 398
+        y: 512
         width: 112
         height: 32
         text: qsTr("点动模式")
         property bool pointMode: false
-        onClicked: {
-            pointMode = !pointMode;
-            var json = {};
-            if (pointMode) {
-                json["point_b_12992_00"] = "1";
-                text = "点动中";
-            } else {
-                json["point_b_12992_00"] = "0";
-                text = "点动模式";
-            }
-            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
-        }
+               onClicked: {
+                   pointMode = !pointMode
+                   var json = {}
+                   if (pointMode) {
+                       json["point_b_12992_00"] = "1"
+                       text = "点动中"
+                   } else {
+                       json["point_b_12992_00"] = "0"
+                       text = "点动模式"
+                   }
+                   var jsRet = appMetaFlash.qmlCallExpected(
+                               MainWindow.ExpectedFunction.WritePLC,
+                               JSON.stringify(json))
+               }
     }
 
+
+    Text {
+        id: textPrepare1
+        x: 611
+        y: 455
+        width: 38
+        height: 19
+        text: qsTr("PLC：")
+        font.pointSize: 11
+    }
+
+    Text {
+        id: textPrepare2
+        x: 582
+        y: 494
+        width: 94
+        height: 19
+        text: qsTr("Domino：")
+        font.pointSize: 11
+    }
+
+    Text {
+        id: textPrepare3
+        x: 564
+        y: 538
+        width: 90
+        height: 19
+        text: qsTr("Permission：")
+        font.pointSize: 11
+    }
+
+    Text {
+        id: textPrepare4
+        x: 591
+        y: 581
+        width: 63
+        height: 19
+        text: qsTr("cognex:")
+        font.pointSize: 11
+    }
+
+    Image {
+        id: imageplc
+        x: 664
+        y: 452
+        width: 28
+        height: 26
+        fillMode: Image.PreserveAspectFit
+    }
+
+    Image {
+        id: imagedomino
+        x: 664
+        y: 491
+        width: 28
+        height: 26
+        fillMode: Image.PreserveAspectFit
+    }
+
+    Image {
+        id: imagepermission
+        x: 664
+        y: 538
+        width: 28
+        height: 26
+        fillMode: Image.PreserveAspectFit
+    }
+
+    Image {
+        id: imagecognex
+        x: 664
+        y: 577
+        width: 28
+        height: 26
+        fillMode: Image.PreserveAspectFit
+    }
+    
     Connections {
-        target: appMetaFlash // C++ 对象实例
-        function onPageMainChange(value) {
-            // 执行其他操作...
-            var jsonData = JSON.parse(value);
-            var val = jsonData.valve;
-            textCountAll = jsonData.count_all;
-            textCountPass = jsonData.count_pass;
-            textCountWaste = jsonData.count_waste;
-            textCountLocateWaste = jsonData.count_locate_waste;
-            textCountCodeWaste = jsonData.count_code_waste;
-            textCountPauseWaste = jsonData.count_pause_waste;
-            textEquipmentSteps = jsonData.equipmentSteps;
-            textProduceState = jsonData.produceState;
+            target: appMetaFlash // C++ 对象实例
+            function onPageMainChange(value) {
+                // 执行其他操作...
+                var jsonData = JSON.parse(value);
+                var val = jsonData.valve;
+                textCountAll = jsonData.count_all;
+                textCountPass = jsonData.count_pass;
+                textCountWaste = jsonData.count_waste;
+                textCountLocateWaste = jsonData.count_locate_waste;
+                textCountCodeWaste = jsonData.count_code_waste;
+                textCountPauseWaste = jsonData.count_pause_waste;
+                textEquipmentSteps = jsonData.equipmentSteps;
+                textProduceState = jsonData.produceState;
+                jsonData.dominoState==="1" ? imagedomino.source="file:///" + appdir + "/ico/green.png" : imagedomino.source="file:///" + appdir + "/ico/red.png"; 
+                jsonData.cognexState==="1" ? imagecognex.source="file:///" + appdir + "/ico/green.png" : imagecognex.source="file:///" + appdir + "/ico/red.png";
+                jsonData.permissionState === "1" ? imagepermission.source="file:///" + appdir + "/ico/green.png" : imagepermission.source="file:///" + appdir + "/ico/red.png";
+                jsonData.plcState === "1" ? imageplc.source="file:///" + appdir + "/ico/green.png" : imageplc.source="file:///" + appdir + "/ico/red.png";
         }
     }
 }

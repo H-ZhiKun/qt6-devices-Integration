@@ -21,11 +21,11 @@ class TCPClient : public QObject
     TCPClient &operator=(TCPClient &&) noexcept(true) = default;
     virtual void dealing(std::vector<unsigned char>) = 0; // 数据接收处理接口，纯虚接口，必须重写
     virtual void pingBehavior(){};                        // 子类继承实现具体心跳行为
-    inline bool getConnect();
   public slots:
     void startClient(const QString &host, quint16 port);
     void connectToServer(const QString &host = "", quint16 port = 0);
     void sendData(const QByteArray &data);
+    bool getConnect();
 
   public:
     void cleanup();

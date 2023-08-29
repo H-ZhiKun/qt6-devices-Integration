@@ -211,3 +211,8 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     // std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding
     //           << Utils::getCurrentTime(true) << std::endl;
 }
+
+bool PLCDevice::getConnect()
+{
+    return client_->getConnection();
+}
