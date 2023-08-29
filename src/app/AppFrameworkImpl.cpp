@@ -414,6 +414,7 @@ void AppFrame::AppFrameworkImpl::saveConfig()
 {
     try
     {
+        baumerManager_->saveConfig(config_);
         std::string filePath = strAppPath_ + "/config.yaml";
         // 保存修改后的配置回文件
         std::ofstream fout(filePath);
@@ -535,6 +536,21 @@ void AppFrame::AppFrameworkImpl::initPLC()
         Product *newProduct = new Product();
         productList_.push_back(newProduct);
         cognex_->scanCode();
+    });
+
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeLogistics, [this](int bottomNum) {
+        for (auto &pro_ : productList_)
+        {
+            if (pro_->isCode)
+            {
+                continue;
+            }
+            if (!pro_->logistics1.empty() && !pro_->logistics2.empty())
+            {
+                domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
+                pro_->isCode = true;
+            }
+        }
     });
 }
 
@@ -1135,10 +1151,6 @@ void AppFrame::AppFrameworkImpl::processHttpRes(std::string &jsonData)
     if (type == "paddleOCR")
     {
         Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
-    }
-    else if (type == "tangleCheck")
-    {
-        Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
     }
     else if (type == "tangle")
     {
