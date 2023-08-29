@@ -546,6 +546,21 @@ void AppFrame::AppFrameworkImpl::initPLC()
         productList_.push_back(newProduct);
         cognex_->scanCode();
     });
+
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeLogistics, [this](int bottomNum) {
+        for (auto &pro_ : productList_)
+        {
+            if (pro_->isCode)
+            {
+                continue;
+            }
+            if (!pro_->logistics1.empty() && !pro_->logistics2.empty())
+            {
+                domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
+                pro_->isCode = true;
+            }
+        }
+    });
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -1147,10 +1162,6 @@ void AppFrame::AppFrameworkImpl::processHttpRes(std::string &jsonData)
     if (type == "paddleOCR")
     {
         Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
-    }
-    else if (type == "tangleCheck")
-    {
-        Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
     }
     else if (type == "tangle")
     {
