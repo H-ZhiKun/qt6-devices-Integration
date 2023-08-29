@@ -52,7 +52,7 @@ Window {
                 y: 3
                 width: 144
                 height: 34
-                currentIndex: -1
+                currentIndex: 0
                 model: ["定位相机", "打码复核相机", "定位复核相机"]
 
                 onCurrentValueChanged: {
@@ -78,6 +78,9 @@ Window {
                         textInputHeight.text = details.height;
                         textInputOffsetX.text = details.offset_x;
                         textInputOffsetY.text = details.offset_y;
+                    } else {
+                        saveText.text = result.description;
+                        saveText.color = "red";
                     }
                 }
             }
@@ -367,7 +370,7 @@ Window {
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SetCameraParam, jsonString);
                     var result = JSON.parse(jsRet);
                     if (result.ok === false) {
-                        saveText.text = "修改失败！";
+                        saveText.text = result.description;
                         saveText.color = "red";
                     } else {
                         saveText.text = "保存成功！";

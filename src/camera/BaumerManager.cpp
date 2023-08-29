@@ -263,6 +263,23 @@ void BaumerManager::removeCamera(const std::string &snNumber)
     }
 }
 
+void BaumerManager::saveConfig(YAML::Node &launchConfig)
+{
+    for (uint8_t index = 0; index < lvParams_.size(); index++)
+    {
+        auto curItem = launchConfig["baumer"]["paramters"][index];
+        const auto &params = lvParams_[index];
+        curItem["trigger_mode"] = params["trigger_mode"].asUInt();
+        curItem["expose"] = params["expose"].asDouble();
+        curItem["gain"] = params["gain"].asUInt();
+        curItem["width"] = params["width"].asUInt();
+        curItem["height"] = params["height"].asUInt();
+        curItem["offset_x"] = params["offset_x"].asUInt();
+        curItem["offset_y"] = params["offset_y"].asUInt();
+        launchConfig["baumer"]["paramters"][index] = curItem;
+    }
+}
+
 bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
 {
     bool ret = true;
@@ -308,16 +325,19 @@ bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
 
 Json::Value BaumerManager::getCamera(uint8_t number)
 {
-    Json::Value ret;
+    Json::Value ret = lvParams_[number];
+    Json::Value temp;
     if (number < lvCameras_.size())
     {
         std::lock_guard lock(mtxCamera_);
         if (lvCameras_[number])
         {
-            ret = lvCameras_[number]->getROParams();
+            temp = lvCameras_[number]->getROParams();
+        }
+        {
+            return {};
         }
     }
-    auto &temp = lvParams_[number];
     for (const auto &key : temp.getMemberNames())
     {
         ret[key] = temp[key];

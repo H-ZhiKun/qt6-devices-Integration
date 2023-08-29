@@ -63,14 +63,13 @@ class AppFrameworkImpl final : public AppFramework
     void initBaumerManager();
     void initFile();
 
-    void bindDisplay(const std::string &snId, const DisplayWindows &painterId); // 绑定展示窗口和SN号
-    void updateRealData();                                                      // 主界面实时更新数据
-    void updateProduceRealData();                                               // 生产数据界面实时更新数据
-    void updateSensorRealData();                                                // 传感器界面实时更新数据
-    void updateValveRealData();                                                 // 阀门界面实时更新数据
-    void updatePowerRealData();                                                 // 电机界面实时更新数据
-    void updateAlertData();                                                     // 更新报警信息
-    void updateFormulaData();                                                   // 初始化配方界面
+    void updateRealData();        // 主界面实时更新数据
+    void updateProduceRealData(); // 生产数据界面实时更新数据
+    void updateSensorRealData();  // 传感器界面实时更新数据
+    void updateValveRealData();   // 阀门界面实时更新数据
+    void updatePowerRealData();   // 电机界面实时更新数据
+    void updateAlertData();       // 更新报警信息
+    void updateFormulaData();     // 初始化配方界面
     // void updateVideo();                                                      // 实时视频
     void refreshImage(const int winint, const int bottomNum); // 实时图像
     void refreshImageTest(const int bottomNum);
@@ -107,8 +106,7 @@ class AppFrameworkImpl final : public AppFramework
     BaumerManager *baumerManager_ = nullptr;
     std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
     std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
-    std::unordered_map<DisplayWindows, std::string> mapWndDisplay_; // 绑定好SN码的patinter, first=painterId,second=SN号
-    std::unordered_map<DisplayWindows, uint16_t> mapSaveImage_; // 图片保存数量控制
+    std::unordered_map<DisplayWindows, uint16_t> mapSaveImage_;     // 图片保存数量控制
 
   public:
     // 调用qml 对象函数工具

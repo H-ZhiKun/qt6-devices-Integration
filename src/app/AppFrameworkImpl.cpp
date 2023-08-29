@@ -2,7 +2,6 @@
 #include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
-#include "CameraWapper.h"
 #include "DBConnectionPool.h"
 #include "Domino.h"
 #include "FormulaWapper.h"
@@ -186,7 +185,12 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
     auto params = Utils::stringToJson(value);
     uint8_t winId = params["qml_window"].asInt();
     Json::Value jsVal = baumerManager_->getCamera(winId);
-    return Utils::makeResponse(ret, std::move(jsVal));
+    std::string des;
+    if (jsVal.isNull())
+    {
+        des = "camera init failed";
+    }
+    return Utils::makeResponse(ret, std::move(jsVal), std::move(des));
 }
 
 std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
@@ -411,6 +415,7 @@ void AppFrame::AppFrameworkImpl::saveConfig()
 {
     try
     {
+        baumerManager_->saveConfig(config_);
         std::string filePath = strAppPath_ + "/config.yaml";
         // 保存修改后的配置回文件
         std::ofstream fout(filePath);
@@ -442,19 +447,6 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
         Utils::appExit(-1);
     }
     LogInfo("sqlhelper init success.");
-    Json::Value jsVal = CameraWapper::selectAllCamera();
-    if (!jsVal.isNull())
-    {
-        for (auto &jsItem : jsVal)
-        {
-            std::string key = jsItem["sn_num"].asString();
-            std::string value = jsItem["qml_window"].asString();
-            if (!value.empty())
-            {
-                mapWndDisplay_[static_cast<DisplayWindows>(std::stoi(value))] = key;
-            }
-        }
-    }
     updateFormulaData(); // 放在异步处理中会丢失
     updateUserData();
 }
@@ -891,7 +883,6 @@ void AppFrame::AppFrameworkImpl::updatePowerRealData()
 
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
-    Json::Value jsVal = CameraWapper::selectAllCamera();
     baumerManager_ = new BaumerManager();
     baumerManager_->start(config_);
 }
@@ -1052,7 +1043,6 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     // 退出所有的子线程并回收线程栈资源，堆资源需要后续手动释放
     saveConfig();
     bThreadHolder = false;
-    mapWndDisplay_.clear();
     mapStorePainter_.clear();
     for (auto &ptr : lvFulltimeThread_)
     {
