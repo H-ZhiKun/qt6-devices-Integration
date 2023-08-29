@@ -10,6 +10,7 @@ struct Product
     bool logisticsFalseFlag = false;     // 物流码是否获取失败
     bool locateFalseFlag = false;        // 定位是否失败
     bool locateCheckFalseFlag = false;   // 定位复核是否失败
+    bool isCode = false;                 // 是否打码
     std::atomic_bool hasBottom = true;   // 是否有瓶
     float locateRes;                     // 定位结果
     std::string qrCodeRes;               // 二维码读码结果

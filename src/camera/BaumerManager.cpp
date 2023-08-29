@@ -263,6 +263,23 @@ void BaumerManager::removeCamera(const std::string &snNumber)
     }
 }
 
+void BaumerManager::saveConfig(YAML::Node &launchConfig)
+{
+    for (uint8_t index = 0; index < lvParams_.size(); index++)
+    {
+        auto curItem = launchConfig["baumer"]["paramters"][index];
+        const auto &params = lvParams_[index];
+        curItem["trigger_mode"] = params["trigger_mode"].asUInt();
+        curItem["expose"] = params["expose"].asDouble();
+        curItem["gain"] = params["gain"].asUInt();
+        curItem["width"] = params["width"].asUInt();
+        curItem["height"] = params["height"].asUInt();
+        curItem["offset_x"] = params["offset_x"].asUInt();
+        curItem["offset_y"] = params["offset_y"].asUInt();
+        launchConfig["baumer"]["paramters"][index] = curItem;
+    }
+}
+
 bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
 {
     bool ret = true;
