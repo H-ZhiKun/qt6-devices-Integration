@@ -83,7 +83,6 @@ int AppFrame::AppFrameworkImpl::run()
     initBaumerManager();
     initPLC();
     timerTask();
-    // setCameraParam(R"("sn_num":"123455", "qml_window":"0")");
     return 0;
 }
 

@@ -122,16 +122,13 @@ Window {
                     passwordLabel.text = "密码不得为空！"
                 }else{
                     // 连接数据库，插入数据
-                    var permissionJson = {
-                        "camera_permission": cameraCheckBox.checked ? 1 : 0, 
-                        "data_permission": dataCheckBox.checked ? 1 : 0,
-                        "alarm_permission": alarmCheckBox.checked ? 1 : 0, "formula_permission": formulaCheckBox.checked ? 1 : 0,
-                        "sensor_permission": sensorCheckBox.checked ? 1 : 0, "valve_permission": valveCheckBox.checked ? 1 : 0,
-                        "power_permission": powerCheckBox.checked ? 1 : 0, "log_permission": logCheckBox.checked ? 1 : 0,
-                        "user_manage_permission": 0
-                    }
-                    var json = {"username": accountName.text, "password": accountPassword.text,
-                                "permissions": permissionJson
+                    var json = {"name": accountName.text, "password": accountPassword.text,
+                                "camera_permission": cameraCheckBox.checked ? 1 : 0, 
+                                "data_permission": dataCheckBox.checked ? 1 : 0,
+                                "alarm_permission": alarmCheckBox.checked ? 1 : 0, "formula_permission": formulaCheckBox.checked ? 1 : 0,
+                                "sensor_permission": sensorCheckBox.checked ? 1 : 0, "valve_permission": valveCheckBox.checked ? 1 : 0,
+                                "power_permission": powerCheckBox.checked ? 1 : 0, "log_permission": logCheckBox.checked ? 1 : 0,
+                                "user_manage_permission": 0
                     }
                     var strSend = JSON.stringify(json)
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.InsertUser, strSend)
