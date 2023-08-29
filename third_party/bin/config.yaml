@@ -38,13 +38,13 @@ algorithm:
   url_predict: 'http://192.168.101.8:5000/predict_tangle'
 domino:
   host: 127.0.0.1
-  port: 9999
+  port: 20001
 cognex:
-  host: 192.168.101.111
+  host: 192.168.60.121
   port: 23
 permission:
-  host: 127.0.0.1
-  port: 61000
+  host: 192.168.1.26
+  port: 2000
 baumer:
   # interface: The MAC address of the NIC example: CC-82-7F-3C-04-DF
   interface: CC-82-7F-3C-04-DF

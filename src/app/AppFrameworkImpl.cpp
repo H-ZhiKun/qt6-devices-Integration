@@ -509,6 +509,7 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
             {
                 value->logistics1 = code1;
                 value->logistics2 = code2;
+                domino_->dominoPrint(code1, code2);
                 break;
             }
         }
@@ -548,7 +549,6 @@ void AppFrame::AppFrameworkImpl::initPLC()
             }
             if (!pro_->logistics1.empty() && !pro_->logistics2.empty())
             {
-                domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
                 pro_->isCode = true;
             }
         }
@@ -730,7 +730,7 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
                 }
             }
             // 测试
-            plcDev_->writeDataToDevice("b", "13004", "0", "1");
+            // plcDev_->writeDataToDevice("b", "13004", "0", "1");
         }
         invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
                   Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
@@ -1090,7 +1090,7 @@ void AppFrame::AppFrameworkImpl::memoryClean()
 
 void AppFrame::AppFrameworkImpl::timerTask()
 {
-    refreshImageTest(5);
+    // refreshImageTest(5);
     lvFulltimeThread_.push_back(std::thread([this] {
         std::string recYear = "-1", recMonth = "-1", recDay = "-1";
         std::string recHour = "-1", recMinute = "-1", recSecond = "-1";
@@ -1353,7 +1353,7 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
             QJsonObject boxObject = boxValue.toObject();
             QString result = boxObject["result"].toString().toUtf8();
             // todo 物流码是否正确
-            if (product_->logistics1 == result.toStdString())
+            if ((product_->logistics1 + product_->logistics2) == result.toStdString())
             {
                 plcDev_->writeDataToDevice("b", "13004", "01", "1");
                 // 添加生产数据
