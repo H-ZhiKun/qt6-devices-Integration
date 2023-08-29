@@ -415,6 +415,7 @@ void AppFrame::AppFrameworkImpl::saveConfig()
 {
     try
     {
+        baumerManager_->saveConfig(config_);
         std::string filePath = strAppPath_ + "/config.yaml";
         // 保存修改后的配置回文件
         std::ofstream fout(filePath);
