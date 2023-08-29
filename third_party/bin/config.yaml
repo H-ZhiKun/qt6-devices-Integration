@@ -35,7 +35,7 @@ plc:
   fifo_freq: 50
 algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
-  url_predict: 'http://192.168.101.8:5000/predict_tangle'
+  url_predict: 'http://127.0.0.0:5000/predict_tangle'
 domino:
   host: 127.0.0.1
   port: 20001
