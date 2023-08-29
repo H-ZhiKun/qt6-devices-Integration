@@ -485,6 +485,7 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     LogInfo("network client start success.");
     // 获取到二维码并发送
     QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
+        cognex_->scanStop();
         Product *curProduct = productList_.back();
         LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
         if (value == curProduct->qrCodeRes)
@@ -687,8 +688,10 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
         qDebug() << fmt::format("refreshImage mat null wind = {}, bottomNum = {}", winint, bottomNum);
         return;
     }
-    qDebug() << "Get image size = " << matData.size();
+    qDebug() << "Get image size = " << matData.size() << "wind = " << winint;
     cv::Mat temp = matData.back();
+    QImage saveImg = Utils::matToQImage(temp);
+    saveImageToFile(saveImg, winId);
     Utils::asyncTask([this, winId, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
@@ -1281,6 +1284,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
             plcDev_->writeDataToDevice("r", "13002", "", "0");
         }
     }
+    LogInfo("processYoloTangle finish");
 }
 
 void AppFrame::AppFrameworkImpl::processYoloTangleTest(QJsonDocument jsonDocument, cv::Mat matImage)

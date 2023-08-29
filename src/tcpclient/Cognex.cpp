@@ -12,7 +12,8 @@ void Cognex::dealing(std::vector<unsigned char> buffer)
     {
         QStringList parts = result.split(',');
         qDebug() << "scanCode" << parts.first(); // 返回第一个逗号前的内容
-        emit finishReadQRCode(parts.first().toStdString());
+        // emit finishReadQRCode(parts.first().toStdString());
+        emit finishReadQRCode(result.toStdString());
     }
     else
     {
@@ -29,6 +30,11 @@ void Cognex::dealing(std::vector<unsigned char> buffer)
 void Cognex::scanCode()
 {
     sendData("+");
+}
+
+void Cognex::scanStop()
+{
+    sendData("-");
 }
 
 // bool Cognex::connectToServer(const QString &serverAddress, quint16 port)

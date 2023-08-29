@@ -116,7 +116,7 @@ bool Camera::addBuffersToStream()
     {
         cameraPtr_->GetDataStreams()->Refresh();
         BGAPI2::BufferList *bufferList = stream_->GetBufferList();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 10; i++)
         {
             BGAPI2::Buffer *buffer = new BGAPI2::Buffer();
             bufferList->Add(buffer);

@@ -23,6 +23,7 @@ class Cognex : public TCPClient
 
   public slots:
     void scanCode();
+    void scanStop();
 
   signals:
     void connected();

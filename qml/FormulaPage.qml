@@ -728,13 +728,23 @@ GroupBox {
             icon.source: "file:///" + appdir + "/ico/xiazai.png"
             font.pointSize: 11
             onClicked: {
-                // 发送给PLC 成功则做以下动作
-                downloadName = curFormulaName;
-                formulaDisplay.downloadState = "已下载";
-                master.formulaName = curFormulaName;
-                master.formulaSpeed = deviceProduceSpeedInput.text;
-                saveText.text = "下载成功！";
-                saveText.color = "green";
+                var json = {
+                    "speed_r_12952": deviceProduceSpeedInput.text,
+                    "add_r_12954": deviceproduceAccelerationInput.text,
+                    "reduce_r_12596": deviceproduceDecelerationInput.text
+                };
+                var strSend = JSON.stringify(json);
+                var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, strSend);
+                var result = JSON.parse(jsRet);
+                if (result.ok) {
+                    // 发送给PLC 成功则做以下动作
+                    downloadName = curFormulaName;
+                    formulaDisplay.downloadState = "已下载";
+                    master.formulaName = curFormulaName;
+                    master.formulaSpeed = deviceProduceSpeedInput.text;
+                    saveText.text = "下载成功！";
+                    saveText.color = "green";
+                }
             }
         }
 
