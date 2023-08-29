@@ -57,7 +57,7 @@ Window {
 
                 onCurrentValueChanged: {
                     var json = {
-                        "DisplayWindows": currentCamera.currentIndex
+                        "display_window": currentCamera.currentIndex
                     };
                     var strSend = JSON.stringify(json);
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.GetCameraParam, strSend);
@@ -355,7 +355,7 @@ Window {
                         return;
                     }
                     var json = {
-                        "DisplayWindows": currentCamera.currentIndex,
+                        "display_window": currentCamera.currentIndex,
                         "trigger_mode": comboBoxTrigger.currentIndex,
                         "expose": textInputExpose.text,
                         "gain": textInputGain.text,
