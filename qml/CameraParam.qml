@@ -6,12 +6,17 @@ Window {
     objectName: "cameraPageWin"
     modality: Qt.WindowModal
     //固定窗口大小
-    minimumWidth: 500
-    maximumWidth: 500
+    minimumWidth: 420
+    maximumWidth: 420
     minimumHeight: 690
     maximumHeight: 690
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     property int numWidth: 0
+    property int widthIncrement: 1
+    property int heightIncrement: 1
+    property int offsetxIncrement: 1
+    property int offsetyIncrement: 1
+    property int maxExpose: 1
     title: "相机参数设置"
 
     Rectangle {
@@ -23,7 +28,7 @@ Window {
             x: 15
             y: 0
             width: parent.width - 30
-            height: 130
+            height: 210
             title: "相机选择"
             background: Rectangle {
                 anchors.fill: parent
@@ -47,17 +52,13 @@ Window {
                 y: 3
                 width: 144
                 height: 34
-                currentIndex: cameraPage.cbxLastIndex
-                model: ListModel {
-                    id: cameraList
-                    //定义这个接口来动态添加下拉内容
-                }
+                currentIndex: 0
+                model: ["定位相机", "打码复核相机", "定位复核相机"]
 
                 onCurrentValueChanged: {
                     var json = {
-                        "sn": currentCamera.currentText
+                        "DisplayWindows": currentCamera.currentIndex
                     };
-                    cameraPage.cbxLastIndex = currentCamera.currentIndex;
                     var strSend = JSON.stringify(json);
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.GetCameraParam, strSend);
                     var result = JSON.parse(jsRet);
@@ -65,16 +66,21 @@ Window {
                         var details = result.details;
                         textWidthMax.text = details.max_width;
                         textHeightMax.text = details.max_height;
-                        comboBoxWindow.currentIndex = details.qml_window;
                         comboBoxTrigger.currentIndex = details.trigger_mode;
-                        sliderFPS.value = details.fps;
-                        sliderExpose.value = details.expose;
-                        sliderExpose.to = details.max_expose;
-                        sliderGain.value = details.gain;
-                        sliderWidth.value = details.width;
-                        sliderHeight.value = details.height;
-                        sliderOffsetX.value = details.offset_x;
-                        sliderOffsetY.value = details.offset_y;
+                        widthIncrement = details.width_increment;
+                        heightIncrement = details.height_increment;
+                        offsetxIncrement = details.offsetx_increment;
+                        offsetyIncrement = details.offsety_increment;
+                        textInputExpose.text = details.expose;
+                        maxExpose = details.max_expose;
+                        textInputGain.text = details.gain;
+                        textInputWidth.text = details.width;
+                        textInputHeight.text = details.height;
+                        textInputOffsetX.text = details.offset_x;
+                        textInputOffsetY.text = details.offset_y;
+                    } else {
+                        saveText.text = result.description;
+                        saveText.color = "red";
                     }
                 }
             }
@@ -88,7 +94,7 @@ Window {
             Label {
                 id: textWidthMax
                 objectName: "textWidthMax"
-                x: 113
+                x: 120
                 y: 58
                 width: 80
                 font.pointSize: 12
@@ -103,19 +109,82 @@ Window {
 
             Label {
                 id: textHeightMax
-                objectName: "textHeightMax"
-                x: 315
+                x: 323
                 y: 58
                 width: 80
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 18
+                y: 98
+                text: qsTr("Width 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textWidthIncrement
+                x: 120
+                y: 98
+                width: 80
+                text: widthIncrement
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 220
+                y: 98
+                text: qsTr("Height 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textHeightIncrement
+                x: 323
+                y: 98
+                width: 80
+                text: heightIncrement
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 18
+                y: 138
+                text: qsTr("OffsetX 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textOffsetxIncrement
+                x: 120
+                y: 138
+                width: 80
+                text: offsetxIncrement
+                font.pointSize: 12
+            }
+
+            Text {
+                x: 220
+                y: 138
+                text: qsTr("OffsetY 步进: ")
+                font.pointSize: 12
+            }
+
+            Label {
+                id: textOffsetyIncrement
+                x: 323
+                y: 138
+                width: 80
+                text: offsetyIncrement
                 font.pointSize: 12
             }
         }
 
         GroupBox {
             x: 15
-            y: 150
+            y: 230
             width: parent.width - 30
-            height: 450
+            height: 350
             title: "参数"
             background: Rectangle {
                 anchors.fill: parent
@@ -128,24 +197,7 @@ Window {
 
             Text {
                 x: 18
-                y: 13
-                text: "绑定窗口"
-                font.pointSize: 12
-            }
-
-            ComboBox {
-                id: comboBoxWindow
-                objectName: "textExposure"
-                x: 103
-                y: 5
-                width: 103
-                height: 34
-                model: ["窗口一", "窗口二", "窗口三"]
-            }
-
-            Text {
-                x: 220
-                y: 13
+                y: 10
                 text: "触发模式"
                 font.pointSize: 12
             }
@@ -153,294 +205,113 @@ Window {
             ComboBox {
                 id: comboBoxTrigger
                 objectName: "textExposure"
-                x: 305
-                y: 5
-                width: 103
+                x: 215
+                y: -3
+                width: 105
                 height: 34
-                model: ["软触发", "硬触发"]
+                model: ["连续采集", "触发采集"]
             }
 
             Text {
                 x: 18
-                y: 63
-                text: "FPS"
-                font.pointSize: 12
-            }
-
-            Slider {
-                id: sliderFPS
-                x: 121
-                y: 59
-                from: 1
-                to: 40
-                stepSize: 1
-                width: 210
-                onValueChanged: {
-                    textInputFPS.text = value;
-                }
-            }
-
-            TextField {
-                id: textInputFPS
-                x: 340
-                y: 63
-                width: 70
-                height: 30
-                text: sliderFPS.value
-                font.pointSize: 12
-                clip: true
-                onEditingFinished: {
-                    sliderFPS.value = text;
-                }
-            }
-
-            Text {
-                x: 18
-                y: 113
+                y: 50
                 text: "曝光时间(ms)"
                 font.pointSize: 12
             }
 
-            Slider {
-                id: sliderExpose
-                x: 121
-                y: 109
-                from: 0.1
-                to: 1000
-                stepSize: 0.1
-                width: 210
-                onValueChanged: {
-                    // 将值保留两位小数，并赋给textInputExpose的text
-                    textInputExpose.text = value.toFixed(1);
-                }
-            }
-
             TextField {
                 id: textInputExpose
-                x: 340
-                y: 113
+                x: 215
+                y: 45
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderExpose.value
                 font.pointSize: 12
-                onEditingFinished: {
-                    sliderExpose.value = parseFloat(text);
-                }
             }
 
             Text {
                 x: 18
-                y: 163
+                y: 90
                 text: "增益Gain(db)"
                 font.pointSize: 12
             }
 
-            Slider {
-                id: sliderGain
-                x: 121
-                y: 163
-                from: 0
-                to: 100
-                stepSize: 1
-                width: 210
-                onValueChanged: {
-                    textInputGain.text = value;
-                }
-            }
-
             TextField {
                 id: textInputGain
-                x: 340
-                y: 163
+                x: 215
+                y: 85
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderGain.value
                 font.pointSize: 12
-                onEditingFinished: {
-                    sliderGain.value = text;
-                }
             }
 
             Text {
                 x: 18
-                y: 213
+                y: 130
                 text: "Width"
                 font.pointSize: 12
             }
 
-            Slider {
-                id: sliderWidth
-                x: 121
-                y: 209
-                from: 16
-                to: textHeightMax.text
-                stepSize: 16
-                width: 210
-                onValueChanged: {
-                    textInputWidth.text = value;
-                    textInputHeight.text = value;
-                    sliderHeight.value = value;
-                }
-            }
-
             TextField {
                 id: textInputWidth
-                x: 340
-                y: 213
+                x: 215
+                y: 125
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderWidth.value
                 font.pointSize: 12
-                onEditingFinished: {
-                    numWidth = Number(text);
-                    if (numWidth > Number(textHeightMax.text)) {
-                        sliderHeight.value = Number(textHeightMax.text);
-                        textInputHeight.text = textHeightMax.text;
-                        sliderWidth.value = Number(textHeightMax.text);
-                        text = textHeightMax.text;
-                    } else {
-                        if (numWidth < 16) {
-                            sliderWidth.value = 16;
-                            textInputHeight.text = "16";
-                            sliderHeight.value = 16;
-                            text = "16";
-                        } else {
-                            numWidth = numWidth / 16;
-                            numWidth = 16 * numWidth;
-                            sliderWidth.value = numWidth;
-                            textInputHeight.text = numWidth.toString();
-                            sliderHeight.value = numWidth;
-                            text = numWidth.toString();
-                        }
-                    }
-                }
             }
 
             Text {
                 x: 18
-                y: 263
+                y: 170
                 text: "Height"
                 font.pointSize: 12
             }
 
-            Slider {
-                id: sliderHeight
-                x: 121
-                y: 259
-                from: 16
-                to: textHeightMax.text
-                stepSize: 16
-                width: 210
-                onValueChanged: {
-                    textInputWidth.text = value;
-                    textInputHeight.text = value;
-                    sliderWidth.value = value;
-                }
-            }
-
             TextField {
                 id: textInputHeight
-                x: 340
-                y: 263
+                x: 215
+                y: 165
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderHeight.value
                 font.pointSize: 12
-                onEditingFinished: {
-                    numWidth = Number(text);
-                    if (numWidth > Number(textHeightMax.text)) {
-                        sliderWidth.value = Number(textHeightMax.text);
-                        textInputWidth.text = textWidthMax.text;
-                        sliderHeight.value = Number(textHeightMax.text);
-                        text = textHeightMax.text;
-                    } else {
-                        if (numWidth < 16) {
-                            sliderWidth.value = 16;
-                            textInputWidth.text = "16";
-                            sliderHeight.value = 16;
-                            text = "16";
-                        } else {
-                            numWidth = numWidth / 16;
-                            numWidth = 16 * numWidth;
-                            sliderWidth.value = numWidth;
-                            textInputWidth.text = numWidth.toString();
-                            sliderHeight.value = numWidth;
-                            text = numWidth.toString();
-                        }
-                    }
-                }
             }
 
             Text {
                 x: 18
-                y: 313
+                y: 210
                 text: "OffsetX"
                 font.pointSize: 12
             }
 
-            Slider {
-                id: sliderOffsetX
-                x: 121
-                y: 309
-                from: 1
-                to: textWidthMax.text
-                stepSize: 1
-                width: 210
-                onValueChanged: {
-                    textInputOffsetX.text = value;
-                }
-            }
-
             TextField {
                 id: textInputOffsetX
-                x: 340
-                y: 313
+                x: 215
+                y: 205
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderOffsetX.value
                 font.pointSize: 12
-                onEditingFinished: {
-                    sliderOffsetX.value = text;
-                }
             }
 
             Text {
                 x: 18
-                y: 363
+                y: 250
                 text: "OffsetY"
                 font.pointSize: 12
             }
 
-            Slider {
-                id: sliderOffsetY
-                x: 121
-                y: 359
-                from: 1
-                to: textHeightMax.text
-                stepSize: 1
-                width: 210
-                onValueChanged: {
-                    textInputOffsetY.text = value;
-                }
-            }
-
             TextField {
                 id: textInputOffsetY
-                x: 340
-                y: 363
+                x: 215
+                y: 245
                 clip: true
-                width: 70
+                width: 105
                 height: 30
-                text: sliderOffsetY.value
                 font.pointSize: 12
-                onEditingFinished: {
-                    sliderOffsetY.value = text;
-                }
             }
         }
 
@@ -449,27 +320,49 @@ Window {
             objectName: "saveCameraSet"
             text: "保存设置"
             icon.source: "file:///" + appdir + "/ico/baocun.png"
-            x: 353
+            x: 280
             y: 620
             font.pointSize: 12
+            height: 40
             onClicked: {
                 if (comboBoxWindow.currentIndex === -1) {
                     saveText.text = "请绑定窗口！";
                     saveText.color = "red";
                 } else {
+                    if (Number(textInputExpose.text) > maxExpose || Number(textInputExpose.text) < 0) {
+                        saveText.text = "曝光参数超出阈值！";
+                        saveText.color = "red";
+                        return;
+                    }
+                    if (Number(textInputWidth.text) > Number(textWidthMax.text) || Number(textInputWidth.text) < 0) {
+                        saveText.text = "宽度参数超出阈值！";
+                        saveText.color = "red";
+                        return;
+                    }
+                    if (Number(textInputHeight.text) > Number(textHeightMax.text) || Number(textInputHeight.text) < 0) {
+                        saveText.text = "长度参数超出阈值！";
+                        saveText.color = "red";
+                        return;
+                    }
+                    if (Number(textInputOffsetX.text) % offsetxIncrement != 0) {
+                        saveText.text = "offsetx参数不符合步进！";
+                        saveText.color = "red";
+                        return;
+                    }
+                    if (Number(textInputOffsetY.text) % offsetyIncrement != 0) {
+                        saveText.text = "offsety参数不符合步进！";
+                        saveText.color = "red";
+                        return;
+                    }
                     var json = {
-                        "sn_num": currentCamera.currentText,
-                        "qml_window": comboBoxWindow.currentIndex,
-                        "fps": sliderFPS.value,
+                        "DisplayWindows": currentCamera.currentIndex,
                         "trigger_mode": comboBoxTrigger.currentIndex,
-                        "expose": sliderExpose.value,
-                        "gain": sliderGain.value,
-                        "width": sliderWidth.value,
-                        "height": sliderHeight.value,
-                        "offset_x": sliderOffsetX.value,
-                        "offset_y": sliderOffsetY.value,
-                        "max_width": parseInt(textWidthMax.text),
-                        "max_height": parseInt(textHeightMax.text)
+                        "expose": textInputExpose.text,
+                        "gain": textInputGain.text,
+                        "width": textInputWidth.text,
+                        "height": textInputHeight.text,
+                        "offset_x": textInputOffsetX.text,
+                        "offset_y": textInputOffsetY.text
                     };
 
                     // 将json对象转换为JSON字符串
@@ -477,7 +370,7 @@ Window {
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SetCameraParam, jsonString);
                     var result = JSON.parse(jsRet);
                     if (result.ok === false) {
-                        saveText.text = "修改失败！";
+                        saveText.text = result.description;
                         saveText.color = "red";
                     } else {
                         saveText.text = "保存成功！";
@@ -492,17 +385,6 @@ Window {
             x: 18
             y: 625
             font.pointSize: 11
-        }
-    }
-    Component.onCompleted: {
-        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.GetCameraList, "");
-        var result = JSON.parse(jsRet);
-        if (result.ok === true) {
-            for (var i = 0; i < result.details.cameraId.length; i++) {
-                cameraList.append({
-                        "text": result.details.cameraId[i]
-                    });
-            }
         }
     }
 }

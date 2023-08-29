@@ -42,13 +42,13 @@ void BGAPI2CALL BufferHandler(void *callBackOwner, BGAPI2::Buffer *pBufferFilled
 
 Camera::Camera(BGAPI2::Device *bgapi_device) : cameraPtr_(bgapi_device)
 {
-    mapCameraString_[CameraParams::TriggerMode] = SFNC_TRIGGERMODE;
-    mapCameraString_[CameraParams::ExposureTime] = SFNC_EXPOSURETIME;
-    mapCameraString_[CameraParams::Gain] = SFNC_GAIN;
-    mapCameraString_[CameraParams::RoiWidth] = SFNC_WIDTH;
-    mapCameraString_[CameraParams::RoiHeight] = SFNC_HEIGHT;
-    mapCameraString_[CameraParams::OffsetX] = SFNC_OFFSETX;
-    mapCameraString_[CameraParams::OffsetY] = SFNC_OFFSETY;
+    mapCameraString_["trigger_mode"] = SFNC_TRIGGERMODE;
+    mapCameraString_["expose"] = SFNC_EXPOSURETIME;
+    mapCameraString_["gain"] = SFNC_GAIN;
+    mapCameraString_["width"] = SFNC_WIDTH;
+    mapCameraString_["height"] = SFNC_HEIGHT;
+    mapCameraString_["offset_x"] = SFNC_OFFSETX;
+    mapCameraString_["offset_y"] = SFNC_OFFSETY;
 
     // keepCaptureRunning();
     initialize();
@@ -56,11 +56,8 @@ Camera::Camera(BGAPI2::Device *bgapi_device) : cameraPtr_(bgapi_device)
 
 Camera::~Camera()
 {
-    bHolder_ = false;
     bActive_ = false;
     deinitialize();
-    if (thObserver_.joinable())
-        thObserver_.join();
 }
 
 void Camera::initialize()
@@ -81,50 +78,17 @@ bool Camera::openDevice()
     bool ret = false;
     try
     {
-        cameraPtr_->OpenExclusive();
+        cameraPtr_->Open();
         ret = true;
     }
-    catch (BGAPI2::Exceptions::IException &ex)
+    catch (BGAPI2::Exceptions::ResourceInUseException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("ResourceInUseException: ", ex.GetErrorDescription().get());
     }
-
-    try
+    catch (BGAPI2::Exceptions::AccessDeniedException &ex)
     {
-        if (cameraPtr_->GetRemoteNodeList()->GetNodePresent(SFNC_CHUNKMODEACTIVE))
-        {
-            chunk_was_active_ = cameraPtr_->GetRemoteNode(SFNC_CHUNKMODEACTIVE)->GetBool();
-        }
-        if (cameraPtr_->GetRemoteNodeList()->GetNodePresent(SFNC_CHUNKSELECTOR))
-        {
-            for (BGAPI2::NodeMap::iterator iter =
-                     cameraPtr_->GetRemoteNode(SFNC_CHUNKSELECTOR)->GetEnumNodeList()->begin();
-                 iter != cameraPtr_->GetRemoteNode(SFNC_CHUNKSELECTOR)->GetEnumNodeList()->end(); iter++)
-            {
-                BGAPI2::Node *chunknode_name = (*iter).second.second;
-                std::string chunk_name = chunknode_name->GetValue().get();
-                if (chunknode_name->GetImplemented() && chunknode_name->GetAvailable())
-                {
-                    cameraPtr_->GetRemoteNode(SFNC_CHUNKSELECTOR)->SetValue(chunk_name.c_str());
-                    cameraPtr_->GetRemoteNode(SFNC_CHUNKENABLE)->SetBool(true);
-                }
-            }
-            if (!chunk_was_active_)
-            {
-                cameraPtr_->GetRemoteNode(SFNC_CHUNKMODEACTIVE)->SetBool(true);
-            }
-        }
+        LogError("AccessDeniedException: ", ex.GetErrorDescription().get());
     }
-    catch (BGAPI2::Exceptions::IException &ex)
-    {
-        ret = false;
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
-    }
-
     try
     {
         BGAPI2::DataStreamList *datastream_list = cameraPtr_->GetDataStreams();
@@ -133,17 +97,15 @@ bool Camera::openDevice()
         {
             stream_ = datastream_list->begin()->second;
             stream_->Open();
-            stream_->Close();
         }
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
         ret = false;
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
-
     return ret;
 }
 
@@ -153,7 +115,6 @@ bool Camera::addBuffersToStream()
     try
     {
         cameraPtr_->GetDataStreams()->Refresh();
-        stream_->Open();
         BGAPI2::BufferList *bufferList = stream_->GetBufferList();
         for (int i = 0; i < 5; i++)
         {
@@ -168,9 +129,9 @@ bool Camera::addBuffersToStream()
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
     return ret;
 }
@@ -180,8 +141,6 @@ bool Camera::startStream()
     bool ret = false;
     try
     {
-        stream_->GetBufferList()->DiscardAllBuffers();
-        stream_->GetBufferList()->FlushAllToInputQueue();
         stream_->StartAcquisitionContinuous();
         if (cameraPtr_->GetRemoteNodeList()->GetNodePresent(SFNC_TESTIMAGESELECTORVALUE_FRAMECOUNTER))
         {
@@ -194,29 +153,17 @@ bool Camera::startStream()
         {
             cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_START)->Execute();
             bActive_ = true;
-            bInited_ = true;
             ret = true;
         }
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        bInited_ = false;
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        bActive_ = false;
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
     return ret;
-}
-
-void Camera::keepCaptureRunning()
-{
-    thObserver_ = std::thread([this] {
-        uint64_t frame = 0;
-        while (bHolder_)
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(5));
-        }
-    });
 }
 
 void Camera::deinitialize()
@@ -242,6 +189,10 @@ bool Camera::stopStream()
     }
     try
     {
+        if (cameraPtr_->GetRemoteNodeList()->GetNodePresent("AcquisitionAbort"))
+        {
+            cameraPtr_->GetRemoteNode("AcquisitionAbort")->Execute();
+        }
         if (cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_STOP)->IsWriteable())
         {
             cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_STOP)->Execute();
@@ -249,21 +200,23 @@ bool Camera::stopStream()
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
 
     try
     {
         stream_->StopAcquisition();
+        auto bufferList = stream_->GetBufferList();
+        bufferList->DiscardAllBuffers();
         ret = true;
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
     return ret;
 }
@@ -275,10 +228,9 @@ void Camera::clearBuffersFromStream()
     {
         if (stream_ != nullptr)
         {
-            stream_->RegisterNewBufferEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
             stream_->UnregisterNewBufferEvent();
+            // stream_->RegisterNewBufferEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
             BGAPI2::BufferList *buffer_list = stream_->GetBufferList();
-            buffer_list->DiscardAllBuffers();
             while (buffer_list->size() > 0)
             {
                 BGAPI2::Buffer *buffer = buffer_list->begin()->second;
@@ -290,61 +242,38 @@ void Camera::clearBuffersFromStream()
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
 }
 
 void Camera::stopDevice()
 {
-    if (!chunk_was_active_ && bOpen_)
-    {
-        try
-        {
-            if (cameraPtr_->GetRemoteNodeList()->GetNodePresent(SFNC_CHUNKSELECTOR))
-            {
-                for (BGAPI2::NodeMap::iterator iter =
-                         cameraPtr_->GetRemoteNode(SFNC_CHUNKSELECTOR)->GetEnumNodeList()->begin();
-                     iter != cameraPtr_->GetRemoteNode(SFNC_CHUNKSELECTOR)->GetEnumNodeList()->end(); iter++)
-                {
-                    BGAPI2::Node *chunk_name = (*iter).second.second;
-                    cameraPtr_->GetRemoteNode(SFNC_CHUNKSELECTOR)->SetValue(chunk_name->GetValue());
-                    cameraPtr_->GetRemoteNode(SFNC_CHUNKENABLE)->SetBool(false);
-                }
-                cameraPtr_->GetRemoteNode(SFNC_CHUNKMODEACTIVE)->SetBool(false);
-            }
-        }
-        catch (BGAPI2::Exceptions::IException &ex)
-        {
-            qDebug() << "Error Type: " << ex.GetType();
-            qDebug() << "Error function: " << ex.GetFunctionName();
-            qDebug() << "Error description: " << ex.GetErrorDescription();
-        }
-    }
     try
     {
-        if (cameraPtr_->IsOpen())
-        {
-            cameraPtr_->Close();
-        }
+        cameraPtr_->Close();
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
 }
 
 bool Camera::getInitialized()
 {
-    return bInited_;
+    return bActive_;
 }
 
 void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint64_t width, uint64_t height,
                       uint64_t frameId)
 {
+    if (matBuffers_.getSize() > 10)
+    {
+        matBuffers_.clear();
+    }
     cv::Mat mat;
     if (pixFormat == "BayerRG8")
     {
@@ -382,134 +311,60 @@ cv::Mat Camera::mono8ToMat(unsigned char *buffer, uint64_t width, uint64_t heigh
     return matImage;
 }
 
-int64_t Camera::switchParams(const std::string &key, uint64_t value, bool bReadOnly)
+bool Camera::writeParam(const std::string &key, uint64_t value)
 {
-    int64_t ret = -1;
+    bool ret = false;
     try
     {
-        qDebug() << "switchParams: ";
-        qDebug() << "key: " << key;
-        qDebug() << "value: " << value;
         BGAPI2::Node *node = cameraPtr_->GetRemoteNode(key.c_str());
-        if (node == nullptr)
+        if (node == nullptr || node->IsWriteable() == false)
         {
             return ret;
-        }
-        if (bReadOnly)
-        {
-            if (node->IsReadable() == false)
-            {
-                return ret;
-            }
-        }
-        else
-        {
-            if (node->IsWriteable() == false)
-            {
-                return ret;
-            }
         }
 
         BGAPI2::String valueType = node->GetInterface();
         if (valueType == "IEnumeration")
         {
-            if (!bReadOnly)
-            {
-                node->SetString(value ? "On" : "Off");
-            }
-            ret = (node->GetString() == "On") ? 1 : 0;
+            node->SetString(value ? "On" : "Off");
         }
-        if (valueType == "IInteger")
+        else if (valueType == "IInteger")
         {
-            if (!bReadOnly)
+            uint16_t scale = 0;
+            if (node->HasInc())
             {
-                uint64_t scale = 1;
-                if (node->HasInc())
-                {
-                    scale = node->GetIntInc();
-                }
-                node->SetInt(value / scale * scale);
+                scale = node->GetIntInc();
             }
-            ret = static_cast<uint64_t>(node->GetInt());
+            value = value / scale * scale;
+            node->SetInt(value);
         }
         if (valueType == "IFloat")
         {
-            if (!bReadOnly)
-            {
-                node->SetDouble(value);
-            }
-            ret = static_cast<uint64_t>(node->GetDouble());
+            node->SetDouble(value);
         }
+        ret = true;
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
-        qDebug() << "Error switchParams: " << key;
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
     }
     return ret;
 }
 
-uint64_t Camera::readMaxValue(const std::string &key)
+bool Camera::setParams(const std::string &key, uint64_t value)
 {
-    uint64_t ret = 0;
-    try
-    {
-        BGAPI2::Node *node = cameraPtr_->GetRemoteNode(key.c_str());
-        if (node == nullptr)
-        {
-            return ret;
-        }
-
-        if (node->IsReadable() == false)
-        {
-            return ret;
-        }
-
-        BGAPI2::String valueType = node->GetInterface();
-        if (valueType == "IInteger")
-        {
-            ret = static_cast<uint64_t>(node->GetIntMax());
-        }
-        if (valueType == "IFloat")
-        {
-            ret = static_cast<uint64_t>(node->GetDoubleMax());
-        }
-    }
-    catch (BGAPI2::Exceptions::IException &ex)
-    {
-        qDebug() << "Error readMaxValue: " << key;
-        qDebug() << "Error Type: " << ex.GetType();
-        qDebug() << "Error function: " << ex.GetFunctionName();
-        qDebug() << "Error description: " << ex.GetErrorDescription();
-    }
-    return ret;
-}
-
-bool Camera::setParams(CameraParams key, uint64_t value)
-{
-    bool ret = false;
     auto iter = mapCameraString_.find(key);
     if (iter != mapCameraString_.end())
     {
-        auto temp = mapCameraParams_[key];
-        if (temp != value)
-        {
-            temp = switchParams(iter->second, value, false);
-            if (temp >= 0)
-            {
-                ret = true;
-                mapCameraParams_[key] = temp;
-            }
-        }
+        return writeParam(iter->second, value);
     }
-    return ret;
+    return false;
 }
 
-uint64_t Camera::getParams(CameraParams key)
+const Json::Value &Camera::getROParams()
 {
-    return mapCameraParams_[key];
+    return jsReadOnly_;
 }
 
 cv::Mat Camera::bayerRG8ToMat(unsigned char *buffer, uint64_t width, uint64_t height)
@@ -547,17 +402,14 @@ cv::Mat Camera::mono10ToMat(unsigned char *buffer, uint64_t width, uint64_t heig
 
 void Camera::initParams()
 {
-    mapCameraParams_[CameraParams::TriggerMode] = switchParams(SFNC_TRIGGERMODE, 1, false); // 1 硬触发 0 软触发
-    mapCameraParams_[CameraParams::ExposureTime] = switchParams(SFNC_EXPOSURETIME);
-    mapCameraParams_[CameraParams::Gain] = switchParams(SFNC_GAIN);
-    mapCameraParams_[CameraParams::RoiWidth] = switchParams(SFNC_WIDTH);
-    mapCameraParams_[CameraParams::RoiHeight] = switchParams(SFNC_HEIGHT);
-    mapCameraParams_[CameraParams::OffsetX] = switchParams(SFNC_OFFSETX);
-    mapCameraParams_[CameraParams::OffsetY] = switchParams(SFNC_OFFSETY);
-    mapCameraParams_[CameraParams::FPS] = switchParams(SFNC_ACQUISITION_FRAMERATE);
-    mapCameraParams_[CameraParams::MaxExposureTime] = readMaxValue(SFNC_EXPOSURETIME);
-    mapCameraParams_[CameraParams::AutoExposureTime] = switchParams(SFNC_EXPOSUREAUTO, 0, false);
-    mapCameraParams_[CameraParams::MaxWidth] = switchParams(SFNC_WIDTHMAX);
-    mapCameraParams_[CameraParams::MaxHeight] = switchParams(SFNC_HEIGHTMAX);
-    mapCameraParams_[CameraParams::AutoGain] = switchParams(SFNC_GAINAUTO, 0, false);
+    writeParam(SFNC_EXPOSUREAUTO, 0);
+    writeParam(SFNC_GAINAUTO, 0);
+    // jsReadOnly_["fps"] = cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_FRAMERATE)->GetInt();
+    jsReadOnly_["max_width"] = cameraPtr_->GetRemoteNode(SFNC_WIDTHMAX)->GetInt();
+    jsReadOnly_["max_height"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHTMAX)->GetInt();
+    jsReadOnly_["width_increment"] = cameraPtr_->GetRemoteNode(SFNC_WIDTH)->GetIntInc();
+    jsReadOnly_["height_increment"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHT)->GetIntInc();
+    jsReadOnly_["offsetx_increment"] = cameraPtr_->GetRemoteNode(SFNC_OFFSETX)->GetIntInc();
+    jsReadOnly_["offsety_increment"] = cameraPtr_->GetRemoteNode(SFNC_OFFSETY)->GetIntInc();
+    qDebug() << jsReadOnly_.toStyledString();
 }

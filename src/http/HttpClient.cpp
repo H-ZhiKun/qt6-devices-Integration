@@ -18,7 +18,7 @@ void HttpClient::sendPostRequest(const std::string &urlStr, const std::string &p
 {
     QUrl url = QUrl::fromUserInput(QString::fromStdString(urlStr));
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     QByteArray postData = QByteArray::fromStdString(postDataStr);
 

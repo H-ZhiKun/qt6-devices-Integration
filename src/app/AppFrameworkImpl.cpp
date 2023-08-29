@@ -2,7 +2,6 @@
 #include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
-#include "CameraWapper.h"
 #include "DBConnectionPool.h"
 #include "Domino.h"
 #include "FormulaWapper.h"
@@ -41,8 +40,6 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::getCameraParam, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::SetCameraParam,
                         std::bind(&AppFrameworkImpl::setCameraParam, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::GetCameraList,
-                        std::bind(&AppFrameworkImpl::getCameraList, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::InsertUser,
                         std::bind(&AppFrameworkImpl::insertUser, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::SelectUserID,
@@ -181,61 +178,30 @@ void AppFrame::AppFrameworkImpl::updateUserData()
     }
 }
 
-std::string AppFrame::AppFrameworkImpl::getCameraList(const std::string &value)
-{
-    Json::Value jsRet;
-    bool ret = false;
-    auto ids = baumerManager_->getCameraList();
-    for (auto &id : ids)
-    {
-        jsRet["cameraId"].append(id);
-        ret = true;
-    }
-    return Utils::makeResponse(ret, std::move(jsRet));
-}
-
 std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
 {
     bool ret = false;
     auto params = Utils::stringToJson(value);
-    std::string snNumber = params["sn"].asString();
-    Json::Value jsVal = baumerManager_->getCameraParam(snNumber);
-    if (!jsVal.isNull())
+    uint8_t winId = params["qml_window"].asInt();
+    Json::Value jsVal = baumerManager_->getCamera(winId);
+    std::string des;
+    if (jsVal.isNull())
     {
-        std::shared_lock lock(mtxSNPainter_);
-        jsVal["qml_window"] = -1;
-        for (auto &[wnd, cameraId] : mapWndDisplay_)
-        {
-            if (snNumber == cameraId)
-            {
-                jsVal["qml_window"] = static_cast<uint16_t>(wnd);
-            }
-        }
-        ret = true;
+        des = "camera init failed";
     }
-    else
-    {
-        return "";
-    }
-    return Utils::makeResponse(ret, std::move(jsVal));
+    return Utils::makeResponse(ret, std::move(jsVal), std::move(des));
 }
 
 std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
 {
     bool ret = false;
     Json::Value jsParams = Utils::stringToJson(value);
-    if (!jsParams.isNull() && jsParams.isMember("sn_num"))
+    std::string des;
+    if (!jsParams.isNull())
     {
-        std::string snNum = jsParams["sn_num"].asString();
-        uint16_t window = jsParams["qml_window"].asUInt();
-        bindDisplay(snNum, static_cast<DisplayWindows>(window));
-        auto rs1 = baumerManager_->setCameraParam(jsParams);
-        auto jsStore = baumerManager_->getCameraParam(snNum);
-        jsStore["qml_window"] = window;
-        auto rs2 = CameraWapper::modifyCamera(jsStore);
-        ret = rs1 && rs2;
+        ret = baumerManager_->setCamera(jsParams, des);
     }
-    return Utils::makeResponse(ret);
+    return Utils::makeResponse(ret, {}, std::move(des));
 }
 
 std::string AppFrame::AppFrameworkImpl::insertUser(const std::string &value)
@@ -479,19 +445,6 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
         Utils::appExit(-1);
     }
     LogInfo("sqlhelper init success.");
-    Json::Value jsVal = CameraWapper::selectAllCamera();
-    if (!jsVal.isNull())
-    {
-        for (auto &jsItem : jsVal)
-        {
-            std::string key = jsItem["sn_num"].asString();
-            std::string value = jsItem["qml_window"].asString();
-            if (!value.empty())
-            {
-                mapWndDisplay_[static_cast<DisplayWindows>(std::stoi(value))] = key;
-            }
-        }
-    }
     updateFormulaData(); // 放在异步处理中会丢失
     updateUserData();
 }
@@ -518,7 +471,8 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
         }
         else
         {
-            processHttpRes(json);
+            // processHttpRes(json);
+            processHttpResTest(json);
         }
     });
     LogInfo("network client start success.");
@@ -605,19 +559,19 @@ void AppFrame::AppFrameworkImpl::updateProduceRealData()
 {
     Json::Value jsProduceVal;
     /*生产数据界面实时更新数据*/
-    jsProduceVal["positive_active_energy"] = "3.22"; // 正向有功电能
-    jsProduceVal["reverse_active_energy"] = "4.22";  // 反向有功电能
-    jsProduceVal["a_phase_voltage"] = "3.45";        // A相电压
-    jsProduceVal["b_phase_voltage"] = "3.54";        // B相电压
-    jsProduceVal["c_phase_voltage"] = "3.36";        // C相电压
-    jsProduceVal["temperature"] = "45.7";            // 温度
-    jsProduceVal["total_active_power"] = "2045";     // 总有功功率
-    jsProduceVal["total_apparent_power"] = "5424";   // 总视在功率
-    jsProduceVal["total_active_energy"] = "54.5";    // 总有功电能
-    jsProduceVal["a_direction_current"] = "12.4";    // A向电流
-    jsProduceVal["b_direction_current"] = "15.3";    // B向电流
-    jsProduceVal["c_direction_current"] = "14.5";    // C向电流
-    jsProduceVal["humidity"] = "91.3%";              // 湿度
+    jsProduceVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
+    jsProduceVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
+    jsProduceVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
+    jsProduceVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
+    jsProduceVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
+    jsProduceVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
+    jsProduceVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
+    jsProduceVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
+    jsProduceVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
+    jsProduceVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
+    jsProduceVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
+    jsProduceVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
+    jsProduceVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
 
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
@@ -700,7 +654,7 @@ void AppFrame::AppFrameworkImpl::updateFormulaData()
 void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottomNum)
 {
     AppFrame::DisplayWindows winId = static_cast<DisplayWindows>(winint);
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(mapWndDisplay_[winId]);
+    std::list<cv::Mat> matData = baumerManager_->getImageBySN(winint);
     if (matData.size() == 0)
     {
         return;
@@ -777,6 +731,25 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
     });
 }
 
+void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
+{
+    // cv::Mat temp = cv::imread("D:/test.jpg");
+    cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+    Utils::asyncTask([this, target = std::move(temp), bottomNum] {
+        std::string url;
+        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
+        std::string modelName = "tangle";
+        url = config_["algorithm"]["url_predict"].as<std::string>();
+        LogInfo("LocationCamera bottom: ", bottomNum);
+        invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+                  Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
+        QImage img = Utils::matToQImage(target);
+        if (img.isNull() == false)
+        {
+            invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
+        }
+    });
+}
 void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
 {
     // 每分钟更新电能数据
@@ -893,9 +866,8 @@ void AppFrame::AppFrameworkImpl::updatePowerRealData()
 
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
-    Json::Value jsVal = CameraWapper::selectAllCamera();
-    baumerManager_ = new BaumerManager(jsVal);
-    baumerManager_->start();
+    baumerManager_ = new BaumerManager();
+    baumerManager_->start(config_);
 }
 
 // void AppFrame::AppFrameworkImpl::initHttp()
@@ -1049,28 +1021,12 @@ void AppFrame::AppFrameworkImpl::initFile()
 //     return;
 // }
 
-void AppFrame::AppFrameworkImpl::bindDisplay(const std::string &snId, const DisplayWindows &painterId)
-{
-    std::unique_lock lock(mtxSNPainter_);
-    auto iter = mapWndDisplay_.begin();
-    for (; iter != mapWndDisplay_.end(); ++iter)
-    {
-        if (iter->second == snId)
-        {
-            iter->second = "";
-        }
-    }
-    mapWndDisplay_[painterId] = snId;
-}
-
 void AppFrame::AppFrameworkImpl::memoryClean()
 {
     // 退出所有的子线程并回收线程栈资源，堆资源需要后续手动释放
     saveConfig();
     bThreadHolder = false;
-    mapWndDisplay_.clear();
     mapStorePainter_.clear();
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // 等到子线程回收资源
     for (auto &ptr : lvFulltimeThread_)
     {
         ptr.join();
@@ -1117,6 +1073,7 @@ void AppFrame::AppFrameworkImpl::memoryClean()
 
 void AppFrame::AppFrameworkImpl::timerTask()
 {
+    refreshImageTest(5);
     lvFulltimeThread_.push_back(std::thread([this] {
         std::string recYear = "-1", recMonth = "-1", recDay = "-1";
         std::string recHour = "-1", recMinute = "-1", recSecond = "-1";
@@ -1147,12 +1104,6 @@ void AppFrame::AppFrameworkImpl::timerTask()
             { // 更新每分钟数据
                 updateByMinute(minute);
                 recMinute = minute;
-                // int num = plcDev_->getFIFOInfo().numPosition;
-                // Json::Value jsParams, jsNum;
-                // jsParams["tangle_r_13002"] = "53";
-                // jsNum["tangle_n_12993"] = std::to_string(num);
-                // writePLC(Utils::jsonToString(jsParams));
-                // writePLC(Utils::jsonToString(jsNum));
             }
             if (second != recSecond)
             { // 更新每秒数据
@@ -1175,26 +1126,37 @@ void AppFrame::AppFrameworkImpl::timerTask()
     // }));
 }
 
-void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
+void AppFrame::AppFrameworkImpl::processHttpRes(std::string &jsonData)
 {
     // 调用yolo或者ocr处理过程
-    Json::Value jsVal = Utils::stringToJson(jsonData);
-    std::string type = jsVal["model"].asString();
+    QString qString = QString::fromStdString(jsonData);
+    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+    QString type = jsonDocu["model"].toString();
     if (type == "paddleOCR")
     {
-        // Utils::asyncTask([this] { processPaddleOCR(); });
+        Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
     }
     else if (type == "tangleCheck")
     {
-        // Utils::asyncTask([this] { processYoloTangle(); });
+        Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
     }
     else if (type == "tangle")
     {
-        // Utils::asyncTask([this] { processYoloTangle(); });
+        Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
     }
 }
 
-void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument)
+void AppFrame::AppFrameworkImpl::processHttpResTest(const std::string &jsonData)
+{
+    QString qString = QString::fromStdString(jsonData);
+    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+    QString type = jsonDocu["model"].toString();
+    // cv::Mat test = cv::imread("D:/test.jpg");
+    cv::Mat test(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+    Utils::asyncTask([this, jsonDocu, test] { processYoloTangleTest(jsonDocu, test); });
+}
+
+void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
 {
     // 转换为QJsonObject
     QJsonObject jsonObject = jsonDocument.object();
@@ -1294,11 +1256,43 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument &jsonDocument)
     }
 }
 
+void AppFrame::AppFrameworkImpl::processYoloTangleTest(QJsonDocument jsonDocument, cv::Mat matImage)
+{
+    // 转换为QJsonObject
+    QJsonObject jsonObject = jsonDocument.object();
+    std::string imageName = jsonObject["imageName"].toString().toStdString();
+
+    // qDebug() << jsonObject["imageName"];
+    // 检查是否含有键box
+    if (jsonObject.contains("box"))
+    {
+        QString boxJsonString = jsonObject["box"].toString();
+        QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
+
+        // 遍历json array
+        foreach (const QJsonValue &boxValue, boxJsonArray)
+        {
+            QJsonObject boxObject = boxValue.toObject();
+            QString result = boxObject["result"].toString().toUtf8();
+            QString resstr = "tangle; " + result + "; ";
+            cv::putText(matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
+                        cv::Scalar(0, 0, 255), 2, 8); // 输出文字
+        }
+        // cv::imwrite("Utils::getCurrentTime(true)", matImage);
+        invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
+                  Q_ARG(QImage, Utils::matToQImage(matImage)));
+    }
+    else
+    {
+        // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
+    }
+}
+
 void AppFrame::AppFrameworkImpl::runMainProcess()
 {
 }
 
-void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument &jsonDocument)
+void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
 {
     // 找出图像
     Product *product_;
@@ -1388,7 +1382,6 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument &jsonDocument)
         }
 
         // 1 图像操作：显示在界面、保存
-        std::string imagePath = "D:/deviceintegration/build/Debug/image/test2.jpg";
         QImage saveImage = Utils::matToQImage(*product_->codeCheckImage);
         saveImageToFile(saveImage, DisplayWindows::LocateCheckCamera);
         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",

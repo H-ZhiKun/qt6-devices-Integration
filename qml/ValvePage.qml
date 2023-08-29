@@ -93,7 +93,7 @@ GroupBox {
                         if (checked) {
                             var handMoveAddr = singalComponent.curItem.handMoveAddr;
                             var json = {
-                                [handMoveAddr]: "1"
+                                [handMoveAddr]: "0"
                             };
                             var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
                             var result = JSON.parse(jsRet);
@@ -122,7 +122,7 @@ GroupBox {
                         if (checked) {
                             var handMoveAddr = singalComponent.curItem.handMoveAddr;
                             var json = {
-                                [handMoveAddr]: "0"
+                                [handMoveAddr]: "1"
                             };
                             var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
                             var result = JSON.parse(jsRet);

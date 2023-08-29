@@ -26,7 +26,7 @@ plc:
   # type: circle or line
   type: circle
   # host: plc address,192.168.1.10 by default
-  host: 192.168.1.10
+  host: 192.168.123.10
   # port: plc port, 502 by default
   port: 502
   # io_freq read registers freq, the read interval milliseconds
@@ -46,8 +46,8 @@ permission:
   host: 127.0.0.1
   port: 61000
 baumer:
-  # interface: The static IP address of the NIC
-  interface: 192.168.60.60
+  # interface: The MAC address of the NIC example: CC-82-7F-3C-04-DF
+  interface: CC-82-7F-3C-04-DF
   # display_window: LocationCamera = 0;CodeCheckCamera = 1;LocateCheckCamera = 2.
   # trigger_mode: software = 0;hardware=1;
   # expose: expose time unit millisecond
