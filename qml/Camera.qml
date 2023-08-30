@@ -601,6 +601,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
+        mipmap:true
     }
 
     Image {
@@ -610,6 +611,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
+        mipmap:true
     }
 
     Image {
@@ -619,6 +621,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
+        mipmap:true
     }
 
     Image {
@@ -628,6 +631,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
+        mipmap:true
     }
     
     Connections {
