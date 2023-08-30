@@ -1,7 +1,7 @@
 #pragma once
 #include "LockFreeQueue.h"
 #include "Logger.h"
-#include <modbus.h>
+#include "modbus.h"
 #include <string>
 #include <unordered_map>
 #include <vector>

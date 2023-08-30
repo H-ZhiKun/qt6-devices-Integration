@@ -33,8 +33,6 @@ void BGAPI2CALL BufferHandler(void *callBackOwner, BGAPI2::Buffer *pBufferFilled
                               pBufferFilled->GetFrameID());
             pBufferFilled->QueueBuffer();
         }
-        LogInfo("from SN = {}, frame count ={}, incomplete count = {}", pCamera->snNumber_, pCamera->frameCount_,
-                pCamera->incompleteCount_);
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
@@ -71,7 +69,7 @@ void Camera::initialize()
         bOpen_ = true;
         if (addBuffersToStream())
         {
-            startStream();
+            startCollect();
         }
         initParams();
     }
@@ -121,7 +119,7 @@ bool Camera::addBuffersToStream()
     {
         cameraPtr_->GetDataStreams()->Refresh();
         BGAPI2::BufferList *bufferList = stream_->GetBufferList();
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 5; i++)
         {
             BGAPI2::Buffer *buffer = new BGAPI2::Buffer();
             bufferList->Add(buffer);
@@ -130,6 +128,7 @@ bool Camera::addBuffersToStream()
         }
         stream_->RegisterNewBufferEvent(BGAPI2::Events::EVENTMODE_EVENT_HANDLER);
         stream_->RegisterNewBufferEventHandler(this, (BGAPI2::Events::NewBufferEventHandler)&BufferHandler);
+        stream_->StartAcquisitionContinuous();
         ret = true;
     }
     catch (BGAPI2::Exceptions::IException &ex)
@@ -141,39 +140,9 @@ bool Camera::addBuffersToStream()
     return ret;
 }
 
-bool Camera::startStream()
-{
-    bool ret = false;
-    try
-    {
-        stream_->StartAcquisitionContinuous();
-        if (cameraPtr_->GetRemoteNodeList()->GetNodePresent(SFNC_TESTIMAGESELECTORVALUE_FRAMECOUNTER))
-        {
-            if (cameraPtr_->GetRemoteNode(SFNC_TESTIMAGESELECTORVALUE_FRAMECOUNTER)->IsWriteable())
-            {
-                cameraPtr_->GetRemoteNode(SFNC_TESTIMAGESELECTORVALUE_FRAMECOUNTER)->SetInt(0);
-            }
-        }
-        if (cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_START)->IsWriteable())
-        {
-            cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_START)->Execute();
-            bActive_ = true;
-            ret = true;
-        }
-    }
-    catch (BGAPI2::Exceptions::IException &ex)
-    {
-        bActive_ = false;
-        LogError("Error Type: {}", ex.GetType().get());
-        LogError("Error function: {}", ex.GetFunctionName().get());
-        LogError("Error description: {}", ex.GetErrorDescription().get());
-    }
-    return ret;
-}
-
 void Camera::deinitialize()
 {
-    stopStream();
+    stopCollect();
     clearBuffersFromStream();
     stopDevice();
     // 由这里统一释放，避免异常导致的泄漏问题
@@ -184,54 +153,13 @@ void Camera::deinitialize()
     streamBuffers_.clear();
 }
 
-bool Camera::stopStream()
-{
-    bool ret = false;
-    bActive_ = false;
-    if (stream_ == nullptr)
-    {
-        return ret;
-    }
-    try
-    {
-        if (cameraPtr_->GetRemoteNodeList()->GetNodePresent("AcquisitionAbort"))
-        {
-            cameraPtr_->GetRemoteNode("AcquisitionAbort")->Execute();
-        }
-        if (cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_STOP)->IsWriteable())
-        {
-            cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_STOP)->Execute();
-        }
-    }
-    catch (BGAPI2::Exceptions::IException &ex)
-    {
-        LogError("Error Type: {}", ex.GetType().get());
-        LogError("Error function: {}", ex.GetFunctionName().get());
-        LogError("Error description: {}", ex.GetErrorDescription().get());
-    }
-
-    try
-    {
-        stream_->StopAcquisition();
-        ret = true;
-    }
-    catch (BGAPI2::Exceptions::IException &ex)
-    {
-        LogError("Error Type: {}", ex.GetType().get());
-        LogError("Error function: {}", ex.GetFunctionName().get());
-        LogError("Error description: {}", ex.GetErrorDescription().get());
-    }
-    return ret;
-}
-
 void Camera::clearBuffersFromStream()
 {
-
     try
     {
         if (stream_ != nullptr)
         {
-
+            stream_->StopAcquisition();
             stream_->UnregisterNewBufferEvent();
             // stream_->RegisterNewBufferEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
             auto bufferList = stream_->GetBufferList();
@@ -256,6 +184,10 @@ void Camera::clearBuffersFromStream()
 
 void Camera::stopDevice()
 {
+    if (cameraPtr_ == nullptr)
+    {
+        return;
+    }
     try
     {
         cameraPtr_->Close();
@@ -310,6 +242,62 @@ std::list<cv::Mat> Camera::getImage()
     return list;
 }
 
+void Camera::startCollect()
+{
+    if (cameraPtr_ == nullptr)
+    {
+        return;
+    }
+    try
+    {
+        if (cameraPtr_->GetRemoteNodeList()->GetNodePresent(SFNC_TESTIMAGESELECTORVALUE_FRAMECOUNTER))
+        {
+            if (cameraPtr_->GetRemoteNode(SFNC_TESTIMAGESELECTORVALUE_FRAMECOUNTER)->IsWriteable())
+            {
+                cameraPtr_->GetRemoteNode(SFNC_TESTIMAGESELECTORVALUE_FRAMECOUNTER)->SetInt(0);
+            }
+        }
+        if (cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_START)->IsWriteable())
+        {
+            cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_START)->Execute();
+            bActive_ = true;
+        }
+    }
+    catch (BGAPI2::Exceptions::IException &ex)
+    {
+        bActive_ = false;
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
+    }
+}
+
+void Camera::stopCollect()
+{
+    bActive_ = false;
+    if (cameraPtr_ == nullptr)
+    {
+        return;
+    }
+    try
+    {
+        if (cameraPtr_->GetRemoteNodeList()->GetNodePresent("AcquisitionAbort"))
+        {
+            cameraPtr_->GetRemoteNode("AcquisitionAbort")->Execute();
+        }
+        if (cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_STOP)->IsWriteable())
+        {
+            cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_STOP)->Execute();
+        }
+    }
+    catch (BGAPI2::Exceptions::IException &ex)
+    {
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
+    }
+}
+
 cv::Mat Camera::mono8ToMat(unsigned char *buffer, uint64_t width, uint64_t height)
 {
     cv::Mat matImage(height, width, CV_8UC1, buffer);
@@ -334,15 +322,9 @@ bool Camera::writeParam(const std::string &key, uint64_t value)
         }
         else if (valueType == "IInteger")
         {
-            uint16_t scale = 0;
-            if (node->HasInc())
-            {
-                scale = node->GetIntInc();
-            }
-            value = value / scale * scale;
             node->SetInt(value);
         }
-        if (valueType == "IFloat")
+        else if (valueType == "IFloat")
         {
             node->SetDouble(value);
         }

@@ -309,7 +309,7 @@ bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
         des = "camera init error.";
         return false;
     }
-    pCamera->stopStream();
+    pCamera->stopCollect();
     for (auto it = param.begin(); it != param.end(); ++it)
     {
         const std::string &key = it.key().asString();
@@ -329,16 +329,11 @@ bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
         if (!pCamera->setParams(key, value))
         {
             LogError("failed camera param key = {}, camera value = {}", key, value);
-            des = key + "set error.";
-            ret = false;
-            break;
-        }
-        else
-        {
-            LogInfo("success camera param key = {}, camera value = {}", key, value);
+            des += key + " set error;";
         }
     }
-    pCamera->startStream();
+    pCamera->startCollect();
+    ret = des.empty();
     return ret;
 }
 

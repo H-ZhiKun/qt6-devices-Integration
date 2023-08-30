@@ -59,6 +59,7 @@ class AppFrameworkImpl final : public AppFramework
     // 差异调用 接口区域
     void loadConfig();
     void saveConfig();
+    void initLogger();
     void initSqlHelper();
     void initNetworkClient();
     void initPLC();
@@ -89,7 +90,6 @@ class AppFrameworkImpl final : public AppFramework
     void processYoloTangle(QJsonDocument); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
     void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
-    void saveImageToFileTest(QImage &imgSave, const DisplayWindows &camId);
     void runMainProcess();
 
   private:
