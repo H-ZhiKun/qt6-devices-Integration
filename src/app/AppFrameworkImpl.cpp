@@ -665,9 +665,7 @@ void AppFrame::AppFrameworkImpl::refreshImage(const uint8_t winint, const uint64
         std::string modelName;
         if (winId == DisplayWindows::CodeCheckCamera)
         {
-            static uint16_t countCode = 0;
             url = config_["algorithm"]["url_ocr"].as<std::string>();
-            LogInfo("CodeCheckCamera count: {}", countCode);
             for (auto &product_ : productList_)
             {
                 if (product_->codeCheckImage == nullptr && !product_->logistics1.empty())
@@ -678,14 +676,10 @@ void AppFrame::AppFrameworkImpl::refreshImage(const uint8_t winint, const uint64
                     // 1 保存数据
                 }
             }
-            countCode++;
         }
         else if (winId == DisplayWindows::LocationCamera)
         {
-            static uint16_t countLocation = 0;
             url = config_["algorithm"]["url_predict"].as<std::string>();
-            LogInfo("LocationCamera: {}", countLocation);
-            countLocation++;
             for (auto &product_ : productList_)
             {
                 if (product_->locateImage == nullptr)
@@ -699,10 +693,7 @@ void AppFrame::AppFrameworkImpl::refreshImage(const uint8_t winint, const uint64
         }
         else if (winId == DisplayWindows::LocateCheckCamera)
         {
-            static uint16_t countLocateCheck = 0;
             url = config_["algorithm"]["url_predict"].as<std::string>();
-            LogInfo("LocateCheckCamera: {}", countLocateCheck);
-            countLocateCheck++;
             for (auto &product_ : productList_)
             {
                 if (product_->locateCheckImage == nullptr)

@@ -87,7 +87,6 @@ class AppFrameworkImpl final : public AppFramework
     void processYoloTangle(QJsonDocument); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
     void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
-    void saveImageToFileTest(QImage &imgSave, const DisplayWindows &camId);
     void runMainProcess();
 
   private:
