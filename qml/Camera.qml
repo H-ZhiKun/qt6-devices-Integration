@@ -560,17 +560,17 @@ GroupBox {
         y: 455
         width: 38
         height: 19
-        text: qsTr("PLC：")
+        text: qsTr("PLC:")
         font.pointSize: 11
     }
 
     Text {
         id: textPrepare2
-        x: 582
+        x: 563
         y: 494
         width: 94
         height: 19
-        text: qsTr("Domino：")
+        text: qsTr("激光打码机:")
         font.pointSize: 11
     }
 
@@ -580,7 +580,7 @@ GroupBox {
         y: 538
         width: 90
         height: 19
-        text: qsTr("Permission：")
+        text: qsTr("普什服务器:")
         font.pointSize: 11
     }
 
@@ -590,7 +590,7 @@ GroupBox {
         y: 581
         width: 63
         height: 19
-        text: qsTr("cognex:")
+        text: qsTr("扫码机:")
         font.pointSize: 11
     }
 
