@@ -620,42 +620,42 @@ void AppFrame::AppFrameworkImpl::updateFormulaData()
 
 void AppFrame::AppFrameworkImpl::updateVideo()
 {
-    std::shared_lock lock(mtxSNPainter_);
-    for (const auto &[key, value] : mapStorePainter_)
-    {
-        auto windId = key;
-        uint8_t cameraId = static_cast<uint8_t>(windId);
-        std::list<cv::Mat> matData = baumerManager_->getImageBySN(cameraId);
-        if (matData.size() == 0)
-        {
-            continue;
-        }
-        cv::Mat temp = matData.back();
-        Utils::asyncTask([this, windId, temp] {
-            QImage img = Utils::matToQImage(temp);
-            if (img.isNull() == false)
-            {
-                if (saveImageFlag.load(std::memory_order_acquire))
-                {
-                    saveImageFlag.store(false, std::memory_order_release);
-                    saveImageToFile(img, windId);
-                }
-                saveImageToFile(img, windId);
+    // std::shared_lock lock(mtxSNPainter_);
+    // for (const auto &[key, value] : mapStorePainter_)
+    // {
+    //     auto windId = key;
+    //     uint8_t cameraId = static_cast<uint8_t>(windId);
+    //     std::list<cv::Mat> matData = baumerManager_->getImageBySN(cameraId);
+    //     if (matData.size() == 0)
+    //     {
+    //         continue;
+    //     }
+    //     cv::Mat temp = matData.back();
+    //     Utils::asyncTask([this, windId, temp] {
+    //         QImage img = Utils::matToQImage(temp);
+    //         if (img.isNull() == false)
+    //         {
+    //             if (saveImageFlag.load(std::memory_order_acquire))
+    //             {
+    //                 saveImageFlag.store(false, std::memory_order_release);
+    //                 saveImageToFile(img, windId);
+    //             }
+    //             saveImageToFile(img, windId);
 
-                invokeCpp(mapStorePainter_[windId], "updateImage", Q_ARG(QImage, img));
-                if (windId == DisplayWindows::LocationCamera)
-                {
-                    LogInfo("send locateImage");
-                    productList_.back()->locateImageName = Utils::getCurrentTime(true);
-                    productList_.back()->locateImage = temp;
-                    std::string url = config_["algorithm"]["url_predict"].as<std::string>();
-                    invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                              Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(
-                                                     temp, 6, productList_.back()->locateImageName, "tangle")));
-                }
-            }
-        });
-    }
+    //             invokeCpp(mapStorePainter_[windId], "updateImage", Q_ARG(QImage, img));
+    //             if (windId == DisplayWindows::LocationCamera)
+    //             {
+    //                 LogInfo("send locateImage");
+    //                 productList_.back()->locateImageName = Utils::getCurrentTime(true);
+    //                 productList_.back()->locateImage = temp;
+    //                 std::string url = config_["algorithm"]["url_predict"].as<std::string>();
+    //                 invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+    //                           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(
+    //                                                  temp, 6, productList_.back()->locateImageName, "tangle")));
+    //             }
+    //         }
+    //     });
+    // }
 }
 
 void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
@@ -682,7 +682,7 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
             if (product_->codeCheckImage.empty() && !product_->logistics1.empty())
             {
                 product_->codeCheckImage = temp;
-                product_->codeCheckImageName = imageName + "1";
+                product_->codeCheckImageName = imageName + "CC";
                 modelName = "paddleOCR";
                 // 1 保存数据
             }
@@ -718,8 +718,8 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
         {
             if (product_->locateCheckImage.empty())
             {
-                product_->locateCheckImage;
-                product_->locateCheckImageName = imageName + "2";
+                product_->locateCheckImage = temp;
+                product_->locateCheckImageName = imageName + "LC";
                 modelName = "tangleCheck";
                 break;
             }
@@ -744,21 +744,22 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-        std::string modelName;
 
         static uint16_t countLocation = 0;
         url = config_["algorithm"]["url_predict"].as<std::string>();
         LogInfo("LocationCamera: {}", countLocation);
+        LogInfo("productList_ cur size: {}", productList_.size());
         countLocation++;
+        productList_.push_back(new Product());
         for (auto &product_ : productList_)
         {
             if (product_->locateImage.empty())
             {
-                product_->locateImage = temp;
-                product_->locateImageName = imageName + "0";
-                modelName = "tangle";
+                LogInfo("get locateImage");
+                product_->locateImage = temp.clone();
+                product_->locateImageName = imageName + "L";
                 invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, modelName)));
+                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName + "L", "tangle")));
                 break;
             }
         }
@@ -1188,34 +1189,36 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
 {
     // 转换为QJsonObject
     QJsonObject jsonObject = jsonDocument.object();
-    cv::Mat *matImage;
+    cv::Mat matImage;
     std::string imageName = jsonObject["imageName"].toString().toStdString();
     bool isCheck = false;
     Product *pro_;
     for (auto &tempPro : productList_)
     {
-        if (!tempPro->locateImageName.empty() && tempPro->locateImageName == imageName)
+        if (tempPro->locateImageName == imageName)
         {
-            matImage = &tempPro->locateImage;
+            matImage = tempPro->locateImage;
+            LogInfo("process locate image in tangle");
             isCheck = false;
             pro_ = tempPro;
             break;
         }
-        else if (!tempPro->locateCheckImageName.empty() && tempPro->locateCheckImageName == imageName)
+        else if (tempPro->locateCheckImageName == imageName)
         {
-            matImage = &tempPro->locateCheckImage;
+            matImage = tempPro->locateCheckImage;
+            LogInfo("process locateCheck image in tangle");
             isCheck = true;
             pro_ = tempPro;
             break;
         }
     }
-    if (matImage == nullptr)
+    if (matImage.empty())
     {
         LogInfo("imag: {} requre null", imageName);
         return;
     }
     LogInfo("process image: {}", imageName);
-    QImage resImg = Utils::matToQImage(*matImage);
+    QImage resImg = Utils::matToQImage(matImage);
     // qDebug() << jsonObject["imageName"];
     // 检查是否含有键box
     if (jsonObject.contains("box"))
@@ -1260,7 +1263,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
             pp.setFont(font);
             pp.setPen(pen);
             pp.setBrush(brush);
-            pp.drawText(QPointF(20, 50), QStringLiteral("tanggle;56;"));
+            pp.drawText(QPointF(20, 50), resstr);
             // cv::putText(*matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
             //             cv::Scalar(0, 0, 255), 2, 8); // 输出文字
         }
@@ -1271,8 +1274,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
         }
         else
         {
-            invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage",
-                      Q_ARG(QImage, Utils::matToQImage(*matImage)));
+            invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, resImg));
         }
 
         // cv::imwrite("Utils::getCurrentTime(true)", matImage);

@@ -1,6 +1,7 @@
 #ifndef HTTPCLIENT_H
 #define HTTPCLIENT_H
 
+#include "Logger.h"
 #include <QByteArray>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -8,7 +9,6 @@
 #include <QObject>
 #include <QString>
 #include <QUrl>
-
 class HttpClient : public QObject
 {
     Q_OBJECT

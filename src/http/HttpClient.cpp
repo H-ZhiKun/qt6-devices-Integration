@@ -19,7 +19,7 @@ void HttpClient::sendPostRequest(const std::string &urlStr, const std::string &p
     QUrl url = QUrl::fromUserInput(QString::fromStdString(urlStr));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
+    LogInfo("send data to {}", urlStr);
     QByteArray postData = QByteArray::fromStdString(postDataStr);
 
     QNetworkReply *reply = m_manager->post(request, postData);
