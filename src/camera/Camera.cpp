@@ -293,10 +293,9 @@ void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint6
 std::list<cv::Mat> Camera::getImage()
 {
     std::list<cv::Mat> list;
-    while (!matBuffers_.empty())
+    cv::Mat mat;
+    while (matBuffers_.dequeue(mat))
     {
-        cv::Mat mat;
-        matBuffers_.dequeue(mat);
         if (!mat.empty())
         {
             list.emplace_back(std::move(mat));

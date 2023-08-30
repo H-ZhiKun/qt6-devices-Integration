@@ -66,14 +66,14 @@ class AppFrameworkImpl final : public AppFramework
     void initBaumerManager();
     void initFile();
 
-    void updateRealData();        // 主界面实时更新数据
-    void updateProduceRealData(); // 生产数据界面实时更新数据
-    void updateSensorRealData();  // 传感器界面实时更新数据
-    void updateValveRealData();   // 阀门界面实时更新数据
-    void updatePowerRealData();   // 电机界面实时更新数据
-    void updateAlertData();       // 更新报警信息
-    void updateFormulaData();     // 初始化配方界面
-    // void updateVideo();                                                      // 实时视频
+    void updateRealData();                                    // 主界面实时更新数据
+    void updateProduceRealData();                             // 生产数据界面实时更新数据
+    void updateSensorRealData();                              // 传感器界面实时更新数据
+    void updateValveRealData();                               // 阀门界面实时更新数据
+    void updatePowerRealData();                               // 电机界面实时更新数据
+    void updateAlertData();                                   // 更新报警信息
+    void updateFormulaData();                                 // 初始化配方界面
+    void updateVideo();                                       // 实时视频
     void refreshImage(const int winint, const int bottomNum); // 实时图像
     void refreshImageTest(const int bottomNum);
     void updateByMinute(const std::string &minute);                                              // 每分钟更新
@@ -86,6 +86,7 @@ class AppFrameworkImpl final : public AppFramework
     void processYoloTangle(QJsonDocument); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
     void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
+    void saveImageToFileTest(QImage &imgSave, const DisplayWindows &camId);
     void runMainProcess();
 
   private:

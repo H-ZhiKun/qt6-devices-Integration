@@ -624,58 +624,53 @@ void AppFrame::AppFrameworkImpl::updateFormulaData()
     }
 }
 
-// void AppFrame::AppFrameworkImpl::updateVideo()
-// {
-//     std::shared_lock lock(mtxSNPainter_);
-//     for (const auto &[key, value] : mapWndDisplay_)
-//     {
-//         auto camId = key;
-//         std::string sn = value;
-//         if (sn.empty())
-//         {
-//             invokeCpp(mapStorePainter_[camId], "stopPainting");
-//             continue;
-//         }
-//         std::list<cv::Mat> matData = baumerManager_->getImageBySN(sn);
-//         if (matData.size() == 0)
-//         {
-//             continue;
-//         }
-//         cv::Mat temp = matData.back();
-//         Utils::asyncTask([this, camId, target = std::move(temp)] {
-//             const FIFOInfo &it = plcDev_->getFIFOInfo();
-//             int num = it.numPosition;
-//             std::string url;
-//             if (camId == DisplayWindows::CodeCheckCamera)
-//             {
-//                 url = config_["algorithm"]["url_ocr"].as<std::string>();
-//                 LogInfo("CodeCheckCamera bottom: ", num);
-//             }
-//             else if (camId == DisplayWindows::LocationCamera)
-//             {
-//                 url = config_["algorithm"]["url_predict"].as<std::string>();
-//                 LogInfo("LocationCamera bottom: ", num);
-//             }
-//             else if (camId == DisplayWindows::LocateCheckCamera)
-//             {
-//                 url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
-//                 LogInfo("LocateCheckCamera bottom: ", num);
-//             }
-//             invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-//                       Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, num)));
-//             QImage img = Utils::matToQImage(target);
-//             if (img.isNull() == false)
-//             {
-//                 if (saveImageFlag.load(std::memory_order_acquire))
-//                 {
-//                     saveImageFlag.store(false, std::memory_order_release);
-//                     saveImageToFile(img, camId);
-//                 }
-//                 invokeCpp(mapStorePainter_[camId], "updateImage", Q_ARG(QImage, img));
-//             }
-//         });
-//     }
-// }
+void AppFrame::AppFrameworkImpl::updateVideo()
+{
+    std::shared_lock lock(mtxSNPainter_);
+    for (const auto &[key, value] : mapStorePainter_)
+    {
+        auto windId = key;
+        uint8_t cameraId = static_cast<uint8_t>(windId);
+        std::list<cv::Mat> matData = baumerManager_->getImageBySN(cameraId);
+        if (matData.size() == 0)
+        {
+            continue;
+        }
+        cv::Mat temp = matData.back();
+        Utils::asyncTask([this, windId, temp] {
+            // const FIFOInfo &it = plcDev_->getFIFOInfo();
+            // int num = it.numPosition;
+            // std::string url;
+            // if (windId == DisplayWindows::CodeCheckCamera)
+            // {
+            //     url = config_["algorithm"]["url_ocr"].as<std::string>();
+            //     LogInfo("CodeCheckCamera bottom: ", num);
+            // }
+            // else if (windId == DisplayWindows::LocationCamera)
+            // {
+            //     url = config_["algorithm"]["url_predict"].as<std::string>();
+            //     LogInfo("LocationCamera bottom: ", num);
+            // }
+            // else if (windId == DisplayWindows::LocateCheckCamera)
+            // {
+            //     url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
+            //     LogInfo("LocateCheckCamera bottom: ", num);
+            // }
+            // invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+            //           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, num)));
+            QImage img = Utils::matToQImage(temp);
+            if (img.isNull() == false)
+            {
+                if (saveImageFlag.load(std::memory_order_acquire))
+                {
+                    saveImageFlag.store(false, std::memory_order_release);
+                    saveImageToFile(img, windId);
+                }
+                invokeCpp(mapStorePainter_[windId], "updateImage", Q_ARG(QImage, img));
+            }
+        });
+    }
+}
 
 void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottomNum)
 {
@@ -976,6 +971,7 @@ void AppFrame::AppFrameworkImpl::initFile()
     QString saveImageSubDir3 = saveImageDir + "/LocateCheckCamera";
     if (!qdir.exists(saveImageSubDir1))
     {
+        qdir.mkdir(saveImageSubDir1 + "_RealTime");
         bool res = qdir.mkdir(saveImageSubDir1);
         if (!res)
         {
@@ -984,6 +980,7 @@ void AppFrame::AppFrameworkImpl::initFile()
     }
     if (!qdir.exists(saveImageSubDir2))
     {
+        qdir.mkdir(saveImageSubDir2 + "_RealTime");
         bool res = qdir.mkdir(saveImageSubDir2);
         if (!res)
         {
@@ -992,6 +989,7 @@ void AppFrame::AppFrameworkImpl::initFile()
     }
     if (!qdir.exists(saveImageSubDir3))
     {
+        qdir.mkdir(saveImageSubDir3 + "_RealTime");
         bool res = qdir.mkdir(saveImageSubDir3);
         if (!res)
         {
@@ -1057,11 +1055,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     // 退出所有的子线程并回收线程栈资源，堆资源需要后续手动释放
     saveConfig();
     bThreadHolder = false;
-    mapStorePainter_.clear();
     for (auto &ptr : lvFulltimeThread_)
     {
         ptr.join();
     }
+    mapStorePainter_.clear();
     lvFulltimeThread_.clear();
 
     // 对象清理区域
@@ -1147,14 +1145,14 @@ void AppFrame::AppFrameworkImpl::timerTask()
         }
     }));
 
-    // lvFulltimeThread_.push_back(std::thread([this] {
-    //     // 视频渲染线程
-    //     while (bThreadHolder)
-    //     {
-    //         updateVideo();
-    //         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    //     }
-    // }));
+    lvFulltimeThread_.push_back(std::thread([this] {
+        // 视频渲染线程
+        while (bThreadHolder)
+        {
+            updateVideo();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }));
 }
 
 void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
@@ -1457,6 +1455,31 @@ void AppFrame::AppFrameworkImpl::saveImageToFile(QImage &imgSave, const DisplayW
             break;
         case DisplayWindows::LocateCheckCamera:
             saveImageSubDir = saveImageDir + "/LocateCheckCamera/";
+            break;
+        }
+        QString imagePath = saveImageSubDir + currentDateTimeStr + ".jpg";
+        if (!imgSave.save(imagePath, "JPG"))
+        {
+            qDebug() << "save image failed : " + imagePath;
+        }
+    });
+}
+
+void AppFrame::AppFrameworkImpl::saveImageToFileTest(QImage &imgSave, const DisplayWindows &camId)
+{
+    Utils::asyncTask([this, imgSave, camId] {
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QString saveImageSubDir = "";
+        switch (camId)
+        {
+        case DisplayWindows::LocationCamera:
+            saveImageSubDir = saveImageDir + "/LocationCamera_RealTime/";
+            break;
+        case DisplayWindows::CodeCheckCamera:
+            saveImageSubDir = saveImageDir + "/CodeCheckCamera_RealTime/";
+            break;
+        case DisplayWindows::LocateCheckCamera:
+            saveImageSubDir = saveImageDir + "/LocateCheckCamera_RealTime/";
             break;
         }
         QString imagePath = saveImageSubDir + currentDateTimeStr + ".jpg";
