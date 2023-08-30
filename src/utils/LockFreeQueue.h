@@ -21,14 +21,14 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
         BufferNode *node{new BufferNode(std::move(input))};
         BufferNode *prevhead{head_.exchange(node, std::memory_order_acq_rel)};
         prevhead->next_.store(node, std::memory_order_release);
-        size_++;
+        size_.fetch_add(1, std::memory_order_relaxed);
     }
     void enqueue(const T &input)
     {
         BufferNode *node{new BufferNode(input)};
         BufferNode *prevhead{head_.exchange(node, std::memory_order_acq_rel)};
         prevhead->next_.store(node, std::memory_order_release);
-        size_++;
+        size_.fetch_add(1, std::memory_order_relaxed);
     }
 
     bool dequeue(T &output)
@@ -44,7 +44,7 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
         delete next->dataPtr_;
         tail_.store(next, std::memory_order_release);
         delete tail;
-        size_--;
+        size_.fetch_sub(1, std::memory_order_relaxed);
         return true;
     }
 
@@ -56,7 +56,7 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
     }
     uint16_t getSize()
     {
-        return size_;
+        return size_.load(std::memory_order_relaxed);
     }
     void clear()
     {

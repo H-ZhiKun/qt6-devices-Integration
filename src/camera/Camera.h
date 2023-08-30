@@ -32,9 +32,6 @@ class Camera
     const Json::Value &getROParams();
 
     bool setParams(const std::string &key, uint64_t value);
-    uint64_t frameCount_ = 0;
-    uint64_t incompleteCount_ = 0;
-    std::string snNumber_;
 
   private:
     void initialize();         // 初始化入口

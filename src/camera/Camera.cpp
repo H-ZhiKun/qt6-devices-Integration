@@ -20,11 +20,9 @@ void BGAPI2CALL BufferHandler(void *callBackOwner, BGAPI2::Buffer *pBufferFilled
         if (pBufferFilled->GetIsIncomplete())
         {
             pBufferFilled->QueueBuffer();
-            pCamera->incompleteCount_++;
         }
         else
         {
-            pCamera->frameCount_++;
             uint64_t width = pBufferFilled->GetWidth();
             uint64_t height = pBufferFilled->GetHeight();
             unsigned char *imageData =
@@ -81,7 +79,6 @@ bool Camera::openDevice()
     try
     {
         cameraPtr_->Open();
-        snNumber_ = cameraPtr_->GetSerialNumber().get();
         ret = true;
     }
     catch (BGAPI2::Exceptions::ResourceInUseException &ex)
@@ -208,11 +205,11 @@ bool Camera::getInitialized()
 void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint64_t width, uint64_t height,
                       uint64_t frameId)
 {
-    // if (matBuffers_.getSize() > 10)
-    // {
-    //     matBuffers_.clear();
-    // }
     cv::Mat mat;
+    if (matBuffers_.getSize() > 10)
+    {
+        matBuffers_.dequeue(mat);
+    }
     if (pixFormat == "BayerRG8")
     {
         mat = bayerRG8ToMat(buffer, width, height);
