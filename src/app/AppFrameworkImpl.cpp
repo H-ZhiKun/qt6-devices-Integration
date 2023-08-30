@@ -526,21 +526,19 @@ void AppFrame::AppFrameworkImpl::initPLC()
     plcDev_ = new PLCDevice;
     plcDev_->init(plcIp, plcPort, io, fifo);
     LogInfo("{} PLC device start success.", plcType);
-    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locatePhoto,
-                     [this](const uint8_t winInt, const uint64_t bottomNum) { refreshLocate(winInt, bottomNum); });
-    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locateCheckPhoto,
-                     [this](const uint8_t winInt, const uint64_t bottomNum) { refreshLocateCheck(winInt, bottomNum); });
-    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeCheck,
-                     [this](const uint8_t winInt, const uint64_t bottomNum) { refreshCodeCheck(winInt, bottomNum); });
+    QObject::connect(plcDev_, &PLCDevice::locatePhoto, [this](const uint64_t bottomNum) { refreshLocate(bottomNum); });
+    QObject::connect(plcDev_, &PLCDevice::locateCheckPhoto,
+                     [this](const uint64_t bottomNum) { refreshLocateCheck(bottomNum); });
+    QObject::connect(plcDev_, &PLCDevice::codeCheck, [this](const uint64_t bottomNum) { refreshCodeCheck(bottomNum); });
 
     // 获得读二维码信号
-    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::readQRCode, [this](uint8_t bottomNum) {
+    QObject::connect(plcDev_, &PLCDevice::readQRCode, [this](uint8_t bottomNum) {
         cognex_->scanOnce();
         Product *newProduct = new Product();
         productList_.push_back(newProduct);
     });
 
-    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeLogistics, [this](uint8_t bottomNum) {
+    QObject::connect(plcDev_, &PLCDevice::codeLogistics, [this](uint8_t bottomNum) {
         for (auto &pro_ : productList_)
         {
             if (pro_->isCode)
@@ -1444,7 +1442,7 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
         }
 
         // 1 图像操作：显示在界面、保存
-        QImage saveImage = Utils::matToQImage(*product_->codeCheckImage);
+        QImage saveImage = Utils::matToQImage(product_->codeCheckImage);
         saveImageToFile(saveImage, DisplayWindows::LocateCheckCamera);
         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
                   Q_ARG(QImage, Utils::matToQImage(product_->codeCheckImage)));
