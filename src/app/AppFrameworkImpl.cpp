@@ -632,26 +632,6 @@ void AppFrame::AppFrameworkImpl::updateVideo()
         }
         cv::Mat temp = matData.back();
         Utils::asyncTask([this, windId, temp] {
-            // const FIFOInfo &it = plcDev_->getFIFOInfo();
-            // int num = it.numPosition;
-            // std::string url;
-            // if (windId == DisplayWindows::CodeCheckCamera)
-            // {
-            //     url = config_["algorithm"]["url_ocr"].as<std::string>();
-            //     LogInfo("CodeCheckCamera bottom: ", num);
-            // }
-            // else if (windId == DisplayWindows::LocationCamera)
-            // {
-            //     url = config_["algorithm"]["url_predict"].as<std::string>();
-            //     LogInfo("LocationCamera bottom: ", num);
-            // }
-            // else if (windId == DisplayWindows::LocateCheckCamera)
-            // {
-            //     url = config_["app"]["algorithm"]["url_predict"].as<std::string>();
-            //     LogInfo("LocateCheckCamera bottom: ", num);
-            // }
-            // invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-            //           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, num)));
             QImage img = Utils::matToQImage(temp);
             if (img.isNull() == false)
             {
