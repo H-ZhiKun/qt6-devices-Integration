@@ -534,8 +534,7 @@ void AppFrame::AppFrameworkImpl::initPLC()
     // 获得读二维码信号
     QObject::connect(plcDev_, &PLCDevice::readQRCode, [this](uint8_t bottomNum) {
         cognex_->scanOnce();
-        Product *newProduct = new Product();
-        productList_.push_back(newProduct);
+        productList_.push_back(new Product());
     });
 
     QObject::connect(plcDev_, &PLCDevice::codeLogistics, [this](uint8_t bottomNum) {
@@ -677,6 +676,11 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
         static uint16_t countCode = 0;
         url = config_["algorithm"]["url_ocr"].as<std::string>();
         LogInfo("CodeCheckCamera count: {}", countCode);
+        if (productList_.size() == 0)
+        {
+            LogInfo("add product in code check func");
+            productList_.push_back(new Product());
+        }
         for (auto &product_ : productList_)
         {
             if (product_->codeCheckImage.empty() && !product_->logistics1.empty())
@@ -697,10 +701,10 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
 void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
 {
     std::list<cv::Mat> matData = baumerManager_->getImageBySN(2);
-    LogInfo("Get image size = {}, window = {}", matData.size(), 2);
+    LogInfo("Get image size = {}, window = 2", matData.size());
     if (matData.size() == 0)
     {
-        qDebug() << fmt::format("refreshImage mat null wind = {}, bottomNum = {}", 2, bottomNum);
+        qDebug() << fmt::format("refreshImage mat null wind = 2, bottomNum = {}", bottomNum);
         return;
     }
     cv::Mat temp = matData.back();
@@ -708,19 +712,24 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
     saveImageToFile(saveImg, DisplayWindows::LocateCheckCamera);
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-        std::string modelName;
+        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "LC";
         static uint16_t countLocateCheck = 0;
         url = config_["algorithm"]["url_predict"].as<std::string>();
         LogInfo("LocateCheckCamera: {}", countLocateCheck);
         countLocateCheck++;
+        if (productList_.size() == 0)
+        {
+            LogInfo("add product in locate check func");
+            productList_.push_back(new Product());
+        }
         for (auto &product_ : productList_)
         {
             if (product_->locateCheckImage.empty())
             {
                 product_->locateCheckImage = temp;
-                product_->locateCheckImageName = imageName + "LC";
-                modelName = "tangleCheck";
+                product_->locateCheckImageName = imageName;
+                invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "tangleCheck")));
                 break;
             }
         }
@@ -741,25 +750,29 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
     cv::Mat temp = matData.back();
     QImage saveImg = Utils::matToQImage(temp);
     saveImageToFile(saveImg, DisplayWindows::LocationCamera);
+
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-
+        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
         static uint16_t countLocation = 0;
         url = config_["algorithm"]["url_predict"].as<std::string>();
         LogInfo("LocationCamera: {}", countLocation);
         LogInfo("productList_ cur size: {}", productList_.size());
         countLocation++;
-        productList_.push_back(new Product());
+        if (productList_.size() == 0)
+        {
+            LogInfo("add product in locate func");
+            productList_.push_back(new Product());
+        }
         for (auto &product_ : productList_)
         {
             if (product_->locateImage.empty())
             {
                 LogInfo("get locateImage");
                 product_->locateImage = temp.clone();
-                product_->locateImageName = imageName + "L";
+                product_->locateImageName = imageName;
                 invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName + "L", "tangle")));
+                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "tangle")));
                 break;
             }
         }
@@ -1191,6 +1204,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
     QJsonObject jsonObject = jsonDocument.object();
     cv::Mat matImage;
     std::string imageName = jsonObject["imageName"].toString().toStdString();
+    int bottomNum = jsonObject["bottomNum"].toInt();
     bool isCheck = false;
     Product *pro_;
     for (auto &tempPro : productList_)
@@ -1217,6 +1231,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
         LogInfo("imag: {} requre null", imageName);
         return;
     }
+
     LogInfo("process image: {}", imageName);
     QImage resImg = Utils::matToQImage(matImage);
     // qDebug() << jsonObject["imageName"];
@@ -1234,18 +1249,24 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
 
             QString resstr = "tangle; " + result + "; ";
             Json::Value jsParams, jsNum;
-            jsParams["tangle_r_13002"] = result.toStdString();
-            writePLC(Utils::jsonToString(jsParams));
-            writePLC(Utils::jsonToString(jsNum));
             if (isCheck)
             {
+                QPainter pp(&resImg);
+                QFont font = pp.font();
+                font.setPixelSize(50); // 改变字体大小
+                font.setFamily("Microsoft YaHei");
+                pp.setFont(font);
+                pp.setPen(QPen(Qt::red, 5));
+                pp.setBrush(QBrush(Qt::red));
                 if (result.toInt() < 5)
                 { // 小于5度定位成功
                     plcDev_->writeDataToDevice("b", "13004", "00", "1");
+                    pp.drawText(QPointF(20, 50), "定位成功！");
                 }
                 else
                 {
                     plcDev_->writeDataToDevice("b", "13004", "00", "0");
+                    pp.drawText(QPointF(20, 50), "定位失败！");
                 }
                 plcDev_->writeDataToDevice("n", "12994", "", jsonObject["bottomNum"].toString().toStdString());
             }
@@ -1253,17 +1274,16 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
             {
                 plcDev_->writeDataToDevice("n", "13002", "", result.toStdString());
                 plcDev_->writeDataToDevice("n", "12993", "", jsonObject["bottomNum"].toString().toStdString());
+
+                QPainter pp(&resImg);
+                QFont font = pp.font();
+                font.setPixelSize(50); // 改变字体大小
+                font.setFamily("Microsoft YaHei");
+                pp.setFont(font);
+                pp.setPen(QPen(Qt::red, 5));
+                pp.setBrush(QBrush(Qt::red));
+                pp.drawText(QPointF(20, 50), resstr);
             }
-            QPen pen = QPen(Qt::red, 5);
-            QBrush brush = QBrush(Qt::red);
-            QPainter pp(&resImg);
-            QFont font = pp.font();
-            font.setPixelSize(50); // 改变字体大小
-            font.setFamily("Microsoft YaHei");
-            pp.setFont(font);
-            pp.setPen(pen);
-            pp.setBrush(brush);
-            pp.drawText(QPointF(20, 50), resstr);
             // cv::putText(*matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
             //             cv::Scalar(0, 0, 255), 2, 8); // 输出文字
         }

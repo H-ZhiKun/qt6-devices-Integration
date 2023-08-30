@@ -166,11 +166,12 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
+
     if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
         LogInfo("numQRCode emit.");
         fifoInfo_.numQRCode = FIFOGroup[1];
-        emit bottomMove(FIFOGroup[1]);
+        emit readQRCode(FIFOGroup[1]);
     }
     if (FIFOGroup[2] != fifoInfo_.numPosition)
     {
