@@ -485,6 +485,7 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     LogInfo("network client start success.");
     // 获取到二维码并发送
     QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
+        cognex_->scanStop();
         Product *curProduct = productList_.back();
         LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
         if (value == curProduct->qrCodeRes)
@@ -540,6 +541,7 @@ void AppFrame::AppFrameworkImpl::initPLC()
 
     // 获得读二维码信号
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::readQRCode, [this](uint8_t bottomNum) {
+        cognex_->scanOnce();
         Product *newProduct = new Product();
         productList_.push_back(newProduct);
     });
@@ -636,6 +638,7 @@ void AppFrame::AppFrameworkImpl::updateVideo()
         {
             continue;
         }
+
         cv::Mat temp = matData.back();
         Utils::asyncTask([this, windId, temp] {
             // const FIFOInfo &it = plcDev_->getFIFOInfo();

@@ -76,6 +76,9 @@ class AppFrameworkImpl final : public AppFramework
     void updateVideo();                                                // 实时视频
     void refreshImage(const uint8_t winint, const uint64_t bottomNum); // 实时图像
     void refreshImageTest(const int bottomNum);
+    void refreshLocate(const uint64_t bottomNum);
+    void refreshLocateCheck(const uint64_t bottomNum);
+    void refreshCodeCheck(const uint64_t bottomNum);
     void updateByMinute(const std::string &minute);                                              // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();
