@@ -2,6 +2,7 @@
 #include "ConcurrentTaskQueue.h"
 #include "Logger.h"
 #include <regex>
+#include <zlib.h>
 
 std::string Utils::base64Encode(const unsigned char *str, int bytes)
 {
@@ -434,4 +435,23 @@ std::string Utils::makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_
     jsVal["imageHeight"] = std::to_string(algoImage.rows);
     jsVal["bottomNum"] = bottomNum;
     return jsonToString(jsVal);
+}
+
+std::string Utils::compressMatToZlib(const cv::Mat &inputMat)
+{
+    std::vector<uchar> buffer;
+    cv::imencode(".jpg", inputMat, buffer);
+    uLong sourceLen = static_cast<uLong>(buffer.size());
+    uLong destLen = compressBound(sourceLen);
+
+    std::vector<uchar> destBuffer(destLen);
+
+    int res = compress(destBuffer.data(), &destLen, buffer.data(), sourceLen);
+    if (res != Z_OK)
+    {
+        return ""; // Return an empty string on compression error
+    }
+
+    std::string compressedData(reinterpret_cast<char *>(&destBuffer[0]), destLen);
+    return compressedData;
 }
