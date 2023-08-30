@@ -532,19 +532,19 @@ void AppFrame::AppFrameworkImpl::initPLC()
     plcDev_->init(plcIp, plcPort, io, fifo);
     LogInfo("{} PLC device start success.", plcType);
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locatePhoto,
-                     [this](int winInt, int bottomNum) { refreshImage(winInt, bottomNum); });
+                     [this](const uint8_t winInt, const uint64_t bottomNum) { refreshImage(winInt, bottomNum); });
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::locateCheckPhoto,
-                     [this](int winInt, int bottomNum) { refreshImage(winInt, bottomNum); });
+                     [this](const uint8_t winInt, const uint64_t bottomNum) { refreshImage(winInt, bottomNum); });
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeCheck,
-                     [this](int winInt, int bottomNum) { refreshImage(winInt, bottomNum); });
+                     [this](const uint8_t winInt, const uint64_t bottomNum) { refreshImage(winInt, bottomNum); });
 
     // 获得读二维码信号
-    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::readQRCode, [this](int bottomNum) {
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::readQRCode, [this](uint8_t bottomNum) {
         Product *newProduct = new Product();
         productList_.push_back(newProduct);
     });
 
-    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeLogistics, [this](int bottomNum) {
+    QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeLogistics, [this](uint8_t bottomNum) {
         for (auto &pro_ : productList_)
         {
             if (pro_->isCode)
@@ -672,7 +672,7 @@ void AppFrame::AppFrameworkImpl::updateVideo()
     }
 }
 
-void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottomNum)
+void AppFrame::AppFrameworkImpl::refreshImage(const uint8_t winint, const uint64_t bottomNum)
 {
     AppFrame::DisplayWindows winId = static_cast<DisplayWindows>(winint);
     std::list<cv::Mat> matData = baumerManager_->getImageBySN(winint);
@@ -681,7 +681,7 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
         qDebug() << fmt::format("refreshImage mat null wind = {}, bottomNum = {}", winint, bottomNum);
         return;
     }
-    qDebug() << "Get image size = " << matData.size() << "wind = " << winint;
+    LogInfo("Get image size = {}, window = {}", matData.size(), winint);
     cv::Mat temp = matData.back();
     QImage saveImg = Utils::matToQImage(temp);
     saveImageToFile(saveImg, winId);
@@ -691,8 +691,9 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
         std::string modelName;
         if (winId == DisplayWindows::CodeCheckCamera)
         {
+            static uint16_t countCode = 0;
             url = config_["algorithm"]["url_ocr"].as<std::string>();
-            LogInfo("CodeCheckCamera bottom: {}", bottomNum);
+            LogInfo("CodeCheckCamera count: {}", countCode);
             for (auto &product_ : productList_)
             {
                 if (product_->codeCheckImage == nullptr && !product_->logistics1.empty())
@@ -703,12 +704,14 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
                     // 1 保存数据
                 }
             }
+            countCode++;
         }
         else if (winId == DisplayWindows::LocationCamera)
         {
+            static uint16_t countLocation = 0;
             url = config_["algorithm"]["url_predict"].as<std::string>();
-            ;
-            LogInfo("LocationCamera bottom: {}", bottomNum);
+            LogInfo("LocationCamera: {}", countLocation);
+            countLocation++;
             for (auto &product_ : productList_)
             {
                 if (product_->locateImage == nullptr)
@@ -724,9 +727,10 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
         }
         else if (winId == DisplayWindows::LocateCheckCamera)
         {
+            static uint16_t countLocateCheck = 0;
             url = config_["algorithm"]["url_predict"].as<std::string>();
-            ;
-            LogInfo("LocateCheckCamera bottom: {}", bottomNum);
+            LogInfo("LocateCheckCamera: {}", countLocateCheck);
+            countLocateCheck++;
             for (auto &product_ : productList_)
             {
                 if (product_->locateCheckImage == nullptr)
@@ -746,6 +750,7 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
         if (img.isNull() == false)
         {
             // 保存图像
+            LogInfo("window = {}, ");
             if (saveImageFlag.load(std::memory_order_acquire))
             {
                 saveImageFlag.store(false, std::memory_order_release);
@@ -758,8 +763,8 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
 
 void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
 {
-    cv::Mat temp = cv::imread("D:/test.jpg");
-    // cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+    // cv::Mat temp = cv::imread("D:/test.jpg");
+    cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
     Utils::asyncTask([this, target = std::move(temp), bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
@@ -769,7 +774,6 @@ void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
         invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
                   Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
         QImage img = Utils::matToQImage(target);
-
         if (img.isNull() == false)
         {
             invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
@@ -971,7 +975,6 @@ void AppFrame::AppFrameworkImpl::initFile()
     QString saveImageSubDir3 = saveImageDir + "/LocateCheckCamera";
     if (!qdir.exists(saveImageSubDir1))
     {
-        qdir.mkdir(saveImageSubDir1 + "_RealTime");
         bool res = qdir.mkdir(saveImageSubDir1);
         if (!res)
         {
@@ -980,7 +983,6 @@ void AppFrame::AppFrameworkImpl::initFile()
     }
     if (!qdir.exists(saveImageSubDir2))
     {
-        qdir.mkdir(saveImageSubDir2 + "_RealTime");
         bool res = qdir.mkdir(saveImageSubDir2);
         if (!res)
         {
@@ -989,7 +991,6 @@ void AppFrame::AppFrameworkImpl::initFile()
     }
     if (!qdir.exists(saveImageSubDir3))
     {
-        qdir.mkdir(saveImageSubDir3 + "_RealTime");
         bool res = qdir.mkdir(saveImageSubDir3);
         if (!res)
         {
@@ -1462,30 +1463,6 @@ void AppFrame::AppFrameworkImpl::saveImageToFile(QImage &imgSave, const DisplayW
         {
             qDebug() << "save image failed : " + imagePath;
         }
-    });
-}
-
-void AppFrame::AppFrameworkImpl::saveImageToFileTest(QImage &imgSave, const DisplayWindows &camId)
-{
-    Utils::asyncTask([this, imgSave, camId] {
-        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        QString saveImageSubDir = "";
-        switch (camId)
-        {
-        case DisplayWindows::LocationCamera:
-            saveImageSubDir = saveImageDir + "/LocationCamera_RealTime/";
-            break;
-        case DisplayWindows::CodeCheckCamera:
-            saveImageSubDir = saveImageDir + "/CodeCheckCamera_RealTime/";
-            break;
-        case DisplayWindows::LocateCheckCamera:
-            saveImageSubDir = saveImageDir + "/LocateCheckCamera_RealTime/";
-            break;
-        }
-        QString imagePath = saveImageSubDir + currentDateTimeStr + ".jpg";
-        if (!imgSave.save(imagePath, "JPG"))
-        {
-            qDebug() << "save image failed : " + imagePath;
-        }
+        LogInfo("save image : {}", imagePath.toStdString());
     });
 }

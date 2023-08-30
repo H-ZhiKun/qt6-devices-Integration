@@ -8,19 +8,19 @@ class DeviceUpdate : public QObject
   public:
     explicit DeviceUpdate(QObject *parent = nullptr);
     ~DeviceUpdate();
-    void UpdateBottomMove(int);
-    void UpdateReadQRCode(int);
-    void UpdateLocatePhoto(int, int);
-    void UpdateLocateCheckPhoto(int, int);
-    void UpdateCodeLogistics(int);
-    void UpdateCodeCheck(int, int);
-    void UpdateCodeSerch(int);
+    void UpdateBottomMove(const uint8_t);
+    void UpdateReadQRCode(const uint8_t);
+    void UpdateLocatePhoto(const uint8_t, const uint64_t);
+    void UpdateLocateCheckPhoto(const uint8_t, const uint64_t);
+    void UpdateCodeLogistics(const uint8_t);
+    void UpdateCodeCheck(const uint8_t, const uint64_t);
+    void UpdateCodeSerch(const uint8_t);
   signals:
-    void bottomMove(int);            // 瓶位移动信号
-    void readQRCode(int);            // 二维码读取信号
-    void locatePhoto(int, int);      // 定位拍照信号
-    void locateCheckPhoto(int, int); // 定位复核拍照信号
-    void codeLogistics(int);         // 打码信号
-    void codeCheck(int, int);        // 打码复核信号
-    void codeSerch(int);             // 喷码数据查找信号
+    void bottomMove(const uint8_t);                       // 瓶位移动信号
+    void readQRCode(const uint8_t);                       // 二维码读取信号
+    void locatePhoto(const uint8_t, const uint64_t);      // 定位拍照信号
+    void locateCheckPhoto(const uint8_t, const uint64_t); // 定位复核拍照信号
+    void codeLogistics(const uint8_t);                    // 打码信号
+    void codeCheck(const uint8_t, const uint64_t);        // 打码复核信号
+    void codeSerch(const uint8_t);                        // 喷码数据查找信号
 };

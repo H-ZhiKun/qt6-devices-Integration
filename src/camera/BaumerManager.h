@@ -40,6 +40,5 @@ class BaumerManager
     std::vector<std::string> lvSNNumber_;
     std::vector<Camera *> lvCameras_;
     BGAPI2::System *pSystem_ = nullptr;
-    BGAPI2::Interface *pInterface_ = nullptr;
-    std::string MACAddress;
+    std::list<std::string> MACAddress;
 };

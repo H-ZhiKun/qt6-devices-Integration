@@ -28,7 +28,7 @@ class PLCDevice
     bool writeDataToDevice(const std::string &type, const std::string &addr, const std::string &bit = "",
                            const std::string &value = "");
     const FIFOInfo &getFIFOInfo();
-    inline DeviceUpdate *getSignal()
+    DeviceUpdate *getSignal()
     {
         return deviceUpdate_;
     }

@@ -20,9 +20,11 @@ void BGAPI2CALL BufferHandler(void *callBackOwner, BGAPI2::Buffer *pBufferFilled
         if (pBufferFilled->GetIsIncomplete())
         {
             pBufferFilled->QueueBuffer();
+            pCamera->incompleteCount_++;
         }
         else
         {
+            pCamera->frameCount_++;
             uint64_t width = pBufferFilled->GetWidth();
             uint64_t height = pBufferFilled->GetHeight();
             unsigned char *imageData =
@@ -31,6 +33,8 @@ void BGAPI2CALL BufferHandler(void *callBackOwner, BGAPI2::Buffer *pBufferFilled
                               pBufferFilled->GetFrameID());
             pBufferFilled->QueueBuffer();
         }
+        LogInfo("from SN = {}, frame count ={}, incomplete count = {}", pCamera->snNumber_, pCamera->frameCount_,
+                pCamera->incompleteCount_);
     }
     catch (BGAPI2::Exceptions::IException &ex)
     {
@@ -79,6 +83,7 @@ bool Camera::openDevice()
     try
     {
         cameraPtr_->Open();
+        snNumber_ = cameraPtr_->GetSerialNumber().get();
         ret = true;
     }
     catch (BGAPI2::Exceptions::ResourceInUseException &ex)
@@ -208,8 +213,6 @@ bool Camera::stopStream()
     try
     {
         stream_->StopAcquisition();
-        auto bufferList = stream_->GetBufferList();
-        bufferList->DiscardAllBuffers();
         ret = true;
     }
     catch (BGAPI2::Exceptions::IException &ex)
@@ -228,8 +231,11 @@ void Camera::clearBuffersFromStream()
     {
         if (stream_ != nullptr)
         {
+
             stream_->UnregisterNewBufferEvent();
             // stream_->RegisterNewBufferEvent(BGAPI2::Events::EVENTMODE_UNREGISTERED);
+            auto bufferList = stream_->GetBufferList();
+            bufferList->DiscardAllBuffers();
             BGAPI2::BufferList *buffer_list = stream_->GetBufferList();
             while (buffer_list->size() > 0)
             {
@@ -298,7 +304,7 @@ std::list<cv::Mat> Camera::getImage()
     {
         if (!mat.empty())
         {
-            list.emplace_back(std::move(mat));
+            list.push_back(std::move(mat));
         }
     }
     return list;
@@ -406,7 +412,8 @@ void Camera::initParams()
 {
     writeParam(SFNC_EXPOSUREAUTO, 0);
     writeParam(SFNC_GAINAUTO, 0);
-    // jsReadOnly_["fps"] = cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_FRAMERATE)->GetInt();
+
+    //  jsReadOnly_["fps"] = cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_FRAMERATE)->GetInt();
     jsReadOnly_["max_width"] = cameraPtr_->GetRemoteNode(SFNC_WIDTHMAX)->GetInt();
     jsReadOnly_["max_height"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHTMAX)->GetInt();
     jsReadOnly_["width_increment"] = cameraPtr_->GetRemoteNode(SFNC_WIDTH)->GetIntInc();

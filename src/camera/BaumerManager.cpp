@@ -38,10 +38,13 @@ BaumerManager::~BaumerManager()
 
 void BaumerManager::start(const YAML::Node &launchConfig)
 {
-    MACAddress = launchConfig["baumer"]["interface"].as<std::string>();
-    std::transform(MACAddress.begin(), MACAddress.end(), MACAddress.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-    std::replace(MACAddress.begin(), MACAddress.end(), '-', ':');
+    for (const auto &mac : launchConfig["baumer"]["interface"])
+    {
+        std::string temp = mac.as<std::string>();
+        std::transform(temp.begin(), temp.end(), temp.begin(), [](unsigned char c) { return std::tolower(c); });
+        std::replace(temp.begin(), temp.end(), '-', ':');
+        MACAddress.push_back(temp);
+    }
     lvParams_.resize(launchConfig["baumer"]["paramters"].size());
     lvSNNumber_.resize(launchConfig["baumer"]["paramters"].size());
     lvCameras_.resize(launchConfig["baumer"]["paramters"].size());
@@ -86,18 +89,24 @@ void BaumerManager::searchCamera()
             }
             try
             {
-                if (pInterface_)
+                BGAPI2::InterfaceList *interface_list = pSystem_->GetInterfaces();
+                interface_list->Refresh(100);
+                for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin();
+                     ifc_iter != interface_list->end(); ifc_iter++)
                 {
-                    BGAPI2::DeviceList *device_list = pInterface_->GetDevices();
-                    device_list->Refresh(100);
-                    for (BGAPI2::DeviceList::iterator device_iter = device_list->begin();
-                         device_iter != device_list->end(); device_iter++)
+                    if (ifc_iter->second->IsOpen())
                     {
-                        std::string number = device_iter->second->GetSerialNumber().get();
-                        std::string status = device_iter->second->GetAccessStatus().get();
-                        if (status == "RW" && !device_iter->second->IsOpen())
+                        BGAPI2::DeviceList *device_list = ifc_iter->second->GetDevices();
+                        device_list->Refresh(100);
+                        for (BGAPI2::DeviceList::iterator device_iter = device_list->begin();
+                             device_iter != device_list->end(); device_iter++)
                         {
-                            addCamera(number, device_iter->second);
+                            std::string number = device_iter->second->GetSerialNumber().get();
+                            std::string status = device_iter->second->GetAccessStatus().get();
+                            if (status == "RW" && !device_iter->second->IsOpen())
+                            {
+                                addCamera(number, device_iter->second);
+                            }
                         }
                     }
                 }
@@ -166,7 +175,8 @@ void BaumerManager::initializeBGAPI()
                 std::string mac = ifc_iter->second->GetNode("GevInterfaceMACAddress")->GetValue().get();
                 std::string mask = ifc_iter->second->GetNode("GevInterfaceSubnetMask")->GetValue().get();
                 // 为相机对应数据流注册掉线触发事件
-                if (mac != MACAddress)
+                auto finder = std::find(MACAddress.begin(), MACAddress.end(), mac);
+                if (finder == MACAddress.end())
                 {
                     LogInfo("interface not matched: ");
                     LogInfo("ignore ip: {}", ip);
@@ -179,8 +189,6 @@ void BaumerManager::initializeBGAPI()
                 LogInfo("interface founded: ");
                 LogInfo("founded ip: {}", ip);
                 LogInfo("founded MAC: {}", mac);
-                pInterface_ = ifc_iter->second;
-                break;
             }
         }
     }
@@ -196,13 +204,19 @@ void BaumerManager::deinitializeBGAPI()
 {
     try
     {
-        if (pInterface_ != nullptr)
-        {
-            pInterface_->UnregisterPnPEvent();
-            pInterface_->Close();
-        }
         if (pSystem_ != nullptr)
         {
+            BGAPI2::InterfaceList *interface_list = pSystem_->GetInterfaces();
+            interface_list->Refresh(100);
+            for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin(); ifc_iter != interface_list->end();
+                 ifc_iter++)
+            {
+                if (ifc_iter->second->IsOpen())
+                {
+                    ifc_iter->second->UnregisterPnPEvent();
+                    ifc_iter->second->Close();
+                }
+            }
             pSystem_->Close();
         }
         BGAPI2::SystemList::ReleaseInstance();
@@ -314,9 +328,14 @@ bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
         }
         if (!pCamera->setParams(key, value))
         {
+            LogError("failed camera param key = {}, camera value = {}", key, value);
             des = key + "set error.";
             ret = false;
             break;
+        }
+        else
+        {
+            LogInfo("success camera param key = {}, camera value = {}", key, value);
         }
     }
     pCamera->startStream();
