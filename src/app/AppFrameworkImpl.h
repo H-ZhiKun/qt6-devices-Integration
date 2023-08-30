@@ -59,6 +59,7 @@ class AppFrameworkImpl final : public AppFramework
     // 差异调用 接口区域
     void loadConfig();
     void saveConfig();
+    void initLogger();
     void initSqlHelper();
     void initNetworkClient();
     void initPLC();
