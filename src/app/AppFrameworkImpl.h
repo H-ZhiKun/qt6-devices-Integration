@@ -9,7 +9,10 @@
 #include "Permission.h"
 #include "PgsqlHelper.h"
 #include <Product.h>
+#include <QBrush>
 #include <QDir>
+#include <QPainter>
+#include <QPen>
 #include <QQmlApplicationEngine>
 #include <memory>
 #include <mutex>

@@ -485,7 +485,6 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     LogInfo("network client start success.");
     // 获取到二维码并发送
     QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
-        cognex_->scanStop();
         Product *curProduct = productList_.back();
         LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
         if (value == curProduct->qrCodeRes)
@@ -543,7 +542,6 @@ void AppFrame::AppFrameworkImpl::initPLC()
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::readQRCode, [this](int bottomNum) {
         Product *newProduct = new Product();
         productList_.push_back(newProduct);
-        cognex_->scanCode();
     });
 
     QObject::connect(plcDev_->getSignal(), &DeviceUpdate::codeLogistics, [this](int bottomNum) {
@@ -765,8 +763,8 @@ void AppFrame::AppFrameworkImpl::refreshImage(const int winint, const int bottom
 
 void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
 {
-    // cv::Mat temp = cv::imread("D:/test.jpg");
-    cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+    cv::Mat temp = cv::imread("D:/test.jpg");
+    // cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
     Utils::asyncTask([this, target = std::move(temp), bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
@@ -776,6 +774,7 @@ void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
         invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
                   Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
         QImage img = Utils::matToQImage(target);
+
         if (img.isNull() == false)
         {
             invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
@@ -1216,6 +1215,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
         LogError("processYoloTangle error, no imageName to match.");
         return;
     }
+    QImage resImg = Utils::matToQImage(*matImage);
     // qDebug() << jsonObject["imageName"];
     // 检查是否含有键box
     if (jsonObject.contains("box"))
@@ -1251,14 +1251,23 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
                 plcDev_->writeDataToDevice("n", "13002", "", result.toStdString());
                 plcDev_->writeDataToDevice("n", "12993", "", jsonObject["bottomNum"].toString().toStdString());
             }
-            cv::putText(*matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
-                        cv::Scalar(0, 0, 255), 2, 8); // 输出文字
+            QPen pen = QPen(Qt::red, 5);
+            QBrush brush = QBrush(Qt::red);
+            QPainter pp(&resImg);
+            QFont font = pp.font();
+            font.setPixelSize(50); // 改变字体大小
+            font.setFamily("Microsoft YaHei");
+            pp.setFont(font);
+            pp.setPen(pen);
+            pp.setBrush(brush);
+            pp.drawText(QPointF(20, 50), QStringLiteral("tanggle;56;"));
+            // cv::putText(*matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
+            //             cv::Scalar(0, 0, 255), 2, 8); // 输出文字
         }
         // 1 图像操作：显示在界面、保存
         if (isCheck)
         {
-            invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage",
-                      Q_ARG(QImage, Utils::matToQImage(*matImage)));
+            invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage", Q_ARG(QImage, resImg));
         }
         else
         {
