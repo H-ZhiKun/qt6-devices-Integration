@@ -1301,7 +1301,7 @@ void AppFrame::AppFrameworkImpl::doPrintCode(uint8_t bottomNum)
     }
 }
 
-void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
+void AppFrame::AppFrameworkImpl::processPaddleOCR(const std::string &jsonString)
 {
     // 找出图像
     LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
