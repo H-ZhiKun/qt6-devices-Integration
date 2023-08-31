@@ -89,6 +89,9 @@ class AppFrameworkImpl final : public AppFramework
     void processYoloTangle(const std::string &); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
     void runMainProcess();
+    void processQrCode(const std::string value);
+    void processCode(const std::string code1, const std::string code2);
+    void doPrintCode(uint8_t bottomNum);
 
   private:
     // 私有变量区域

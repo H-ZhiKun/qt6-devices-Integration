@@ -473,42 +473,10 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
                      [this](const std::string &json) { processYoloTangle(json); });
     LogInfo("network client start success.");
     // 获取到二维码并发送
-    QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
-        // cognex_->scanStop();
-        Product *curProduct = productList_.back();
-        LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
-        if (value == curProduct->qrCodeRes)
-        {
-            return;
-        }
-        else
-        {
-            curProduct->qrCodeRes = value;
-            // 如果和上一瓶相同，则是上一瓶没读到，错误的读到此瓶
-            if (productList_.size() >= 2)
-            {
-                --curProduct;
-                if (curProduct->qrCodeRes == value)
-                {
-                    curProduct->qrCodeRes = "";
-                    curProduct->logisticsFalseFlag = true;
-                }
-            }
-            permission_->sendQRCode(value);
-        }
-    });
+    QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) { processQrCode(value); });
     // 获取到物流码并存储
-    QObject::connect(permission_, &Permission::codeRight, [this](const std::string code1, const std::string code2) {
-        for (auto &value : productList_)
-        {
-            if (value->logistics1.empty() && !(value->qrCodeRes.empty()))
-            {
-                value->logistics1 = code1;
-                value->logistics2 = code2;
-                break;
-            }
-        }
-    });
+    QObject::connect(permission_, &Permission::codeRight,
+                     [this](const std::string code1, const std::string code2) { processCode(code1, code2); });
 }
 
 void AppFrame::AppFrameworkImpl::initPLC()
@@ -532,21 +500,7 @@ void AppFrame::AppFrameworkImpl::initPLC()
         productList_.push_back(new Product());
     });
 
-    QObject::connect(plcDev_, &PLCDevice::codeLogistics, [this](uint8_t bottomNum) {
-        for (auto &pro_ : productList_)
-        {
-            if (pro_->isCode)
-            {
-                continue;
-            }
-            if (!pro_->logistics1.empty() && !pro_->logistics2.empty())
-            {
-                pro_->isCode = true;
-            }
-            domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
-            LogInfo("bottom {}: send data to domino, in {}", bottomNum, Utils::getCurrentTime(true));
-        }
-    });
+    QObject::connect(plcDev_, &PLCDevice::codeLogistics, [this](uint8_t bottomNum) { doPrintCode(bottomNum); });
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -1292,7 +1246,62 @@ void AppFrame::AppFrameworkImpl::runMainProcess()
 {
 }
 
-void AppFrame::AppFrameworkImpl::processPaddleOCR(const std::string &jsonString)
+void AppFrame::AppFrameworkImpl::processQrCode(const std::string value)
+{
+    Product *curProduct = productList_.back();
+    LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
+    if (value == curProduct->qrCodeRes)
+    {
+        return;
+    }
+    else
+    {
+        curProduct->qrCodeRes = value;
+        // 如果和上一瓶相同，则是上一瓶没读到，错误的读到此瓶(几乎不可能)
+        // if (productList_.size() >= 2)
+        // {
+        //     --curProduct;
+        //     if (curProduct->qrCodeRes == value)
+        //     {
+        //         curProduct->qrCodeRes = "";
+        //         curProduct->logisticsFalseFlag = true;
+        //     }
+        // }
+        permission_->sendQRCode(value);
+    }
+}
+
+void AppFrame::AppFrameworkImpl::processCode(const std::string code1, const std::string code2)
+{
+    for (auto &value : productList_)
+    {
+        if (value->logistics1.empty() && !(value->qrCodeRes.empty()))
+        {
+            value->logistics1 = code1;
+            value->logistics2 = code2;
+            break;
+        }
+    }
+}
+
+void AppFrame::AppFrameworkImpl::doPrintCode(uint8_t bottomNum)
+{
+    for (auto &pro_ : productList_)
+    {
+        if (pro_->isCode)
+        {
+            continue;
+        }
+        if (!pro_->logistics1.empty() && !pro_->logistics2.empty())
+        {
+            pro_->isCode = true;
+        }
+        domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
+        LogInfo("bottom {}: send data to domino, in {}", bottomNum, Utils::getCurrentTime(true));
+    }
+}
+
+void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
 {
     // 找出图像
     LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
