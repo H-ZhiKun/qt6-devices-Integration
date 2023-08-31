@@ -42,7 +42,6 @@ void ModbusClient::work()
         {
             if (bConnected_.load(std::memory_order_acquire))
             {
-                LogInfo("readRegisters complete.");
                 // 缓存写
                 while (!qWriteData_.empty())
                 {

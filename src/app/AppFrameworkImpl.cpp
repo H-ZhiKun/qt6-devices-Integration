@@ -740,18 +740,34 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
 
 void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
 {
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
-    LogInfo("Get image size = {}, window = 0", matData.size());
-    if (matData.size() == 0)
-    {
-        qDebug() << fmt::format("refreshImage mat null wind = 0, bottomNum = {}", bottomNum);
-        return;
-    }
-    cv::Mat temp = matData.back();
-    QImage saveImg = Utils::matToQImage(temp);
-    saveImageToFile(saveImg, DisplayWindows::LocationCamera);
+    Utils::asyncTask([this, bottomNum] {
+        LogInfo("tangle timer: get singnal, bottom {}", bottomNum);
+        std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
+        auto startTime = std::chrono::steady_clock::now(); // 记录开始时间
+        while (true)
+        {
+            // 执行您的循环操作
+            matData = baumerManager_->getImageBySN(0);
+            auto currentTime = std::chrono::steady_clock::now(); // 获取当前时间
+            auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime);
 
-    Utils::asyncTask([this, temp, bottomNum] {
+            if (elapsedTime.count() >= 500 || matData.size())
+            {
+                // 如果经过200毫秒或更长时间，退出循环
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        if (matData.size() == 0)
+        {
+            qDebug() << fmt::format("refreshImage mat timeout, bottomNum: {}", bottomNum);
+            return;
+        }
+        LogInfo("tangle timer: get image, size: {}", matData.size());
+        cv::Mat temp = matData.back();
+        QImage saveImg = Utils::matToQImage(temp);
+        saveImageToFile(saveImg, DisplayWindows::LocationCamera);
+
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
         static uint16_t countLocation = 0;
@@ -768,7 +784,7 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
         {
             if (product_->locateImage.empty())
             {
-                LogInfo("get locateImage");
+                LogInfo("tangle timer: send image to algothm");
                 product_->locateImage = temp.clone();
                 product_->locateImageName = imageName;
                 invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
@@ -1213,7 +1229,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
         if (tempPro->locateImageName == imageName)
         {
             matImage = tempPro->locateImage;
-            LogInfo("process locate image in tangle");
+            LogInfo("tangle timer: get image from algothm");
             isCheck = false;
             pro_ = tempPro;
             break;
@@ -1275,7 +1291,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
             {
                 plcDev_->writeDataToDevice("r", "13002", "", result.toStdString());
                 plcDev_->writeDataToDevice("n", "12993", "", bottomstr);
-                LogInfo("tangle write to plc: 13002_{}, 12993_{}", result.toStdString(), bottomstr);
+                LogInfo("tangle timer: write to plc: 13002_{}, 12993_{}", result.toStdString(), bottomstr);
 
                 QPainter pp(&resImg);
                 QFont font = pp.font();
