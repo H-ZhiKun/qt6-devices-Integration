@@ -91,6 +91,9 @@ class AppFrameworkImpl final : public AppFramework
     void processYoloTangleTest(QJsonDocument, cv::Mat);
     void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
     void runMainProcess();
+    void processQrCode(const std::string value);
+    void processCode(const std::string code1, const std::string code2);
+    void doPrintCode(uint8_t bottomNum);
 
   private:
     // 私有变量区域
