@@ -10,7 +10,7 @@ WebManager::~WebManager() noexcept
 
 void WebManager::init(const YAML::Node &config)
 {
-    std::string urlTangle = config["algorithm"]["url_predict"].as<std::string>();
+    std::string urlTangle = config["algorithm"]["ws_tangle"].as<std::string>();
     std::string urlOcr = config["algorithm"]["url_ocr"].as<std::string>();
     tangleClient_ = new WebsocketClient(this);
     tangleClient_->connectToServer(urlTangle);
