@@ -5,7 +5,10 @@ WebsocketClient::WebsocketClient(QObject *parent) : QObject(parent)
 {
     client_ = new QWebSocket();
     timerConnect = new QTimer(this);
-    timerConnect->setInterval(5000); // ping设置重连间隔为5秒
+    timerConnect->setInterval(5000); // 设置重连间隔为5秒
+    timerPing = new QTimer(this);
+    timerPing->setInterval(5000); // ping间隔为5秒
+    connect(timerPing, &QTimer::timeout, this, &WebsocketClient::ping);
     connect(timerConnect, &QTimer::timeout, this, &WebsocketClient::reconnect);
     connect(client_, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &WebsocketClient::onError);
     connect(client_, &QWebSocket::connected, this, &WebsocketClient::onConnected);
@@ -33,10 +36,13 @@ void WebsocketClient::sendData(const std::string &jsonData, const QByteArray &im
 
 void WebsocketClient::onConnected()
 {
+    pingId_ = 0;
     LogInfo("WebsocketClient connected to url:{}", url_);
     bConnected_ = true;
     if (timerConnect)
         timerConnect->stop();
+    if (timerPing)
+        timerPing->start();
 }
 
 void WebsocketClient::onDisconnected()
@@ -44,6 +50,8 @@ void WebsocketClient::onDisconnected()
     bConnected_ = false;
     if (timerConnect)
         timerConnect->start();
+    if (timerPing)
+        timerPing->stop();
 }
 
 void WebsocketClient::onBinaryMessageReceived(const QByteArray &message)
@@ -80,6 +88,8 @@ void WebsocketClient::onError(QAbstractSocket::SocketError errCode)
 {
     if (timerConnect)
         timerConnect->start();
+    if (timerPing)
+        timerPing->stop();
     switch (errCode)
     {
     case QAbstractSocket::ConnectionRefusedError:
@@ -104,4 +114,15 @@ void WebsocketClient::reconnect()
 {
     client_->open(QString(url_.c_str()));
     LogInfo("WebsocketClient reconnect to url:{}", url_);
+}
+
+void WebsocketClient::ping()
+{
+    pingId_++;
+    QByteArray combinedData;
+    std::string pingData = "{\"ping\":" + std::to_string(pingId_) + "}";
+    combinedData.append("{-ALGOHead-}");
+    combinedData.append(pingData);
+    combinedData.append("{-ALGOTail-}");
+    client_->sendTextMessage(combinedData);
 }

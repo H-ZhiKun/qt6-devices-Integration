@@ -26,6 +26,7 @@ class WebsocketClient : public QObject
     void onBinaryMessageReceived(const QByteArray &message);
     void onError(QAbstractSocket::SocketError errCode);
     void reconnect();
+    void ping();
 
   private:
     std::string url_;
@@ -35,7 +36,9 @@ class WebsocketClient : public QObject
     std::string strBound_{"{-ALGOBound-}"};
     std::string strTail_{"{-ALGOTail-}"};
     QTimer *timerConnect = nullptr;
+    QTimer *timerPing = nullptr;
     bool bConnected_{false};
+    uint64_t pingId_{0};
 };
 
 #endif // WEBSOCKETCLIENT_H
