@@ -479,7 +479,7 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     LogInfo("network client start success.");
     // 获取到二维码并发送
     QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
-        cognex_->scanStop();
+        // cognex_->scanStop();
         Product *curProduct = productList_.back();
         LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
         if (value == curProduct->qrCodeRes)
@@ -728,8 +728,9 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
                 LogInfo("send locate check image to algorithm");
                 product_->locateCheckImage = temp.clone();
                 product_->locateCheckImageName = imageName;
-                invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "tangleCheck")));
+                // invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+                //           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName,
+                //           "tangleCheck")));
                 break;
             }
         }
@@ -740,6 +741,11 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
 
 void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
 {
+    std::string hasBottom = plcDev_->readDevice("b", "12642", "00");
+    if (hasBottom == "0")
+    {
+        return;
+    }
     Utils::asyncTask([this, bottomNum] {
         LogInfo("tangle timer: get singnal, bottom {}", bottomNum);
         std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
@@ -751,7 +757,7 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
             auto currentTime = std::chrono::steady_clock::now(); // 获取当前时间
             auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime);
 
-            if (elapsedTime.count() >= 500 || matData.size())
+            if (elapsedTime.count() >= 400 || matData.size())
             {
                 // 如果经过200毫秒或更长时间，退出循环
                 break;
@@ -765,6 +771,8 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
         }
         LogInfo("tangle timer: get image, size: {}", matData.size());
         cv::Mat temp = matData.back();
+        cv::resize(temp, temp, {800, 800});
+        LogInfo("mat resize cols: {}, rows: {}", temp.cols, temp.rows);
         QImage saveImg = Utils::matToQImage(temp);
         saveImageToFile(saveImg, DisplayWindows::LocationCamera);
 
@@ -1275,7 +1283,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
                 pp.setFont(font);
                 pp.setPen(QPen(Qt::red, 5));
                 pp.setBrush(QBrush(Qt::red));
-                if (result.toInt() < 5 && result.toInt() != 0)
+                if (result.toInt() < 5 && result.toInt() != 360)
                 { // 小于5度定位成功
                     plcDev_->writeDataToDevice("b", "13004", "00", "1");
                     pp.drawText(QPointF(20, 50), "定位成功！");
