@@ -30,7 +30,7 @@ void WebsocketClient::sendData(const std::string &jsonData, const QByteArray &im
     combinedData.append("{-ALGOHead-}");
     combinedData.append(jsonData);
     combinedData.append("{-ALGOBound-}");
-    combinedData.append(imageBinaryData);
+    combinedData.append(imageBinaryData.toBase64().toStdString());
     combinedData.append("{-ALGOTail-}");
 
     qint64 ret = client_->sendTextMessage(combinedData);
@@ -59,6 +59,8 @@ void WebsocketClient::onDisconnected()
 
 void WebsocketClient::onTextMessageReceived(const QString &message)
 {
+    if (message.indexOf("ping") != -1)
+        return;
     incompleteData_.append(message);
     LogInfo("onTextMessageReceived {}", message.toStdString());
     while (true)
