@@ -23,15 +23,18 @@ void WebManager::sendToALGO(uint8_t windId, const std::string &jsonData, const Q
     switch (windId)
     {
     case 0: {
-        tangleClient_->sendData(jsonData, imageBinaryData);
+        if (tangleClient_)
+            tangleClient_->sendData(jsonData, imageBinaryData);
         break;
     }
     case 1: {
-        ocrClient_->sendData(jsonData, imageBinaryData);
+        if (ocrClient_)
+            ocrClient_->sendData(jsonData, imageBinaryData);
         break;
     }
     case 2: {
-        tangleCheckClient_->sendData(jsonData, imageBinaryData);
+        if (tangleCheckClient_)
+            tangleCheckClient_->sendData(jsonData, imageBinaryData);
         break;
     }
     default:

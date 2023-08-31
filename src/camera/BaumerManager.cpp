@@ -83,7 +83,7 @@ void BaumerManager::searchCamera()
                     count++;
                 }
             }
-            if (count == lvCameras_.size())
+            if (count == lvCameras_.size() || lvCameras_.size() == 0)
             {
                 break;
             }

@@ -23,14 +23,14 @@ class WebsocketClient : public QObject
   private slots:
     void onConnected();
     void onDisconnected();
-    void onBinaryMessageReceived(const QByteArray &message);
+    void onTextMessageReceived(const QString &message);
     void onError(QAbstractSocket::SocketError errCode);
     void reconnect();
 
   private:
     std::string url_;
     QWebSocket *client_;
-    QByteArray incompleteData_;
+    QString incompleteData_;
     std::string strHead_{"{-ALGOHead-}"};
     std::string strBound_{"{-ALGOBound-}"};
     std::string strTail_{"{-ALGOTail-}"};

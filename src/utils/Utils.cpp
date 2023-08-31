@@ -437,7 +437,7 @@ void Utils::makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottom
     jsVal["imageHeight"] = std::to_string(algoImage.rows);
     jsVal["bottomNum"] = bottomNum;
     jsonBody = jsonToString(jsVal);
-    LogInfo("makeJsonAndByteArray json: {}", jsonBody);
+    LogInfo("makeJsonAndByteArray json size: {}", jsonBody.length());
     LogInfo("makeJsonAndByteArray byte size: {}", byteArray.size());
     saveImageToFile(byteArray, savePath);
 }
