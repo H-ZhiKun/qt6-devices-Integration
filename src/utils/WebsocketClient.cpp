@@ -15,7 +15,7 @@ WebsocketClient::WebsocketClient(QObject *parent) : QObject(parent)
 
 void WebsocketClient::connectToServer(const std::string &url)
 {
-    url_ = "ws://124.222.224.186:8800";
+    url_ = url;
     client_->open(QString(url_.c_str()));
 }
 
