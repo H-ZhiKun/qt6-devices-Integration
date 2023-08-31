@@ -126,6 +126,7 @@ void WebsocketClient::ping()
     pingId_++;
     QByteArray combinedData;
     std::string pingData = "{\"ping\":" + std::to_string(pingId_) + "}";
+    LogInfo("WebsocketClient ping: {}", pingData);
     combinedData.append("{-ALGOHead-}");
     combinedData.append(pingData);
     combinedData.append("{-ALGOTail-}");
