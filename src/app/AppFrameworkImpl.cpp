@@ -464,18 +464,13 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     cognex_->startClient(cognexIp.c_str(), cognexPort);
     permission_ = new Permission();
     permission_->startClient(permissionIp.c_str(), permissionPort);
-    httpClient_ = new HttpClient();
-    QObject::connect(httpClient_, &HttpClient::responseReceived, [this](const std::string &json) {
-        if (json.empty())
-        {
-            LogError("http network error.");
-        }
-        else
-        {
-            processHttpRes(json);
-            // processHttpResTest(json);
-        }
-    });
+    webManager_ = new WebManager();
+    webManager_->init(config_);
+    QObject::connect(webManager_, &WebManager::ocrRecv, [this](const std::string &json) { processPaddleOCR(json); });
+    QObject::connect(webManager_, &WebManager::tangleRecv,
+                     [this](const std::string &json) { processYoloTangle(json); });
+    QObject::connect(webManager_, &WebManager::tangleCheckRecv,
+                     [this](const std::string &json) { processYoloTangle(json); });
     LogInfo("network client start success.");
     // 获取到二维码并发送
     QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) { processQrCode(value); });
@@ -621,8 +616,6 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
         return;
     }
     cv::Mat temp = matData.back();
-    QImage saveImg = Utils::matToQImage(temp);
-    saveImageToFile(saveImg, DisplayWindows::CodeCheckCamera);
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "CC";
@@ -661,8 +654,6 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
         return;
     }
     cv::Mat temp = matData.back();
-    QImage saveImg = Utils::matToQImage(temp);
-    saveImageToFile(saveImg, DisplayWindows::LocateCheckCamera);
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "LC";
@@ -682,9 +673,11 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
                 LogInfo("send locate check image to algorithm");
                 product_->locateCheckImage = temp.clone();
                 product_->locateCheckImageName = imageName;
-                // invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                //           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName,
-                //           "tangleCheck")));
+                std::string jsonData;
+                QByteArray byteArray;
+                Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangleCheck", strTanglePath_, jsonData,
+                                            byteArray);
+                invokeCpp(webManager_, "sendToALGO", 0, Q_ARG(std::string, jsonData), Q_ARG(QByteArray, byteArray));
                 break;
             }
         }
@@ -695,41 +688,16 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
 
 void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
 {
-    std::string hasBottom = plcDev_->readDevice("b", "12642", "00");
-    if (hasBottom == "0")
+    std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
+    LogInfo("Get image size = {}, window = 0", matData.size());
+    if (matData.size() == 0)
     {
+        qDebug() << fmt::format("refreshImage mat null wind = 0, bottomNum = {}", bottomNum);
         return;
     }
-    Utils::asyncTask([this, bottomNum] {
-        LogInfo("tangle timer: get singnal, bottom {}", bottomNum);
-        std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
-        auto startTime = std::chrono::steady_clock::now(); // 记录开始时间
-        while (true)
-        {
-            // 执行您的循环操作
-            matData = baumerManager_->getImageBySN(0);
-            auto currentTime = std::chrono::steady_clock::now(); // 获取当前时间
-            auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime);
-
-            if (elapsedTime.count() >= 400 || matData.size())
-            {
-                // 如果经过200毫秒或更长时间，退出循环
-                break;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        if (matData.size() == 0)
-        {
-            qDebug() << fmt::format("refreshImage mat timeout, bottomNum: {}", bottomNum);
-            return;
-        }
-        LogInfo("tangle timer: get image, size: {}", matData.size());
-        cv::Mat temp = matData.back();
-        cv::resize(temp, temp, {800, 800});
-        LogInfo("mat resize cols: {}, rows: {}", temp.cols, temp.rows);
-        QImage saveImg = Utils::matToQImage(temp);
-        saveImageToFile(saveImg, DisplayWindows::LocationCamera);
-
+    cv::Mat temp = matData.back();
+    cv::resize(temp, temp, {800, 800});
+    Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
         static uint16_t countLocation = 0;
@@ -749,8 +717,10 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
                 LogInfo("tangle timer: send image to algothm");
                 product_->locateImage = temp.clone();
                 product_->locateImageName = imageName;
-                invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "tangle")));
+                std::string jsonData;
+                QByteArray byteArray;
+                Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangle", strTanglePath_, jsonData, byteArray);
+                invokeCpp(webManager_, "sendToALGO", 0, Q_ARG(std::string, jsonData), Q_ARG(QByteArray, byteArray));
                 break;
             }
         }
@@ -761,22 +731,21 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
 
 void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
 {
-    // cv::Mat temp = cv::imread("D:/test.jpg");
-    cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-    Utils::asyncTask([this, target = std::move(temp), bottomNum] {
-        std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-        std::string modelName = "tangle";
-        url = config_["algorithm"]["url_predict"].as<std::string>();
-        LogInfo("LocationCamera bottom: ", bottomNum);
-        invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                  Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
-        QImage img = Utils::matToQImage(target);
-        if (img.isNull() == false)
-        {
-            invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
-        }
-    });
+    // cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+    // Utils::asyncTask([this, target = std::move(temp), bottomNum] {
+    //     std::string url;
+    //     std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
+    //     std::string modelName = "tangle";
+    //     url = config_["algorithm"]["url_predict"].as<std::string>();
+    //     LogInfo("LocationCamera bottom: ", bottomNum);
+    //     invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+    //               Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
+    //     QImage img = Utils::matToQImage(target);
+    //     if (img.isNull() == false)
+    //     {
+    //         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
+    //     }
+    // });
 }
 void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
 {
@@ -898,98 +867,40 @@ void AppFrame::AppFrameworkImpl::initBaumerManager()
     baumerManager_->start(config_);
 }
 
-// void AppFrame::AppFrameworkImpl::initHttp()
-// {
-//     HttpApiManager *httpLogistics = new HttpApiManager();
-//     HttpApiManager *httpLocate = new HttpApiManager();
-//     HttpApiManager *httpLocateCheck = new HttpApiManager();
-//     http_.emplace_back(httpLogistics);
-//     http_.emplace_back(httpLocate);
-//     http_.emplace_back(httpLocateCheck);
-//     QObject::connect(http_[0], &HttpApiManager::requestFinished,
-//                      [this](const QString &response, cv::Mat matImage, const int bottomNum) {
-//                          if (response.isEmpty())
-//                          {
-//                              return;
-//                          }
-//                          LogInfo("resJS", response.toStdString());
-//                          // 1 获取方框位置，绘制
-//                          QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-//                          // QVariantMap dataMap = jsonDocumentData.toVariant().toMap();
-//                          // ocr:识别物流码  yolovn5_tagle：定位  yolov5：定位复核
-//                          //  检查是否解析成功
-//                          if (!jsonDocument.isNull())
-//                          {
-//                              Utils::asyncTask([this, jsonDocument = std::move(jsonDocument),
-//                                                matImage = std::move(matImage), bottomNum]() {
-//                                  processPaddleOCR(std::move(jsonDocument), std::move(matImage), bottomNum);
-//                              });
-//                          }
-//                      });
-//     QObject::connect(http_[1], &HttpApiManager::requestFinished,
-//                      [this](const QString &response, cv::Mat matImage, const int bottomNum) {
-//                          if (response.isEmpty())
-//                          {
-//                              return;
-//                          }
-//                          LogInfo("resJS", response.toStdString());
-//                          // 1 获取方框位置，绘制
-//                          QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-//                          //  检查是否解析成功
-//                          if (!jsonDocument.isNull())
-//                          {
-//                              processYoloTangle(jsonDocument, matImage, bottomNum);
-//                          }
-//                      });
-//     QObject::connect(http_[2], &HttpApiManager::requestFinished,
-//                      [this](const QString &response, cv::Mat matImage, const int bottomNum) {
-//                          if (response.isEmpty())
-//                          {
-//                              return;
-//                          }
-//                          LogInfo("resJS", response.toStdString());
-//                          QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-//                          if (!jsonDocument.isNull())
-//                          {
-//                              processYoloTangle(jsonDocument, matImage, bottomNum);
-//                          }
-//                      });
-// }
-
 void AppFrame::AppFrameworkImpl::initFile()
 {
     QDir qdir;
-    saveImageDir = qdir.currentPath() + "/" + "Image";
-    if (!qdir.exists(saveImageDir))
+    std::string saveImageDir = strAppPath_ + "/Image";
+    if (!qdir.exists(saveImageDir.c_str()))
     {
-        bool res = qdir.mkdir(saveImageDir);
+        bool res = qdir.mkdir(saveImageDir.c_str());
         if (!res)
         {
             LogWarn("create saveImageDir dir file!");
         }
     }
-    QString saveImageSubDir1 = saveImageDir + "/LocationCamera";
-    QString saveImageSubDir2 = saveImageDir + "/CodeCheckCamera";
-    QString saveImageSubDir3 = saveImageDir + "/LocateCheckCamera";
-    if (!qdir.exists(saveImageSubDir1))
+    strTanglePath_ = saveImageDir + "/LocationCamera";
+    strOcrPath_ = saveImageDir + "/CodeCheckCamera";
+    strTangleCheckPath_ = saveImageDir + "/LocateCheckCamera";
+    if (!qdir.exists(strTanglePath_.c_str()))
     {
-        bool res = qdir.mkdir(saveImageSubDir1);
+        bool res = qdir.mkdir(strTanglePath_.c_str());
         if (!res)
         {
             LogWarn("create LocationCamera dir file!");
         }
     }
-    if (!qdir.exists(saveImageSubDir2))
+    if (!qdir.exists(strOcrPath_.c_str()))
     {
-        bool res = qdir.mkdir(saveImageSubDir2);
+        bool res = qdir.mkdir(strOcrPath_.c_str());
         if (!res)
         {
             LogWarn("create CodeCheckCamera dir file!");
         }
     }
-    if (!qdir.exists(saveImageSubDir3))
+    if (!qdir.exists(strTangleCheckPath_.c_str()))
     {
-        bool res = qdir.mkdir(saveImageSubDir3);
+        bool res = qdir.mkdir(strTangleCheckPath_.c_str());
         if (!res)
         {
             LogWarn("create LocateCheckCamera dir file!");
@@ -1082,10 +993,10 @@ void AppFrame::AppFrameworkImpl::memoryClean()
         delete permission_;
         permission_ = nullptr;
     }
-    if (httpClient_ != nullptr)
+    if (webManager_ != nullptr)
     {
-        delete httpClient_;
-        httpClient_ = nullptr;
+        delete webManager_;
+        webManager_ = nullptr;
     }
     for (auto &ptr_ : productList_)
     {
@@ -1101,7 +1012,6 @@ void AppFrame::AppFrameworkImpl::memoryClean()
 
 void AppFrame::AppFrameworkImpl::timerTask()
 {
-    // refreshImageTest(5);
     lvFulltimeThread_.push_back(std::thread([this] {
         std::string recYear = "-1", recMonth = "-1", recDay = "-1";
         std::string recHour = "-1", recMinute = "-1", recSecond = "-1";
@@ -1148,38 +1058,40 @@ void AppFrame::AppFrameworkImpl::timerTask()
     // }));
 }
 
-void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
-{
-    // 调用yolo或者ocr处理过程
-    QString qString = QString::fromStdString(jsonData);
-    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
-    QString type = jsonDocu["model"].toString();
-    if (type == "paddleOCR")
-    {
-        LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
-        Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
-    }
-    else if (type == "tangle")
-    {
-        LogInfo("recieve tangle algorithm return, in {}", Utils::getCurrentTime(true));
-        Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
-    }
-}
+// void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
+// {
+//     // 调用yolo或者ocr处理过程
+//     QString qString = QString::fromStdString(jsonData);
+//     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+//     QString type = jsonDocu["model"].toString();
+//     if (type == "paddleOCR")
+//     {
+//         LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
+//         Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
+//     }
+//     else if (type == "tangle")
+//     {
+//         LogInfo("recieve tangle algorithm return, in {}", Utils::getCurrentTime(true));
+//         Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
+//     }
+// }
 
-void AppFrame::AppFrameworkImpl::processHttpResTest(const std::string &jsonData)
-{
-    QString qString = QString::fromStdString(jsonData);
-    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
-    QString type = jsonDocu["model"].toString();
-    // cv::Mat test = cv::imread("D:/test.jpg");
-    cv::Mat test(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-    Utils::asyncTask([this, jsonDocu, test] { processYoloTangleTest(jsonDocu, test); });
-}
+// void AppFrame::AppFrameworkImpl::processHttpResTest(const std::string &jsonData)
+// {
+//     QString qString = QString::fromStdString(jsonData);
+//     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+//     QString type = jsonDocu["model"].toString();
+//     // cv::Mat test = cv::imread("D:/test.jpg");
+//     cv::Mat test(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
+//     Utils::asyncTask([this, jsonDocu, test] { processYoloTangleTest(jsonDocu, test); });
+// }
 
-void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
+void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString)
 {
     // 转换为QJsonObject
-    QJsonObject jsonObject = jsonDocument.object();
+    QString qString = QString::fromStdString(jsonString);
+    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+    QJsonObject jsonObject = jsonDocu.object();
     cv::Mat matImage;
     std::string imageName = jsonObject["imageName"].toString().toStdString();
     int bottomNum = jsonObject["bottomNum"].toInt();
@@ -1392,6 +1304,9 @@ void AppFrame::AppFrameworkImpl::doPrintCode(uint8_t bottomNum)
 void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
 {
     // 找出图像
+    LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
+    QString qString = QString::fromStdString(jsonString);
+    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
     Product *product_;
     for (auto &tempPro : productList_)
     {
@@ -1411,7 +1326,7 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
         return;
     }
     // 转换为QJsonObject
-    QJsonObject jsonObject = jsonDocument.object();
+    QJsonObject jsonObject = jsonDocu.object();
     // qDebug() << jsonObject["imageName"];
     // 检查是否含有键box
     if (jsonObject.contains("box"))
@@ -1479,8 +1394,8 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
         }
 
         // 1 图像操作：显示在界面、保存
-        QImage saveImage = Utils::matToQImage(product_->codeCheckImage);
-        saveImageToFile(saveImage, DisplayWindows::LocateCheckCamera);
+        // QImage saveImage = Utils::matToQImage(product_->codeCheckImage);
+        // Utils::saveImageToFile(saveImage, 2);
         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
                   Q_ARG(QImage, Utils::matToQImage(product_->codeCheckImage)));
     }
@@ -1497,30 +1412,4 @@ void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
     }
     // 清理当前数据
     productList_.pop_front();
-}
-
-void AppFrame::AppFrameworkImpl::saveImageToFile(QImage &imgSave, const DisplayWindows &camId)
-{
-    Utils::asyncTask([this, imgSave, camId] {
-        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        QString saveImageSubDir = "";
-        switch (camId)
-        {
-        case DisplayWindows::LocationCamera:
-            saveImageSubDir = saveImageDir + "/LocationCamera/";
-            break;
-        case DisplayWindows::CodeCheckCamera:
-            saveImageSubDir = saveImageDir + "/CodeCheckCamera/";
-            break;
-        case DisplayWindows::LocateCheckCamera:
-            saveImageSubDir = saveImageDir + "/LocateCheckCamera/";
-            break;
-        }
-        QString imagePath = saveImageSubDir + currentDateTimeStr + ".jpg";
-        if (!imgSave.save(imagePath, "JPG"))
-        {
-            qDebug() << "save image failed : " + imagePath;
-        }
-        LogInfo("save image : {}", imagePath.toStdString());
-    });
 }

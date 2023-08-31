@@ -3,11 +3,11 @@
 #include "BaumerManager.h"
 #include "Cognex.h"
 #include "Domino.h"
-#include "HttpClient.h"
 #include "Logger.h"
 #include "PLCDevice.h"
 #include "Permission.h"
 #include "PgsqlHelper.h"
+#include "WebManager.h"
 #include <Product.h>
 #include <QBrush>
 #include <QDir>
@@ -67,15 +67,15 @@ class AppFrameworkImpl final : public AppFramework
     void initBaumerManager();
     void initFile();
 
-    void updateRealData();                                             // 主界面实时更新数据
-    void updateProduceRealData();                                      // 生产数据界面实时更新数据
-    void updateSensorRealData();                                       // 传感器界面实时更新数据
-    void updateValveRealData();                                        // 阀门界面实时更新数据
-    void updatePowerRealData();                                        // 电机界面实时更新数据
-    void updateAlertData();                                            // 更新报警信息
-    void updateFormulaData();                                          // 初始化配方界面
-    void updateVideo();                                                // 实时视频
-    void refreshImage(const uint8_t winint, const uint64_t bottomNum); // 实时图像
+    void updateRealData();        // 主界面实时更新数据
+    void updateProduceRealData(); // 生产数据界面实时更新数据
+    void updateSensorRealData();  // 传感器界面实时更新数据
+    void updateValveRealData();   // 阀门界面实时更新数据
+    void updatePowerRealData();   // 电机界面实时更新数据
+    void updateAlertData();       // 更新报警信息
+    void updateFormulaData();     // 初始化配方界面
+    void updateVideo();           // 实时视频
+
     void refreshImageTest(const int bottomNum);
     void refreshLocate(const uint64_t bottomNum);
     void refreshLocateCheck(const uint64_t bottomNum);
@@ -83,13 +83,11 @@ class AppFrameworkImpl final : public AppFramework
     void updateByMinute(const std::string &minute);                                              // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();
-    void timerTask();                                 // 定时任务
-    void processHttpRes(const std::string &jsonData); // 处理http 返回参数
-    void processHttpResTest(const std::string &jsonData);
-    void processPaddleOCR(QJsonDocument);  // 处理检测算法
-    void processYoloTangle(QJsonDocument); // 处理角度预测算法
+    void timerTask(); // 定时任务
+
+    void processPaddleOCR(const std::string &);  // 处理检测算法
+    void processYoloTangle(const std::string &); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
-    void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
     void runMainProcess();
     void processQrCode(const std::string value);
     void processCode(const std::string code1, const std::string code2);
@@ -97,11 +95,15 @@ class AppFrameworkImpl final : public AppFramework
 
   private:
     // 私有变量区域
+    // 程序路径 begin
     std::string strAppPath_;
+    std::string strTanglePath_;
+    std::string strTangleCheckPath_;
+    std::string strOcrPath_;
+    // 程序路径 end
     YAML::Node config_;
     std::list<std::thread> lvFulltimeThread_;
     std::atomic_bool bThreadHolder{true};
-    QString saveImageDir;
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
     std::list<Product *> productList_;
@@ -110,7 +112,7 @@ class AppFrameworkImpl final : public AppFramework
     Domino *domino_ = nullptr;
     Cognex *cognex_ = nullptr;
     Permission *permission_ = nullptr;
-    HttpClient *httpClient_ = nullptr;
+    WebManager *webManager_ = nullptr;
     // tcp client end
     PLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
