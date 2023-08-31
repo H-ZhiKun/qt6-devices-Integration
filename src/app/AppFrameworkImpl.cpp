@@ -671,8 +671,7 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
     saveImageToFile(saveImg, DisplayWindows::CodeCheckCamera);
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-        std::string modelName;
+        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "CC";
         static uint16_t countCode = 0;
         url = config_["algorithm"]["url_ocr"].as<std::string>();
         LogInfo("CodeCheckCamera count: {}", countCode);
@@ -685,15 +684,15 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
         {
             if (product_->codeCheckImage.empty() && !product_->logistics1.empty())
             {
-                product_->codeCheckImage = temp;
-                product_->codeCheckImageName = imageName + "CC";
-                modelName = "paddleOCR";
-                // 1 保存数据
+                product_->codeCheckImage = temp.clone();
+                product_->codeCheckImageName = imageName;
+                // invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+                //           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "paddleOCR")));
+                break;
             }
         }
         countCode++;
         QImage img = Utils::matToQImage(temp);
-
         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage", Q_ARG(QImage, img));
     });
 }
@@ -726,7 +725,8 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
         {
             if (product_->locateCheckImage.empty())
             {
-                product_->locateCheckImage = temp;
+                LogInfo("send locate check image to algorithm");
+                product_->locateCheckImage = temp.clone();
                 product_->locateCheckImageName = imageName;
                 invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
                           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "tangleCheck")));
