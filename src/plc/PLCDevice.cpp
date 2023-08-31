@@ -118,7 +118,6 @@ void PLCDevice::updateData()
                 int8_t fifoCount = 500;
                 while (fifoCount)
                 {
-                    LogInfo("FIFOParsing complete.");
                     auto FIFO = client_->readFIFO();
                     if (FIFO.cache.size() > 0)
                     {

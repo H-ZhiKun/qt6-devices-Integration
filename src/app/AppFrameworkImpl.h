@@ -116,6 +116,7 @@ class AppFrameworkImpl final : public AppFramework
     std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
     std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
     std::unordered_map<DisplayWindows, uint16_t> mapSaveImage_;     // 图片保存数量控制
+    std::atomic<u_int> curbottomnum;
 
   public:
     // 调用qml 对象函数工具

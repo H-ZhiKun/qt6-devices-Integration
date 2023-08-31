@@ -474,7 +474,7 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     LogInfo("network client start success.");
     // 获取到二维码并发送
     QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
-        cognex_->scanStop();
+        // cognex_->scanStop();
         Product *curProduct = productList_.back();
         LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
         if (value == curProduct->qrCodeRes)
@@ -664,8 +664,7 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
     cv::Mat temp = matData.back();
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-        std::string modelName;
+        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "CC";
         static uint16_t countCode = 0;
         url = config_["algorithm"]["url_ocr"].as<std::string>();
         LogInfo("CodeCheckCamera count: {}", countCode);
@@ -678,10 +677,11 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
         {
             if (product_->codeCheckImage.empty() && !product_->logistics1.empty())
             {
-                product_->codeCheckImage = temp;
-                product_->codeCheckImageName = imageName + "CC";
-                modelName = "paddleOCR";
-                // 1 保存数据
+                product_->codeCheckImage = temp.clone();
+                product_->codeCheckImageName = imageName;
+                // invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+                //           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "paddleOCR")));
+                break;
             }
         }
         countCode++;
@@ -700,7 +700,6 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
         return;
     }
     cv::Mat temp = matData.back();
-    QImage saveImg = Utils::matToQImage(temp);
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "LC";
@@ -717,7 +716,8 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
         {
             if (product_->locateCheckImage.empty())
             {
-                product_->locateCheckImage = temp;
+                LogInfo("send locate check image to algorithm");
+                product_->locateCheckImage = temp.clone();
                 product_->locateCheckImageName = imageName;
                 std::string jsonData;
                 QByteArray byteArray;
@@ -742,6 +742,7 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
         return;
     }
     cv::Mat temp = matData.back();
+    cv::resize(temp, temp, {800, 800});
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
@@ -759,7 +760,7 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
         {
             if (product_->locateImage.empty())
             {
-                LogInfo("get locateImage");
+                LogInfo("tangle timer: send image to algothm");
                 product_->locateImage = temp.clone();
                 product_->locateImageName = imageName;
                 std::string jsonData;
@@ -1148,7 +1149,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString
         if (tempPro->locateImageName == imageName)
         {
             matImage = tempPro->locateImage;
-            LogInfo("process locate image in tangle");
+            LogInfo("tangle timer: get image from algothm");
             isCheck = false;
             pro_ = tempPro;
             break;
@@ -1194,7 +1195,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString
                 pp.setFont(font);
                 pp.setPen(QPen(Qt::red, 5));
                 pp.setBrush(QBrush(Qt::red));
-                if (result.toInt() < 5 && result.toInt() != 0)
+                if (result.toInt() < 5 && result.toInt() != 360)
                 { // 小于5度定位成功
                     plcDev_->writeDataToDevice("b", "13004", "00", "1");
                     pp.drawText(QPointF(20, 50), "定位成功！");
@@ -1210,7 +1211,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString
             {
                 plcDev_->writeDataToDevice("r", "13002", "", result.toStdString());
                 plcDev_->writeDataToDevice("n", "12993", "", bottomstr);
-                LogInfo("tangle write to plc: 13002_{}, 12993_{}", result.toStdString(), bottomstr);
+                LogInfo("tangle timer: write to plc: 13002_{}, 12993_{}", result.toStdString(), bottomstr);
 
                 QPainter pp(&resImg);
                 QFont font = pp.font();

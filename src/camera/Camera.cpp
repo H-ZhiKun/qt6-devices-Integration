@@ -222,7 +222,7 @@ void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint6
     {
         mat = mono8ToMat(buffer, width, height);
     }
-    matBuffers_.enqueue(std::move(mat));
+    matBuffers_.enqueue(mat);
 }
 
 std::list<cv::Mat> Camera::getImage()
