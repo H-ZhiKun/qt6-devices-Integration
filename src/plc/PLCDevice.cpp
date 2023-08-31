@@ -115,16 +115,17 @@ void PLCDevice::updateData()
                 {
                     alertParsing(readCache.data(), readSize);
                 }
-                int8_t fifoCount = 10;
+                int8_t fifoCount = 500;
                 while (fifoCount)
                 {
+                    LogInfo("FIFOParsing complete.");
                     auto FIFO = client_->readFIFO();
                     if (FIFO.cache.size() > 0)
                     {
                         FIFOParsing(FIFO.cache.data(), FIFO.cache.size());
                     }
                     fifoCount--;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
             }
         }
@@ -166,7 +167,6 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
-
     if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
         LogInfo("numQRCode emit.");

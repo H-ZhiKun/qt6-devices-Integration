@@ -1205,6 +1205,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
     cv::Mat matImage;
     std::string imageName = jsonObject["imageName"].toString().toStdString();
     int bottomNum = jsonObject["bottomNum"].toInt();
+    std::string bottomstr = std::to_string(bottomNum);
     bool isCheck = false;
     Product *pro_;
     for (auto &tempPro : productList_)
@@ -1258,7 +1259,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
                 pp.setFont(font);
                 pp.setPen(QPen(Qt::red, 5));
                 pp.setBrush(QBrush(Qt::red));
-                if (result.toInt() < 5)
+                if (result.toInt() < 5 && result.toInt() != 0)
                 { // 小于5度定位成功
                     plcDev_->writeDataToDevice("b", "13004", "00", "1");
                     pp.drawText(QPointF(20, 50), "定位成功！");
@@ -1268,12 +1269,13 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
                     plcDev_->writeDataToDevice("b", "13004", "00", "0");
                     pp.drawText(QPointF(20, 50), "定位失败！");
                 }
-                plcDev_->writeDataToDevice("n", "12994", "", jsonObject["bottomNum"].toString().toStdString());
+                plcDev_->writeDataToDevice("n", "12994", "", bottomstr);
             }
             else
             {
-                plcDev_->writeDataToDevice("n", "13002", "", result.toStdString());
-                plcDev_->writeDataToDevice("n", "12993", "", jsonObject["bottomNum"].toString().toStdString());
+                plcDev_->writeDataToDevice("r", "13002", "", result.toStdString());
+                plcDev_->writeDataToDevice("n", "12993", "", bottomstr);
+                LogInfo("tangle write to plc: 13002_{}, 12993_{}", result.toStdString(), bottomstr);
 
                 QPainter pp(&resImg);
                 QFont font = pp.font();

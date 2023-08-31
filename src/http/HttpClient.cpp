@@ -1,4 +1,5 @@
 #include "HttpClient.h"
+#include <QHttpMultiPart>
 
 HttpClient::HttpClient(QObject *parent) : QObject(parent), m_manager(new QNetworkAccessManager(this))
 {
@@ -25,6 +26,35 @@ void HttpClient::sendPostRequest(const std::string &urlStr, const std::string &p
     QNetworkReply *reply = m_manager->post(request, postData);
 
     connect(reply, &QNetworkReply::finished, this, &HttpClient::handleReply);
+}
+
+void HttpClient::sendImageRequest(const std::string &urlStr, const QByteArray &imageData, const std::string &imageName,
+                                  const std::string &jsonText)
+{
+    QUrl url = QUrl::fromUserInput(QString::fromStdString(urlStr));
+    QNetworkRequest request(url);
+
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+    // Add image data part
+    QHttpPart imagePart;
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                        QVariant("form-data; name=\"image\"; filename=\"" + QString::fromStdString(imageName) + "\""));
+    imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/jpeg"));
+    imagePart.setBody(imageData);
+    multiPart->append(imagePart);
+
+    // Add JSON part
+    QHttpPart jsonPart;
+    jsonPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"json\""));
+    jsonPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));
+    jsonPart.setBody(jsonText.c_str());
+    multiPart->append(jsonPart);
+
+    QNetworkReply *reply = m_manager->post(request, multiPart);
+
+    connect(reply, &QNetworkReply::finished, this, &HttpClient::handleReply);
+    connect(reply, &QNetworkReply::finished, multiPart, &QHttpMultiPart::deleteLater);
 }
 
 void HttpClient::handleReply()

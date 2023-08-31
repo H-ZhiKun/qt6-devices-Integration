@@ -18,7 +18,8 @@ class HttpClient : public QObject
   public slots:
     void sendGetRequest(const std::string &urlStr);
     void sendPostRequest(const std::string &urlStr, const std::string &postDataStr);
-
+    void sendImageRequest(const std::string &urlStr, const QByteArray &imageData, const std::string &imageName,
+                          const std::string &jsonText);
   private slots:
     void handleReply();
 

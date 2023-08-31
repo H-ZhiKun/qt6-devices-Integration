@@ -42,6 +42,7 @@ void ModbusClient::work()
         {
             if (bConnected_.load(std::memory_order_acquire))
             {
+                LogInfo("readRegisters complete.");
                 // 缓存写
                 while (!qWriteData_.empty())
                 {
@@ -52,7 +53,7 @@ void ModbusClient::work()
                     }
                 }
                 // 读缓存
-                if (offsetCount >= 10)
+                if (offsetCount >= 500)
                 {
                     if (readRegisters(rCacheInfo_.address, rCacheInfo_.size, cacheBuffer))
                     {
@@ -71,7 +72,7 @@ void ModbusClient::work()
                     //                         FIFOCacheInfo_.size);
                 }
                 offsetCount++;
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
             else
             {
