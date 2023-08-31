@@ -1,7 +1,7 @@
 #pragma once
-#include "DeviceUpdate.h"
 #include "ModbusClient.h"
 #include "RegistersWapper.h"
+#include <QObject>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -18,20 +18,17 @@ struct FIFOInfo
     uint16_t signalSearchCoding; // 412655 喷码数据查找信号
 };
 
-class PLCDevice
+class PLCDevice : public QObject
 {
+    Q_OBJECT
   public:
-    explicit PLCDevice();
+    explicit PLCDevice(QObject *parent = nullptr);
     ~PLCDevice();
     void init(const std::string &host, uint16_t port, uint16_t ioFreq, uint16_t FIFOFreq);
     std::string readDevice(const std::string &type, const std::string &addr, const std::string &bit = "");
     bool writeDataToDevice(const std::string &type, const std::string &addr, const std::string &bit = "",
                            const std::string &value = "");
     const FIFOInfo &getFIFOInfo();
-    inline DeviceUpdate *getSignal()
-    {
-        return deviceUpdate_;
-    }
     bool getConnect();
 
   protected:
@@ -42,12 +39,18 @@ class PLCDevice
     void updateData();
     void alertParsing(const uint16_t *alertGroup, uint16_t size);
     void FIFOParsing(const uint16_t *FIFOGroup, uint16_t size);
-
+  signals:
+    void bottomMove(const uint64_t);        // 瓶位移动信号
+    void readQRCode(const uint64_t);        // 二维码读取信号
+    void locatePhoto(const uint64_t);      // 定位拍照信号
+    void locateCheckPhoto(const uint64_t); // 定位复核拍照信号
+    void codeLogistics(const uint64_t);     // 打码信号
+    void codeCheck(const uint64_t);        // 打码复核信号
+    void codeSerch(const uint64_t);         // 喷码数据查找信号
   private:
     RegistersWapper regWapper_;
     std::atomic_bool updateHolder_{true};
     std::thread thUpdate_;
-    DeviceUpdate *deviceUpdate_ = nullptr;
     ModbusClient *client_ = nullptr;
     const uint16_t readBeginAddress_ = 12288;
     const uint16_t readCacheSize_ = 331;

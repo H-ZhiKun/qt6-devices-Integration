@@ -2,7 +2,7 @@
 #include "AlertWapper.h"
 #include <QDebug>
 #include <bitset>
-PLCDevice::PLCDevice()
+PLCDevice::PLCDevice(QObject *parent) : QObject(parent)
 {
 }
 
@@ -14,11 +14,6 @@ PLCDevice::~PLCDevice()
     {
         delete client_;
         client_ = nullptr;
-    }
-    if (deviceUpdate_)
-    {
-        delete deviceUpdate_;
-        deviceUpdate_ = nullptr;
     }
     // 加wapper 清除写缓存表
 }
@@ -33,7 +28,6 @@ void PLCDevice::init(const std::string &host, uint16_t port, uint16_t ioFreq, ui
     client_->addReadCache(readBeginAddress_, readCacheSize_, ioFreq);
     client_->addFIFOCache(FIFOBeginAddress_, FIFOCacheSize_, FIFOFreq);
     client_->work();
-    deviceUpdate_ = new DeviceUpdate();
     updateData();
 }
 
@@ -172,51 +166,49 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
+
     if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
         LogInfo("numQRCode emit.");
-        deviceUpdate_->UpdateReadQRCode(FIFOGroup[1]);
         fifoInfo_.numQRCode = FIFOGroup[1];
+        emit readQRCode(FIFOGroup[1]);
     }
     if (FIFOGroup[2] != fifoInfo_.numPosition)
     {
         LogInfo("numPosition emit.");
-        emit deviceUpdate_->UpdateLocatePhoto(0, FIFOGroup[2]);
         fifoInfo_.numPosition = FIFOGroup[2];
+        emit locatePhoto(FIFOGroup[2]);
     }
     if (FIFOGroup[3] != fifoInfo_.numVerifyPos)
     {
-        LogInfo("numVerifyPos emit.");
-        emit deviceUpdate_->UpdateLocateCheckPhoto(2, FIFOGroup[3]);
         fifoInfo_.numVerifyPos = FIFOGroup[3];
+        LogInfo("bottom {}: Photo locate check image signal", FIFOGroup[3]);
+        emit locateCheckPhoto(FIFOGroup[3]);
     }
     if (FIFOGroup[4] != fifoInfo_.numCoding)
     {
-        LogInfo("numCoding emit.");
-        emit deviceUpdate_->UpdateCodeLogistics(FIFOGroup[4]);
         fifoInfo_.numCoding = FIFOGroup[4];
+        LogInfo("bottom {}: code Logistics signal", FIFOGroup[4]);
+        emit codeLogistics(FIFOGroup[4]);
     }
     if (FIFOGroup[5] != fifoInfo_.numVerifyCoding)
     {
-        LogInfo("numVerifyCoding emit.");
-        emit deviceUpdate_->UpdateCodeCheck(1, FIFOGroup[5]);
         fifoInfo_.numVerifyCoding = FIFOGroup[5];
+        LogInfo("bottom {}: photo code check signal", FIFOGroup[5]);
+        emit codeCheck(FIFOGroup[5]);
     }
     if (FIFOGroup[12] != fifoInfo_.signalMove)
     {
-        LogInfo("signalMove emit.");
-        emit deviceUpdate_->UpdateBottomMove(FIFOGroup[12]);
         fifoInfo_.signalMove = FIFOGroup[12];
+        LogInfo("bottom {}: bottomMove signal", FIFOGroup[12]);
+        emit bottomMove(FIFOGroup[12]);
     }
     if (FIFOGroup[13] != fifoInfo_.signalSearchCoding)
     {
-        LogInfo("signalSearchCoding emit.");
-        emit deviceUpdate_->UpdateCodeSerch(FIFOGroup[13]);
         fifoInfo_.signalSearchCoding = FIFOGroup[13];
+        LogInfo("bottom {}: code serch signal", FIFOGroup[13]);
+        emit codeSerch(FIFOGroup[13]);
     }
-
-    // std::cout << "FIFO updated: " << fifoInfo_.numQRCode << "," << fifoInfo_.signalSearchCoding
-    //           << Utils::getCurrentTime(true) << std::endl;
 }
 
 bool PLCDevice::getConnect()

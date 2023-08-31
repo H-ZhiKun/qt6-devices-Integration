@@ -27,8 +27,8 @@ class Camera
     void storeImg(unsigned char *bayerRG8Data, const std::string &pixFormat, uint64_t width, uint64_t height,
                   uint64_t frameId);
     std::list<cv::Mat> getImage();
-    bool startStream(); // 打开图像采集流
-    bool stopStream();  // 打开图像采集流
+    void startCollect(); // 开始采集
+    void stopCollect();  // 停止采集
     const Json::Value &getROParams();
 
     bool setParams(const std::string &key, uint64_t value);
@@ -41,7 +41,6 @@ class Camera
     void deinitialize();           // 资源回收入口
     void clearBuffersFromStream(); // 清理相机缓存buffer
     void stopDevice();             // 关闭相机
-
     cv::Mat bayerRG8ToMat(unsigned char *buffer, uint64_t width, uint64_t height);
     cv::Mat mono10ToMat(unsigned char *buffer, uint64_t width, uint64_t height);
     cv::Mat mono8ToMat(unsigned char *buffer, uint64_t width, uint64_t height);

@@ -9,7 +9,10 @@
 #include "Permission.h"
 #include "PgsqlHelper.h"
 #include <Product.h>
+#include <QBrush>
 #include <QDir>
+#include <QPainter>
+#include <QPen>
 #include <QQmlApplicationEngine>
 #include <memory>
 #include <mutex>
@@ -56,6 +59,7 @@ class AppFrameworkImpl final : public AppFramework
     // 差异调用 接口区域
     void loadConfig();
     void saveConfig();
+    void initLogger();
     void initSqlHelper();
     void initNetworkClient();
     void initPLC();
@@ -63,16 +67,19 @@ class AppFrameworkImpl final : public AppFramework
     void initBaumerManager();
     void initFile();
 
-    void updateRealData();        // 主界面实时更新数据
-    void updateProduceRealData(); // 生产数据界面实时更新数据
-    void updateSensorRealData();  // 传感器界面实时更新数据
-    void updateValveRealData();   // 阀门界面实时更新数据
-    void updatePowerRealData();   // 电机界面实时更新数据
-    void updateAlertData();       // 更新报警信息
-    void updateFormulaData();     // 初始化配方界面
-    // void updateVideo();                                                      // 实时视频
-    void refreshImage(const int winint, const int bottomNum); // 实时图像
+    void updateRealData();                                             // 主界面实时更新数据
+    void updateProduceRealData();                                      // 生产数据界面实时更新数据
+    void updateSensorRealData();                                       // 传感器界面实时更新数据
+    void updateValveRealData();                                        // 阀门界面实时更新数据
+    void updatePowerRealData();                                        // 电机界面实时更新数据
+    void updateAlertData();                                            // 更新报警信息
+    void updateFormulaData();                                          // 初始化配方界面
+    void updateVideo();                                                // 实时视频
+    void refreshImage(const uint8_t winint, const uint64_t bottomNum); // 实时图像
     void refreshImageTest(const int bottomNum);
+    void refreshLocate(const uint64_t bottomNum);
+    void refreshLocateCheck(const uint64_t bottomNum);
+    void refreshCodeCheck(const uint64_t bottomNum);
     void updateByMinute(const std::string &minute);                                              // 每分钟更新
     void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
     void updateUserData();

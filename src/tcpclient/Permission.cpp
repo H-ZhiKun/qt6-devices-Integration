@@ -38,7 +38,9 @@ void Permission::dealing(std::vector<unsigned char> buffer)
 void Permission::sendQRCode(const std::string &code)
 {
     std::string cmd = strHead + code;
-    sendData(QByteArray(cmd.c_str(), static_cast<int>(cmd.size())));
+    QByteArray byteArray = QByteArray(cmd.c_str(), static_cast<int>(cmd.size()));
+    qDebug() << "qrcode send to permission: " << byteArray;
+    sendData(byteArray);
 }
 void Permission::pingBehavior()
 {

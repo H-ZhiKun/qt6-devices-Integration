@@ -46,8 +46,10 @@ void ModbusClient::work()
                 while (!qWriteData_.empty())
                 {
                     RegisterWriteData wData;
-                    qWriteData_.dequeue(wData);
-                    writeRegisters(wData.wStartAddr, wData.wSize, wData.wData);
+                    if (qWriteData_.dequeue(wData))
+                    {
+                        writeRegisters(wData.wStartAddr, wData.wSize, wData.wData);
+                    }
                 }
                 // 读缓存
                 if (offsetCount >= 10)

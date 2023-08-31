@@ -1,6 +1,7 @@
 #ifndef HTTPCLIENT_H
 #define HTTPCLIENT_H
 
+#include "Logger.h"
 #include <QByteArray>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -8,7 +9,6 @@
 #include <QObject>
 #include <QString>
 #include <QUrl>
-
 class HttpClient : public QObject
 {
     Q_OBJECT
@@ -18,7 +18,8 @@ class HttpClient : public QObject
   public slots:
     void sendGetRequest(const std::string &urlStr);
     void sendPostRequest(const std::string &urlStr, const std::string &postDataStr);
-
+    void sendImageRequest(const std::string &urlStr, const QByteArray &imageData, const std::string &imageName,
+                          const std::string &jsonText);
   private slots:
     void handleReply();
 

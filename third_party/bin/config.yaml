@@ -35,7 +35,7 @@ plc:
   fifo_freq: 50
 algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
-  url_predict: 'http://127.0.0.0:5000/predict_tangle'
+  url_predict: 'http://127.0.0.1:5000/predict_tangle'
 domino:
   host: 127.0.0.1
   port: 20001
@@ -43,11 +43,11 @@ cognex:
   host: 192.168.60.121
   port: 23
 permission:
-  host: 192.168.1.26
+  host: 192.168.123.100
   port: 2000
 baumer:
   # interface: The MAC address of the NIC example: CC-82-7F-3C-04-DF
-  interface: CC-82-7F-3C-04-DF
+  interface: [CC-82-7F-3C-04-E1, CC-82-7F-3C-04-DF]
   # display_window: LocationCamera = 0;CodeCheckCamera = 1;LocateCheckCamera = 2.
   # trigger_mode: software = 0;hardware=1;
   # expose: expose time unit millisecond
@@ -62,8 +62,8 @@ baumer:
       gain: 2
       width: 1024
       height: 1024
-      offset_x: 544
-      offset_y: 580
+      offset_x: 704
+      offset_y: 400
     - sn_number: 700009842699
       display_window: 1
       trigger_mode: 1

@@ -22,7 +22,7 @@ struct Product
     std::string locateImageName;             // 定位图像
     std::string locateCheckImageName;        // 定位复核图像
     std::string codeCheckImageName;          // 打码复核图像
-    cv::Mat *locateImage = nullptr;          // 定位图像
-    cv::Mat *locateCheckImage = nullptr;     // 定位复核图像
-    cv::Mat *codeCheckImage = nullptr;       // 打码复核图像
+    cv::Mat locateImage;                     // 定位图像
+    cv::Mat locateCheckImage;                // 定位复核图像
+    cv::Mat codeCheckImage;                  // 打码复核图像
 };
