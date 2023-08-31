@@ -420,21 +420,43 @@ std::vector<std::string> Utils::splitString(const std::string &input, const std:
     return tokens;
 }
 
-std::string Utils::makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum,
-                                         const std::string &imageName, const std::string &modelName)
+void Utils::makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, const std::string &imageName,
+                                 const std::string &modelName, const std::string &savePath, std::string &jsonBody,
+                                 QByteArray &byteArray)
 {
     // 将图像转换为QByteArray
-    std::vector<uint8_t> buffer;
-    cv::imencode(".jpg", algoImage, buffer);
-    QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
-
+    std::vector<uchar> buffer;
+    std::vector<int> compress_params;
+    compress_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compress_params.push_back(50); // 压缩率 50
+    cv::imencode(".jpg", algoImage, buffer, compress_params);
+    byteArray = QByteArray(reinterpret_cast<const char *>(buffer.data()), buffer.size());
     Json::Value jsVal;
-    jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
     jsVal["imageName"] = imageName;
     jsVal["imageWidth"] = std::to_string(algoImage.cols);
     jsVal["imageHeight"] = std::to_string(algoImage.rows);
     jsVal["bottomNum"] = bottomNum;
-    return jsonToString(jsVal);
+    jsonBody = jsonToString(jsVal);
+    LogInfo("makeJsonAndByteArray json: {}", jsonBody);
+    LogInfo("makeJsonAndByteArray byte size: {}", byteArray.size());
+    saveImageToFile(byteArray, savePath);
+}
+
+void Utils::saveImageToFile(const QByteArray &byteArray, const std::string &filePath)
+{
+    QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+    QString fileName = filePath.c_str() + currentDateTimeStr + ".jpg";
+    QFile file(fileName);
+    if (file.open(QIODevice::WriteOnly))
+    {
+        file.write(byteArray);
+        file.close();
+        LogInfo("success save image: {}.", fileName.toStdString());
+    }
+    else
+    {
+        LogInfo("failed save image: {}.", fileName.toStdString());
+    }
 }
 
 std::string Utils::compressMatToZlib(const cv::Mat &inputMat)

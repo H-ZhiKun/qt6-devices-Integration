@@ -7,6 +7,8 @@
 #include "cryptopp/osrng.h"
 #include <QBuffer>
 #include <QByteArray>
+#include <QDataStream>
+#include <QDir>
 #include <QImage>
 #include <chrono>
 #include <ctime>
@@ -141,10 +143,11 @@ class Utils
         ss >> value;
         return value;
     }
-
+    static void saveImageToFile(const QByteArray &byteArray, const std::string &filePath);
     static cv::Mat qImageToMat(QImage &qim);
     static std::vector<std::string> splitString(const std::string &input, const std::string &delimiter);
-    static std::string makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum,
-                                             const std::string &imageName, const std::string &modelName);
+    static void makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, const std::string &imageName,
+                                     const std::string &modelName, const std::string &savePath, std::string &jsonBody,
+                                     QByteArray &byteArray);
     static std::string compressMatToZlib(const cv::Mat &inputMat);
 };
