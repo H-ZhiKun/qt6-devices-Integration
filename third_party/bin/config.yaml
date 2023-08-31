@@ -36,6 +36,7 @@ plc:
 algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
   url_predict: 'http://127.0.0.1:5000/predict_tangle'
+  ws_tangle: 'ws://localhost:5000/'
 domino:
   host: 127.0.0.1
   port: 20001
