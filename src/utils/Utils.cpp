@@ -432,6 +432,6 @@ std::string Utils::makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_
     jsVal["imageName"] = imageName;
     jsVal["imageWidth"] = std::to_string(algoImage.cols);
     jsVal["imageHeight"] = std::to_string(algoImage.rows);
-    // jsVal["bottomNum"] = bottomNum;
+    jsVal["bottomNum"] = bottomNum;
     return jsonToString(jsVal);
 }
