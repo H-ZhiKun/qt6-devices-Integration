@@ -19,9 +19,9 @@ class WebManager : public QObject
     void tangleCheckRecv(const std::string &);
 
   private:
-    WebsocketClient *ocrClient_;
-    WebsocketClient *tangleClient_;
-    WebsocketClient *tangleCheckClient_;
+    WebsocketClient *ocrClient_ {nullptr};
+    WebsocketClient *tangleClient_{nullptr};
+    WebsocketClient *tangleCheckClient_{nullptr};
 };
 
 #endif // WEBMANAGER_H

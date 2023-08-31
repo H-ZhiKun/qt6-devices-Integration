@@ -677,7 +677,8 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
                 QByteArray byteArray;
                 Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangleCheck", strTanglePath_, jsonData,
                                             byteArray);
-                invokeCpp(webManager_, "sendToALGO", 0, Q_ARG(std::string, jsonData), Q_ARG(QByteArray, byteArray));
+                invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, 2), Q_ARG(std::string, jsonData),
+                          Q_ARG(QByteArray, byteArray));
                 break;
             }
         }
@@ -688,16 +689,39 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
 
 void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
 {
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
-    LogInfo("Get image size = {}, window = 0", matData.size());
-    if (matData.size() == 0)
+    std::string hasBottom = plcDev_->readDevice("b", "12642", "00");
+    if (hasBottom == "0")
     {
-        qDebug() << fmt::format("refreshImage mat null wind = 0, bottomNum = {}", bottomNum);
         return;
     }
-    cv::Mat temp = matData.back();
-    cv::resize(temp, temp, {800, 800});
-    Utils::asyncTask([this, temp, bottomNum] {
+    Utils::asyncTask([this, bottomNum] {
+        LogInfo("tangle timer: get singnal, bottom {}", bottomNum);
+        std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
+        auto startTime = std::chrono::steady_clock::now(); // 记录开始时间
+        while (true)
+        {
+            // 执行您的循环操作
+            matData = baumerManager_->getImageBySN(0);
+            auto currentTime = std::chrono::steady_clock::now(); // 获取当前时间
+            auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime);
+
+            if (elapsedTime.count() >= 700 || matData.size())
+            {
+                // 如果经过200毫秒或更长时间，退出循环
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        if (matData.size() == 0)
+        {
+            qDebug() << fmt::format("refreshImage mat timeout, bottomNum: {}", bottomNum);
+            return;
+        }
+        LogInfo("tangle timer: get image, size: {}", matData.size());
+        cv::Mat temp = matData.back();
+        cv::resize(temp, temp, {800, 800});
+        LogInfo("mat resize cols: {}, rows: {}", temp.cols, temp.rows);
+
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
         static uint16_t countLocation = 0;
@@ -720,7 +744,8 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
                 std::string jsonData;
                 QByteArray byteArray;
                 Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangle", strTanglePath_, jsonData, byteArray);
-                invokeCpp(webManager_, "sendToALGO", 0, Q_ARG(std::string, jsonData), Q_ARG(QByteArray, byteArray));
+                invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, 0), Q_ARG(std::string, jsonData),
+                          Q_ARG(QByteArray, byteArray));
                 break;
             }
         }
@@ -728,7 +753,6 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
     });
 }
-
 void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
 {
     // cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -879,9 +903,9 @@ void AppFrame::AppFrameworkImpl::initFile()
             LogWarn("create saveImageDir dir file!");
         }
     }
-    strTanglePath_ = saveImageDir + "/LocationCamera";
-    strOcrPath_ = saveImageDir + "/CodeCheckCamera";
-    strTangleCheckPath_ = saveImageDir + "/LocateCheckCamera";
+    strTanglePath_ = saveImageDir + "/LocationCamera/";
+    strOcrPath_ = saveImageDir + "/CodeCheckCamera/";
+    strTangleCheckPath_ = saveImageDir + "/LocateCheckCamera/";
     if (!qdir.exists(strTanglePath_.c_str()))
     {
         bool res = qdir.mkdir(strTanglePath_.c_str());
@@ -1301,7 +1325,7 @@ void AppFrame::AppFrameworkImpl::doPrintCode(uint8_t bottomNum)
     }
 }
 
-void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
+void AppFrame::AppFrameworkImpl::processPaddleOCR(const std::string &jsonString)
 {
     // 找出图像
     LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));

@@ -13,7 +13,7 @@ WebsocketClient::WebsocketClient(QObject *parent) : QObject(parent)
     connect(client_, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &WebsocketClient::onError);
     connect(client_, &QWebSocket::connected, this, &WebsocketClient::onConnected);
     connect(client_, &QWebSocket::disconnected, this, &WebsocketClient::onDisconnected);
-    connect(client_, &QWebSocket::binaryMessageReceived, this, &WebsocketClient::onBinaryMessageReceived);
+    connect(client_, &QWebSocket::textMessageReceived, this, &WebsocketClient::onTextMessageReceived);
 }
 
 void WebsocketClient::connectToServer(const std::string &url)
@@ -24,6 +24,8 @@ void WebsocketClient::connectToServer(const std::string &url)
 
 void WebsocketClient::sendData(const std::string &jsonData, const QByteArray &imageBinaryData)
 {
+    if (!bConnected_)
+        return;
     QByteArray combinedData;
     combinedData.append("{-ALGOHead-}");
     combinedData.append(jsonData);
@@ -31,7 +33,8 @@ void WebsocketClient::sendData(const std::string &jsonData, const QByteArray &im
     combinedData.append(imageBinaryData);
     combinedData.append("{-ALGOTail-}");
 
-    client_->sendBinaryMessage(combinedData);
+    qint64 ret = client_->sendTextMessage(combinedData);
+    LogInfo("WebsocketClient send data size ={}, ret = {}", combinedData.size(), ret);
 }
 
 void WebsocketClient::onConnected()
@@ -54,23 +57,23 @@ void WebsocketClient::onDisconnected()
         timerPing->stop();
 }
 
-void WebsocketClient::onBinaryMessageReceived(const QByteArray &message)
+void WebsocketClient::onTextMessageReceived(const QString &message)
 {
     incompleteData_.append(message);
-
+    LogInfo("onTextMessageReceived {}", message.toStdString());
     while (true)
     {
-        int headIndex = incompleteData_.indexOf(strHead_);
-        int tailIndex = incompleteData_.indexOf(strTail_);
+        int headIndex = incompleteData_.indexOf(strHead_.c_str());
+        int tailIndex = incompleteData_.indexOf(strTail_.c_str());
 
         if (headIndex != -1 && tailIndex != -1)
         {
             if (headIndex < tailIndex)
             {
-                QByteArray jsonData = incompleteData_.mid(headIndex + 11, tailIndex - headIndex - 11);
+                QString jsonData = incompleteData_.mid(headIndex + 12, tailIndex - headIndex - 12);
                 emit messageReceived(jsonData.toStdString());
-
-                incompleteData_ = incompleteData_.mid(tailIndex + 11);
+                LogInfo("emit messageReceived jsonData={}", jsonData.toStdString());
+                incompleteData_ = incompleteData_.mid(tailIndex + 12);
             }
             else
             {
