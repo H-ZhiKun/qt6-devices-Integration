@@ -1,5 +1,6 @@
 #include "WebsocketClient.h"
 #include "Logger.h"
+#include "json/json.h"
 
 WebsocketClient::WebsocketClient(QObject *parent) : QObject(parent)
 {
@@ -60,7 +61,10 @@ void WebsocketClient::onDisconnected()
 void WebsocketClient::onTextMessageReceived(const QString &message)
 {
     if (message.indexOf("ping") != -1)
+    {
+        LogInfo("WebsocketClient recv ping: {}", message.toStdString());
         return;
+    }
     incompleteData_.append(message);
     LogInfo("onTextMessageReceived {}", message.toStdString());
     while (true)
@@ -125,10 +129,10 @@ void WebsocketClient::ping()
 {
     pingId_++;
     QByteArray combinedData;
-    std::string pingData = "{\"ping\":" + std::to_string(pingId_) + "}";
-    LogInfo("WebsocketClient ping: {}", pingData);
+    Json::Value jsVal;
+    jsVal["ping"] = std::to_string(pingId_);
     combinedData.append("{-ALGOHead-}");
-    combinedData.append(pingData);
+    combinedData.append(jsVal.toStyledString());
     combinedData.append("{-ALGOTail-}");
     client_->sendTextMessage(combinedData);
 }
