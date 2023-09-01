@@ -69,7 +69,7 @@ void TCPClient::connectToServer(const QString &host, quint16 port)
 
 void TCPClient::sendData(const QByteArray &data)
 {
-    if (tcpSocket && tcpSocket->state() == QAbstractSocket::ConnectedState)
+    if (bconnect_ && tcpSocket && tcpSocket->state() == QAbstractSocket::ConnectedState)
     {
         tcpSocket->write(data);
         tcpSocket->flush();

@@ -81,5 +81,5 @@ baumer:
       gain: 2
       width: 800
       height: 800
-      offset_x: 800
-      offset_y: 650
+      offset_x: 768
+      offset_y: 576

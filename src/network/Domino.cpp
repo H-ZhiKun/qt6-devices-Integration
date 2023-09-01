@@ -46,20 +46,20 @@ void Domino::pingBehavior()
 
 void Domino::dominoCheck()
 {
-    const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    const int charactersLength = characters.length();
+    // const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    // const int charactersLength = characters.length();
 
-    std::string randomString1;
-    std::string randomString2;
-    for (int i = 0; i < 12; ++i)
-    {
-        int randomIndex1 = rand() % charactersLength;
-        int randomIndex2 = rand() % charactersLength;
-        randomString1 += characters[randomIndex1];
-        randomString2 += characters[randomIndex2];
-    }
+    // std::string randomString1;
+    // std::string randomString2;
+    // for (int i = 0; i < 12; ++i)
+    // {
+    //     int randomIndex1 = rand() % charactersLength;
+    //     int randomIndex2 = rand() % charactersLength;
+    //     randomString1 += characters[randomIndex1];
+    //     randomString2 += characters[randomIndex2];
+    // }
 
-    dominoPrint(randomString1, randomString2);
+    // dominoPrint(randomString1, randomString2);
     // sendData(QByteArray(reinterpret_cast<const char *>(cmdCheck.data()), static_cast<int>(cmdCheck.size())));
 }
 
