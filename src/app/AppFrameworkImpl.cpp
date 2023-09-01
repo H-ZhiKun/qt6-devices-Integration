@@ -619,9 +619,7 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "CC";
-        static uint16_t countCode = 0;
         url = config_["algorithm"]["url_ocr"].as<std::string>();
-        LogInfo("CodeCheckCamera count: {}", countCode);
         if (productList_.size() == 0)
         {
             LogInfo("add product in code check func");
@@ -638,7 +636,6 @@ void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
                 break;
             }
         }
-        countCode++;
         QImage img = Utils::matToQImage(temp);
         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage", Q_ARG(QImage, img));
     });
@@ -657,10 +654,7 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
     Utils::asyncTask([this, temp, bottomNum] {
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "LC";
-        static uint16_t countLocateCheck = 0;
         url = config_["algorithm"]["url_predict"].as<std::string>();
-        LogInfo("LocateCheckCamera: {}", countLocateCheck);
-        countLocateCheck++;
         if (productList_.size() == 0)
         {
             LogInfo("add product in locate check func");
@@ -724,11 +718,8 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
 
         std::string url;
         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
-        static uint16_t countLocation = 0;
         url = config_["algorithm"]["url_predict"].as<std::string>();
-        LogInfo("LocationCamera: {}", countLocation);
         LogInfo("productList_ cur size: {}", productList_.size());
-        countLocation++;
         if (productList_.size() == 0)
         {
             LogInfo("add product in locate func");
