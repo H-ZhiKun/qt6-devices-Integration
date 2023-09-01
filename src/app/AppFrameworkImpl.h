@@ -88,10 +88,11 @@ class AppFrameworkImpl final : public AppFramework
     void processPaddleOCR(const std::string &);  // 处理检测算法
     void processYoloTangle(const std::string &); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
-    void runMainProcess();
     void processQrCode(const std::string value);
     void processCode(const std::string code1, const std::string code2);
     void doPrintCode(uint8_t bottomNum);
+    void sendOneToAlgo(); // 初始化服务端的python模型
+    void drawText(QImage &img, QString &text);
 
   private:
     // 私有变量区域
