@@ -675,7 +675,7 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
                 product_->locateCheckImageName = imageName;
                 std::string jsonData;
                 QByteArray byteArray;
-                Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangleCheck", strTanglePath_, jsonData,
+                Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangleCheck", strTangleCheckPath_, jsonData,
                                             byteArray);
                 invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, 2), Q_ARG(std::string, jsonData),
                           Q_ARG(QByteArray, byteArray));
@@ -689,11 +689,6 @@ void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
 
 void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
 {
-    std::string hasBottom = plcDev_->readDevice("b", "12642", "00");
-    if (hasBottom == "0")
-    {
-        return;
-    }
     Utils::asyncTask([this, bottomNum] {
         LogInfo("tangle timer: get singnal, bottom {}", bottomNum);
         std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
@@ -705,7 +700,7 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
             auto currentTime = std::chrono::steady_clock::now(); // 获取当前时间
             auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime);
 
-            if (elapsedTime.count() >= 700 || matData.size())
+            if (elapsedTime.count() >= 2500 || matData.size())
             {
                 // 如果经过200毫秒或更长时间，退出循环
                 break;
