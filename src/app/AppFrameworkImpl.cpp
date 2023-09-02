@@ -1183,15 +1183,21 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         const auto codeCheck = circleProduct_->getIndex(16);
         if (rotate)
         {
-            plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
-            plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
-            LogInfo("product process:locate:number={},value={}.", rotate->numBottom, rotate->locateResult);
+            if (!rotate->locateResult.empty())
+            {
+                plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
+                plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
+                LogInfo("product process:write plc:number={},value={}.", rotate->numBottom, rotate->locateResult);
+            }
         }
         if (locateCheck)
         {
-            plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
-            LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
-                    locateCheck->locateCheckResult);
+            if (!locateCheck->locateCheckResult.empty())
+            {
+                plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
+                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
+                        locateCheck->locateCheckResult);
+            }
         }
         if (printer)
         {
@@ -1206,7 +1212,7 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         if (codeCheck)
         {
             plcDev_->writeDataToDevice("b", "13004", "1", codeCheck->OCRResult);
-            LogInfo("product process:codeCheck:number={},value={}.", codeCheck->numBottom, codeCheck->OCRResult);
+
             // 这里应该做流程结束保存数据记录的工作和清理工位。
             // 保存到数据库
             // todo
@@ -1311,8 +1317,13 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
             LogInfo("product process:recv from tangle:number={},mat is null.", bottomNum);
             return;
         }
-        std::string result = jsValue["box"][0]["result"].asString();
-        LogInfo("product process:recv from tangle:number={},result={}", bottomNum, result);
+        std::string result = "0";
+        jsValue = Utils::stringToJson(jsValue["box"].asString());
+        for (const auto &item : jsValue)
+        {
+            result = item["result"].asString();
+        }
+        circleProduct_->updateLocateResult(bottomNum, result);
         result = "tangle; " + result + "; ";
         QImage Image = Utils::matToQImage(mat);
         drawText(Image, result.c_str());

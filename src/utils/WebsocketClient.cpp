@@ -67,7 +67,7 @@ void WebsocketClient::onTextMessageReceived(const QString &message)
         return;
     }
     incompleteData_.append(message);
-    LogInfo("onTextMessageReceived {}", message.toStdString());
+    // LogInfo("onTextMessageReceived {}", message.toStdString());
     while (true)
     {
         int headIndex = incompleteData_.indexOf(strHead_.c_str());
