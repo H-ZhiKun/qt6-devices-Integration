@@ -1181,32 +1181,29 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
 
         // 打码复合工位=14 考虑图片接受时延+算法时延=16
         const auto codeCheck = circleProduct_->getIndex(16);
-        if (rotate)
+        if (rotate && !rotate->locateResult.empty())
         {
             plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
             plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
-            LogInfo("product process:locate:number={},value={}.", rotate->numBottom, rotate->locateResult);
+            LogInfo("product process:write plc:number={},value={}.", rotate->numBottom, rotate->locateResult);
         }
-        if (locateCheck)
+        if (locateCheck && !locateCheck->locateCheckResult.empty())
         {
             plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
             LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
                     locateCheck->locateCheckResult);
         }
-        if (printer)
+        if (printer && printer->locateCheckResult == "1")
         {
-            if (printer->locateCheckResult == "1")
-            {
-                invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
-                          Q_ARG(std::string, printer->logistics2));
-                LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
-                        printer->logistics2);
-            }
+            invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
+                      Q_ARG(std::string, printer->logistics2));
+            LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
+                    printer->logistics2);
         }
         if (codeCheck)
         {
             plcDev_->writeDataToDevice("b", "13004", "1", codeCheck->OCRResult);
-            LogInfo("product process:codeCheck:number={},value={}.", codeCheck->numBottom, codeCheck->OCRResult);
+
             // 这里应该做流程结束保存数据记录的工作和清理工位。
             // 保存到数据库
             // todo

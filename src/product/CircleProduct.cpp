@@ -6,6 +6,7 @@ CircleProduct::CircleProduct()
 
 CircleProduct::~CircleProduct()
 {
+    lvProduct_.resize(24);
 }
 
 void CircleProduct::newProduct(uint32_t number)
