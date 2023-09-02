@@ -28,7 +28,7 @@ void WebsocketClient::sendData(const std::string &jsonData, const QByteArray &im
     if (!bConnected_)
         return;
     QByteArray combinedData;
-    const auto &base64Data = imageBinaryData.toBase64().toStdString();
+    const auto base64Data = imageBinaryData.toBase64().toStdString();
     combinedData.append("{-ALGOHead-}");
     combinedData.append(jsonData);
     combinedData.append("{-ALGOBound-}");
