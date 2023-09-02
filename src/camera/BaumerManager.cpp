@@ -294,6 +294,20 @@ void BaumerManager::saveConfig(YAML::Node &launchConfig)
     }
 }
 
+std::vector<uint8_t> BaumerManager::cameraState()
+{
+    std::vector<uint8_t> res;
+    for (uint8_t index = 0; index < lvSNNumber_.size(); index++)
+    {
+        std::lock_guard lock(mtxCamera_);
+        if (lvCameras_[index])
+        {
+            res.push_back(index);
+        }
+    }
+    return res;
+}
+
 bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
 {
     bool ret = true;

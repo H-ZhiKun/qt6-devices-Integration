@@ -10,6 +10,7 @@ GroupBox {
     property alias produceRunState: produceRun.state                // 运行生产状态
     property alias producePauseState: producePause.state            // 暂停生产状态
     property alias produceStopState: produceStop.state              // 终止生产状态
+    property alias timeTask: timeProduce
     background: Rectangle {
         anchors.fill: parent
         border.color: "gray"
@@ -690,36 +691,36 @@ GroupBox {
         fillMode: Image.PreserveAspectFit
     }
 
-    Connections {
-        target: appMetaFlash // C++ 对象实例
-        function onPageProduceChange(value) {
-            // 执行其他操作...
-            var jsonData = JSON.parse(value);
-            var val = jsonData.valve;
-            positiveActiveEnergy.text = jsonData.positive_active_energy;
-            reverseActiveEnergy.text = jsonData.reverse_active_energy;
-            aPhaseVoltage.text = jsonData.a_phase_voltage;
-            bPhaseVoltage.text = jsonData.b_phase_voltage;
-            cPhaseVoltage.text = jsonData.c_phase_voltage;
-            temperature.text = jsonData.temperature;
-            totalActivePower.text = jsonData.total_active_power;
-            totalApparentPower.text = jsonData.total_apparent_power;
-            totalActiveEnergy.text = jsonData.total_active_energy;
-            aDirectionCurrent.text = jsonData.a_direction_current;
-            bDirectionCurrent.text = jsonData.b_direction_current;
-            cDirectionCurrent.text = jsonData.c_direction_current;
-            humidity.text = jsonData.humidity;
-        // curFormulaName.text = jsonData.curFormulaName;
-        // curFormulaSpeed.text = jsonData.curFormulaSpeed;
-        // countAll.text = jsonData.count_all;
-        // countPass.text = jsonData.count_pass;
-        // countWaste.text = jsonData.count_waste;
-        // countLocateWaste.text = jsonData.count_locate_waste;
-        // countCodeWaste.text = jsonData.count_code_waste;
-        // countPauseWaste.text = jsonData.count_pause_waste;
-        // equipmentSteps.text = jsonData.equipmentSteps;
-        // produceState = jsonData.produceState;
+    Timer {
+        id: timeProduce
+        interval: 2000//设置定时器定时时间为500ms,默认1000ms
+        repeat: true //是否重复定时,默认为false
+        running: false //是否开启定时，默认是false，当为true的时候，进入此界面就开始定时
+        triggeredOnStart: false // 是否开启定时就触发onTriggered，一些特殊用户可以用来设置初始值。
+        onTriggered: {
+            console.log("in produce timer1");
+            refreshProduce();
+            console.log("in produce timer2");
+        }
+    }
 
+    function refreshProduce() {
+        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.RefreshPowerPage, "");
+        var result = JSON.parse(jsRet);
+        if (result.ok) {
+            positiveActiveEnergy.text = result.details.positive_active_energy;
+            reverseActiveEnergy.text = result.details.reverse_active_energy;
+            aPhaseVoltage.text = result.details.a_phase_voltage;
+            bPhaseVoltage.text = result.details.b_phase_voltage;
+            cPhaseVoltage.text = result.details.c_phase_voltage;
+            temperature.text = result.details.temperature;
+            totalActivePower.text = result.details.total_active_power;
+            totalApparentPower.text = result.details.total_apparent_power;
+            totalActiveEnergy.text = result.details.total_active_energy;
+            aDirectionCurrent.text = result.details.a_direction_current;
+            bDirectionCurrent.text = result.details.b_direction_current;
+            cDirectionCurrent.text = result.details.c_direction_current;
+            humidity.text = result.details.humidity;
         }
     }
 }

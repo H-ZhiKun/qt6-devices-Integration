@@ -11,6 +11,7 @@ GroupBox {
     height: 640 //Screen.desktopAvailableHeight
     visible: true
     property int cbxLastIndex: 0
+    property alias timeTask: timeCamera
     background: Rectangle {
         anchors.fill: parent
         border.color: "gray"
@@ -44,25 +45,37 @@ GroupBox {
             source: rectLocatinCamera
         }
 
-               ImagePainter {
-                   id: locationCamera
-                   objectName: "locationCamera"
-                   anchors.fill: parent
-                   anchors.margins: 8
-                   //anchors.topMargin: 20
-               }
+        ImagePainter {
+            id: locationCamera
+            objectName: "locationCamera"
+            anchors.fill: parent
+            anchors.margins: 8
+            //anchors.topMargin: 20
+        }
+
         Text {
             x: 10
             y: -20
             text: "定位相机"
             font.pointSize: 10
         }
+
+        Image {
+            id: imageLocate
+            x: 90
+            y: -25
+            width: 28
+            height: 26
+            mipmap: true
+            fillMode: Image.PreserveAspectFit
+            source: "file:///" + appdir + "/ico/red.png"
+        }
     }
 
     Rectangle {
         id: frame1
         x: 47
-        y: 328
+        y: 335
         width: 290
         height: 290
         radius: 5
@@ -85,18 +98,28 @@ GroupBox {
             source: rectframe1
         }
 
-               ImagePainter {
-                   id: locateCheckCamera
-                   objectName: "locateCheckCamera"
-                   anchors.fill: parent
-                   anchors.margins: 8
-                   //anchors.topMargin: 35
-               }
+        ImagePainter {
+            id: locateCheckCamera
+            objectName: "locateCheckCamera"
+            anchors.fill: parent
+            anchors.margins: 8
+            //anchors.topMargin: 35
+        }
         Text {
             x: 10
             y: -20
             text: "定位复核相机"
             font.pointSize: 10
+        }
+        Image {
+            id: imageLocateCheck
+            x: 90
+            y: -23
+            width: 28
+            height: 26
+            mipmap: true
+            fillMode: Image.PreserveAspectFit
+            source: "file:///" + appdir + "/ico/red.png"
         }
     }
 
@@ -125,18 +148,30 @@ GroupBox {
             source: rectframe2
         }
 
-               ImagePainter {
-                   id: codeCheckCamera
-                   objectName: "codeCheckCamera"
-                   anchors.fill: parent
-                   anchors.margins: 8
-                   //anchors.topMargin: 35
-               }
+        ImagePainter {
+            id: codeCheckCamera
+            objectName: "codeCheckCamera"
+            anchors.fill: parent
+            anchors.margins: 8
+            //anchors.topMargin: 35
+        }
+
         Text {
             x: 10
             y: -20
             text: "打码复核相机"
             font.pointSize: 10
+        }
+
+        Image {
+            id: imageCodeCheck
+            x: 90
+            y: -25
+            width: 28
+            height: 26
+            mipmap: true
+            fillMode: Image.PreserveAspectFit
+            source: "file:///" + appdir + "/ico/red.png"
         }
     }
 
@@ -485,8 +520,7 @@ GroupBox {
         width: 30
         height: 30
         mipmap: true
-        source: textProduceState === 3 ? "file:///" + appdir + "/ico/tingzhi.png" : "file:///"
-                                         + appdir + "/ico/zhongzhiblack.png"
+        source: textProduceState === 3 ? "file:///" + appdir + "/ico/tingzhi.png" : "file:///" + appdir + "/ico/zhongzhiblack.png"
         fillMode: Image.PreserveAspectFit
     }
 
@@ -497,11 +531,11 @@ GroupBox {
         width: 111
         height: 37
         text: qsTr("相机参数设置")
-               onClicked: {
-                   var component = Qt.createComponent("CameraParam.qml")
-                   var window = component.createObject(cameraPage)
-                   window.show()
-               }
+        onClicked: {
+            var component = Qt.createComponent("CameraParam.qml");
+            var window = component.createObject(cameraPage);
+            window.show();
+        }
     }
 
     Button {
@@ -511,22 +545,19 @@ GroupBox {
         width: 108
         height: 38
         text: qsTr("保存图像")
-               onClicked: {
-
-                   var json = {
-                       "name": "保存图像"
-                   }
-                   var jsRet = appMetaFlash.qmlCallExpected(
-                               MainWindow.ExpectedFunction.CollectImage,
-                               JSON.stringify(json))
-                   var result = JSON.parse(jsRet)
-                   if (result.ok === true) {
-                       // 保存成功
-                       console.log("save success")
-                   } else {
-                       console.log("save failed")
-                   }
-               }
+        onClicked: {
+            var json = {
+                "name": "保存图像"
+            };
+            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.CollectImage, JSON.stringify(json));
+            var result = JSON.parse(jsRet);
+            if (result.ok === true) {
+                // 保存成功
+                console.log("save success");
+            } else {
+                console.log("save failed");
+            }
+        }
     }
 
     Button {
@@ -537,22 +568,19 @@ GroupBox {
         height: 32
         text: qsTr("点动模式")
         property bool pointMode: false
-               onClicked: {
-                   pointMode = !pointMode
-                   var json = {}
-                   if (pointMode) {
-                       json["point_b_12992_00"] = "1"
-                       text = "点动中"
-                   } else {
-                       json["point_b_12992_00"] = "0"
-                       text = "点动模式"
-                   }
-                   var jsRet = appMetaFlash.qmlCallExpected(
-                               MainWindow.ExpectedFunction.WritePLC,
-                               JSON.stringify(json))
-               }
+        onClicked: {
+            pointMode = !pointMode;
+            var json = {};
+            if (pointMode) {
+                json["point_b_12992_00"] = "1";
+                text = "点动中";
+            } else {
+                json["point_b_12992_00"] = "0";
+                text = "点动模式";
+            }
+            var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
+        }
     }
-
 
     Text {
         id: textPrepare1
@@ -629,25 +657,46 @@ GroupBox {
         height: 26
         fillMode: Image.PreserveAspectFit
     }
-    
+
+    Timer {
+        id: timeCamera
+        interval: 1000//设置定时器定时时间为500ms,默认1000ms
+        repeat: true //是否重复定时,默认为false
+        running: true //是否开启定时，默认是false，当为true的时候，进入此界面就开始定时
+        triggeredOnStart: false // 是否开启定时就触发onTriggered，一些特殊用户可以用来设置初始值。
+        onTriggered: {
+            refreshItemState();
+            console.log("in timer");
+        }
+    }
+
+    function refreshItemState() {
+        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.RefreshMainPage, "");
+        var result = JSON.parse(jsRet);
+        if (result.ok) {
+            result.details.dominoState === "1" ? imagedomino.source = "file:///" + appdir + "/ico/green.png" : imagedomino.source = "file:///" + appdir + "/ico/red.png";
+            result.details.cognexState === "1" ? imagecognex.source = "file:///" + appdir + "/ico/green.png" : imagecognex.source = "file:///" + appdir + "/ico/red.png";
+            result.details.permissionState === "1" ? imagepermission.source = "file:///" + appdir + "/ico/green.png" : imagepermission.source = "file:///" + appdir + "/ico/red.png";
+            result.details.plcState === "1" ? imageplc.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
+            result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
+            result.details.image1 === "1" ? imageCodeCheck.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
+            result.details.image2 === "1" ? imageLocateCheck.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
+        }
+    }
     Connections {
-            target: appMetaFlash // C++ 对象实例
-            function onPageMainChange(value) {
-                // 执行其他操作...
-                var jsonData = JSON.parse(value);
-                var val = jsonData.valve;
-                textCountAll = jsonData.count_all;
-                textCountPass = jsonData.count_pass;
-                textCountWaste = jsonData.count_waste;
-                textCountLocateWaste = jsonData.count_locate_waste;
-                textCountCodeWaste = jsonData.count_code_waste;
-                textCountPauseWaste = jsonData.count_pause_waste;
-                textEquipmentSteps = jsonData.equipmentSteps;
-                textProduceState = jsonData.produceState;
-                jsonData.dominoState==="1" ? imagedomino.source="file:///" + appdir + "/ico/green.png" : imagedomino.source="file:///" + appdir + "/ico/red.png"; 
-                jsonData.cognexState==="1" ? imagecognex.source="file:///" + appdir + "/ico/green.png" : imagecognex.source="file:///" + appdir + "/ico/red.png";
-                jsonData.permissionState === "1" ? imagepermission.source="file:///" + appdir + "/ico/green.png" : imagepermission.source="file:///" + appdir + "/ico/red.png";
-                jsonData.plcState === "1" ? imageplc.source="file:///" + appdir + "/ico/green.png" : imageplc.source="file:///" + appdir + "/ico/red.png";
+        target: appMetaFlash // C++ 对象实例
+        function onPageMainChange(value) {
+            // 执行其他操作...
+            var jsonData = JSON.parse(value);
+            var val = jsonData.valve;
+            textCountAll = jsonData.count_all;
+            textCountPass = jsonData.count_pass;
+            textCountWaste = jsonData.count_waste;
+            textCountLocateWaste = jsonData.count_locate_waste;
+            textCountCodeWaste = jsonData.count_code_waste;
+            textCountPauseWaste = jsonData.count_pause_waste;
+            textEquipmentSteps = jsonData.equipmentSteps;
+            textProduceState = jsonData.produceState;
         }
     }
 }

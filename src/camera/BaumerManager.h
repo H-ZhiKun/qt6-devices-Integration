@@ -25,6 +25,7 @@ class BaumerManager
     cv::Mat getCamaeraMat(uint8_t number); // 根据sn号获取对应相机的图片
     void removeCamera(const std::string &snNumber);
     void saveConfig(YAML::Node &launchConfig);
+    std::vector<uint8_t> cameraState();
 
   protected:
     void initializeBGAPI();
