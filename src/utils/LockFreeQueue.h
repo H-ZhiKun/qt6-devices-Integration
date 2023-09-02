@@ -40,7 +40,7 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
         {
             return false;
         }
-        output = *(next->dataPtr_);
+        output = std::move(*(next->dataPtr_));
         delete next->dataPtr_;
         tail_.store(next, std::memory_order_release);
         delete tail;
