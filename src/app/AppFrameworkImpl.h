@@ -56,6 +56,8 @@ class AppFrameworkImpl final : public AppFramework
     std::string collectImage(const std::string &);
     std::string readPLC(const std::string &);
     std::string writePLC(const std::string &);
+    std::string refreshMainPage();
+    std::string refreshPowerPage();
     // 差异调用 接口区域
     void loadConfig();
     void saveConfig();
@@ -76,7 +78,6 @@ class AppFrameworkImpl final : public AppFramework
     void updateFormulaData();     // 初始化配方界面
     void updateVideo();           // 实时视频
 
-    void refreshImageTest(const int bottomNum);
     void refreshLocate(const uint64_t bottomNum);
     void refreshLocateCheck(const uint64_t bottomNum);
     void refreshCodeCheck(const uint64_t bottomNum);

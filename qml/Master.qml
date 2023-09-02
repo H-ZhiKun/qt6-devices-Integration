@@ -501,6 +501,14 @@ Rectangle {
                 }
             }
         }
+        onCurrentIndexChanged: {
+            console.log("onCurrentIndexChanged");
+            if (currentIndex == 0) {
+                cameraItem.timeTask.start();
+            } else {
+                cameraItem.timeTask.stop();
+            }
+        }
     }
 
     StackLayout {
@@ -511,6 +519,7 @@ Rectangle {
         Item {
             id: cameraTab
             Camera {
+                id: cameraItem
                 x: 190
                 y: 30
             }

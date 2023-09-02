@@ -57,6 +57,8 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
     registerExpectation(ExpectedFunction::ReadPLC, std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::WritePLC,
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
+    registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -386,6 +388,31 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
     return Utils::makeResponse(ret);
 }
 
+std::string AppFrame::AppFrameworkImpl::refreshMainPage()
+{
+    bool ret = true;
+    Json::Value jsMainVal;
+    jsMainVal["image0"] = "0";
+    jsMainVal["image1"] = "0";
+    jsMainVal["image2"] = "0";
+    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
+    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
+    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
+    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
+    for (uint8_t i = 0; i < cameraState.size(); i++)
+    {
+        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
+    }
+    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
+    return result;
+}
+
+std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
+{
+    return std::string();
+}
+
 void AppFrame::AppFrameworkImpl::loadConfig()
 {
     strAppPath_ = qApp->applicationDirPath().toStdString();
@@ -517,10 +544,6 @@ void AppFrame::AppFrameworkImpl::updateRealData()
     jsMainVal["count_pause_waste"] = 0;     // 暂停、终止废品数
     jsMainVal["equipmentSteps"] = "未启动"; // 设备步骤
     jsMainVal["produceState"] = 3;          // 生产状态
-    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
-    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
-    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
-    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageMain), Q_ARG(QString, Utils::jsonToString(jsMainVal).c_str()));
 }
@@ -741,24 +764,7 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
     });
 }
-void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
-{
-    // cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-    // Utils::asyncTask([this, target = std::move(temp), bottomNum] {
-    //     std::string url;
-    //     std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-    //     std::string modelName = "tangle";
-    //     url = config_["algorithm"]["url_predict"].as<std::string>();
-    //     LogInfo("LocationCamera bottom: ", bottomNum);
-    //     invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-    //               Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
-    //     QImage img = Utils::matToQImage(target);
-    //     if (img.isNull() == false)
-    //     {
-    //         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
-    //     }
-    // });
-}
+
 void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
 {
     // todo:电能信息写入数据库、上报
