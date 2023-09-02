@@ -57,6 +57,8 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
     registerExpectation(ExpectedFunction::ReadPLC, std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::WritePLC,
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
+    registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -386,6 +388,47 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
     return Utils::makeResponse(ret);
 }
 
+std::string AppFrame::AppFrameworkImpl::refreshMainPage()
+{
+    bool ret = true;
+    Json::Value jsMainVal;
+    jsMainVal["image0"] = "0";
+    jsMainVal["image1"] = "0";
+    jsMainVal["image2"] = "0";
+    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
+    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
+    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
+    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
+    for (uint8_t i = 0; i < cameraState.size(); i++)
+    {
+        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
+    }
+    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
+    return result;
+}
+
+std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
+{
+    Json::Value jsPowerVal;
+    bool ret = true;
+    jsPowerVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
+    jsPowerVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
+    jsPowerVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
+    jsPowerVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
+    jsPowerVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
+    jsPowerVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
+    jsPowerVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
+    jsPowerVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
+    jsPowerVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
+    jsPowerVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
+    jsPowerVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
+    jsPowerVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
+    jsPowerVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
+    std::string result = Utils::makeResponse(ret, std::move(jsPowerVal));
+    return result;
+}
+
 void AppFrame::AppFrameworkImpl::loadConfig()
 {
     strAppPath_ = qApp->applicationDirPath().toStdString();
@@ -466,6 +509,8 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     permission_->startClient(permissionIp.c_str(), permissionPort);
     webManager_ = new WebManager();
     webManager_->init(config_);
+    // 发送一张图像， 初始化Python模型
+    sendOneToAlgo();
     QObject::connect(webManager_, &WebManager::ocrRecv, [this](const std::string &json) { processPaddleOCR(json); });
     QObject::connect(webManager_, &WebManager::tangleRecv,
                      [this](const std::string &json) { processYoloTangle(json); });
@@ -515,10 +560,6 @@ void AppFrame::AppFrameworkImpl::updateRealData()
     jsMainVal["count_pause_waste"] = 0;     // 暂停、终止废品数
     jsMainVal["equipmentSteps"] = "未启动"; // 设备步骤
     jsMainVal["produceState"] = 3;          // 生产状态
-    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
-    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
-    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
-    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageMain), Q_ARG(QString, Utils::jsonToString(jsMainVal).c_str()));
 }
@@ -527,19 +568,6 @@ void AppFrame::AppFrameworkImpl::updateProduceRealData()
 {
     Json::Value jsProduceVal;
     /*生产数据界面实时更新数据*/
-    jsProduceVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
-    jsProduceVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
-    jsProduceVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
-    jsProduceVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
-    jsProduceVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
-    jsProduceVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
-    jsProduceVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
-    jsProduceVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
-    jsProduceVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
-    jsProduceVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
-    jsProduceVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
-    jsProduceVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
-    jsProduceVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
 
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
@@ -739,49 +767,10 @@ void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
     });
 }
-void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
-{
-    // cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-    // Utils::asyncTask([this, target = std::move(temp), bottomNum] {
-    //     std::string url;
-    //     std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-    //     std::string modelName = "tangle";
-    //     url = config_["algorithm"]["url_predict"].as<std::string>();
-    //     LogInfo("LocationCamera bottom: ", bottomNum);
-    //     invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-    //               Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
-    //     QImage img = Utils::matToQImage(target);
-    //     if (img.isNull() == false)
-    //     {
-    //         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
-    //     }
-    // });
-}
+
 void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
 {
-    // 每分钟更新电能数据
-    QList<QVariantMap> dataList;
-    Json::Value dataEle;
-    // 与PLC通信得到数据
-    float num = atoi(minute.c_str());
-    // dataEle["id"] = 0;
-    dataEle["positive_active_energy"] = 34.54;
-    dataEle["reverse_active_energy"] = 43.5452;
-    dataEle["a_phase_voltage"] = num;
-    dataEle["b_phase_voltage"] = 43.45;
-    dataEle["c_phase_voltage"] = 43.475;
-    dataEle["temperature"] = 43.0;
-    dataEle["total_active_power"] = 43.045;
-    dataEle["total_apparent_power"] = 43.00;
-    dataEle["total_active_energy"] = 43.0745;
-
-    dataEle["a_direction_current"] = 43.454545;
-    dataEle["b_direction_current"] = 43.45;
-    dataEle["c_direction_current"] = 43.77;
-    dataEle["humidity"] = 43;
-
-    PgsqlHelper::getSqlHelper().insertData("electric_data", std::move(dataEle));
-    // updateAlarmData("test"); // TODO：有报错才发送
+    // todo:电能信息写入数据库、上报
 }
 
 void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std::string &month, const std::string &day)
@@ -815,14 +804,22 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
 
     int tempMonth = atoi(month.c_str());
     std::string lastMonth;
+    std::string lastYear = year;
     // 月份数字小于10，前面需要加上0
     if (++tempMonth < 10)
     {
         lastMonth = "0" + std::to_string(tempMonth);
     }
+    else if (tempMonth == 13)
+    {
+        lastMonth = "01";
+        int yint = std::atoi(year.c_str());
+        yint++;
+        lastYear = std::to_string(yint);
+    }
 
     // 动态创建下月份数据库表
-    std::string lastMonthSingle = year + lastMonth + "single_bottle";
+    std::string lastMonthSingle = lastYear + lastMonth + "single_bottle";
     std::list<std::string> lastFields{"id SERIAL PRIMARY KEY",
                                       "qr_code_reslut varchar(256)",
                                       "logistics_code_gt char(24)",
@@ -861,14 +858,6 @@ void AppFrame::AppFrameworkImpl::updateValveRealData()
 
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageValve), Q_ARG(QString, Utils::jsonToString(jsValveVal).c_str()));
-}
-
-void AppFrame::AppFrameworkImpl::updatePowerRealData()
-{
-    Json::Value jsPowerVal;
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PagePower), Q_ARG(QString, Utils::jsonToString(jsPowerVal).c_str()));
 }
 
 void AppFrame::AppFrameworkImpl::initBaumerManager()
@@ -917,58 +906,6 @@ void AppFrame::AppFrameworkImpl::initFile()
         }
     }
 }
-
-// void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const std::string &imageName,
-//                                          cv::Mat &matImage, const int bottomNum)
-// {
-//     std::string apiUrl;
-//     if (matImage.empty())
-//     {
-//         LogWarn("Failed to read the image.");
-//         return;
-//     }
-//     QImage saveImage = Utils::matToQImage(matImage);
-//     // saveImageToFile(saveImage, DisplayWindows::CodeCheckCamera);
-//     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//     if (modeleName == "paddleOCR")
-//     {
-//         apiUrl = "http://192.168.101.8:5001/paddleOCR";
-//         // 将图像转换为QByteArray
-//         std::vector<uchar> buffer;
-//         cv::imencode(".jpg", matImage, buffer);
-//         QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
-
-//         Json::Value jsVal;
-//         jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
-//         jsVal["imageName"] = imageName;
-//         jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
-//         jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
-//         std::string strJS = jsVal.toStyledString();
-//         http_[0]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
-//         std::string imagePath = "D:/deviceintegration/build/Debug/image/test.jpg";
-//     }
-//     else if (modeleName == "tangle" || modeleName == "tangleCheck")
-//     {
-//         // apiUrl = "http://192.168.101.8:5000/predict_tangle";
-//         apiUrl = "http://127.0.0.1:5000/predict_tangle";
-//         // 将图像转换为QByteArray
-//         std::vector<uchar> buffer;
-//         cv::imencode(".jpg", matImage, buffer);
-//         QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
-
-//         Json::Value jsVal;
-//         jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
-//         jsVal["imageName"] = imageName;
-//         jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
-//         jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
-//         std::string strJS = jsVal.toStyledString();
-//         if (modeleName == "tangle")
-//             http_[1]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
-//         else if (modeleName == "tangleCheck")
-//             http_[2]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
-//     }
-//     return;
-// }
 
 void AppFrame::AppFrameworkImpl::memoryClean()
 {
@@ -1029,8 +966,6 @@ void AppFrame::AppFrameworkImpl::timerTask()
         while (bThreadHolder) // 线程退出Flag
         {
             // 实时更新数据
-            updateRealData();
-            updateProduceRealData();
             /*分解日期字符串*/
             Utils::getCurrentTime(year, month, day, hour, minute, second);
             if (recDay != day)
@@ -1053,6 +988,7 @@ void AppFrame::AppFrameworkImpl::timerTask()
             if (second != recSecond)
             { // 更新每秒数据
                 recSecond = second;
+                updateRealData();
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
@@ -1067,34 +1003,6 @@ void AppFrame::AppFrameworkImpl::timerTask()
     //     }
     // }));
 }
-
-// void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
-// {
-//     // 调用yolo或者ocr处理过程
-//     QString qString = QString::fromStdString(jsonData);
-//     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
-//     QString type = jsonDocu["model"].toString();
-//     if (type == "paddleOCR")
-//     {
-//         LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
-//         Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
-//     }
-//     else if (type == "tangle")
-//     {
-//         LogInfo("recieve tangle algorithm return, in {}", Utils::getCurrentTime(true));
-//         Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
-//     }
-// }
-
-// void AppFrame::AppFrameworkImpl::processHttpResTest(const std::string &jsonData)
-// {
-//     QString qString = QString::fromStdString(jsonData);
-//     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
-//     QString type = jsonDocu["model"].toString();
-//     // cv::Mat test = cv::imread("D:/test.jpg");
-//     cv::Mat test(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-//     Utils::asyncTask([this, jsonDocu, test] { processYoloTangleTest(jsonDocu, test); });
-// }
 
 void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString)
 {
@@ -1152,22 +1060,17 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString
             Json::Value jsParams, jsNum;
             if (isCheck)
             {
-                QPainter pp(&resImg);
-                QFont font = pp.font();
-                font.setPixelSize(50); // 改变字体大小
-                font.setFamily("Microsoft YaHei");
-                pp.setFont(font);
-                pp.setPen(QPen(Qt::red, 5));
-                pp.setBrush(QBrush(Qt::red));
                 if (result.toInt() < 5 && result.toInt() != 360)
                 { // 小于5度定位成功
                     plcDev_->writeDataToDevice("b", "13004", "00", "1");
-                    pp.drawText(QPointF(20, 50), "定位成功！");
+                    QString drawStr = "定位成功！";
+                    drawText(resImg, drawStr);
                 }
                 else
                 {
                     plcDev_->writeDataToDevice("b", "13004", "00", "0");
-                    pp.drawText(QPointF(20, 50), "定位失败！");
+                    QString drawStr = "定位失败！";
+                    drawText(resImg, drawStr);
                 }
                 plcDev_->writeDataToDevice("n", "12994", "", bottomstr);
             }
@@ -1176,15 +1079,7 @@ void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString
                 plcDev_->writeDataToDevice("r", "13002", "", result.toStdString());
                 plcDev_->writeDataToDevice("n", "12993", "", bottomstr);
                 LogInfo("tangle timer: write to plc: 13002_{}, 12993_{}", result.toStdString(), bottomstr);
-
-                QPainter pp(&resImg);
-                QFont font = pp.font();
-                font.setPixelSize(50); // 改变字体大小
-                font.setFamily("Microsoft YaHei");
-                pp.setFont(font);
-                pp.setPen(QPen(Qt::red, 5));
-                pp.setBrush(QBrush(Qt::red));
-                pp.drawText(QPointF(20, 50), resstr);
+                drawText(resImg, resstr);
             }
             // cv::putText(*matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
             //             cv::Scalar(0, 0, 255), 2, 8); // 输出文字
@@ -1225,9 +1120,6 @@ void AppFrame::AppFrameworkImpl::processYoloTangleTest(QJsonDocument jsonDocumen
     // 转换为QJsonObject
     QJsonObject jsonObject = jsonDocument.object();
     std::string imageName = jsonObject["imageName"].toString().toStdString();
-
-    // qDebug() << jsonObject["imageName"];
-    // 检查是否含有键box
     if (jsonObject.contains("box"))
     {
         QString boxJsonString = jsonObject["box"].toString();
@@ -1252,10 +1144,6 @@ void AppFrame::AppFrameworkImpl::processYoloTangleTest(QJsonDocument jsonDocumen
     }
 }
 
-void AppFrame::AppFrameworkImpl::runMainProcess()
-{
-}
-
 void AppFrame::AppFrameworkImpl::processQrCode(const std::string value)
 {
     Product *curProduct = productList_.back();
@@ -1267,16 +1155,6 @@ void AppFrame::AppFrameworkImpl::processQrCode(const std::string value)
     else
     {
         curProduct->qrCodeRes = value;
-        // 如果和上一瓶相同，则是上一瓶没读到，错误的读到此瓶(几乎不可能)
-        // if (productList_.size() >= 2)
-        // {
-        //     --curProduct;
-        //     if (curProduct->qrCodeRes == value)
-        //     {
-        //         curProduct->qrCodeRes = "";
-        //         curProduct->logisticsFalseFlag = true;
-        //     }
-        // }
         permission_->sendQRCode(value);
     }
 }
@@ -1309,6 +1187,27 @@ void AppFrame::AppFrameworkImpl::doPrintCode(uint8_t bottomNum)
         domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
         LogInfo("bottom {}: send data to domino, in {}", bottomNum, Utils::getCurrentTime(true));
     }
+}
+
+void AppFrame::AppFrameworkImpl::sendOneToAlgo()
+{
+    std::string jsonData;
+    QByteArray byteArray;
+    Utils::makeJsonAndByteArray(cv::Mat(800, 800, CV_8UC3, cv::Scalar(255, 255, 255)), 0, "init", "tangle",
+                                strTanglePath_, jsonData, byteArray);
+    webManager_->sendToALGO(0, jsonData, byteArray);
+}
+
+void AppFrame::AppFrameworkImpl::drawText(QImage &img, QString &text)
+{
+    QPainter pp(&img);
+    QFont font = pp.font();
+    font.setPixelSize(50); // 改变字体大小
+    font.setFamily("Microsoft YaHei");
+    pp.setFont(font);
+    pp.setPen(QPen(Qt::red, 5));
+    pp.setBrush(QBrush(Qt::red));
+    pp.drawText(QPointF(20, 50), text);
 }
 
 void AppFrame::AppFrameworkImpl::processPaddleOCR(const std::string &jsonString)
