@@ -156,5 +156,9 @@ const ProductItem *CircleProduct::getNumber(const uint32_t number)
 const ProductItem *CircleProduct::getIndex(const uint32_t index)
 {
     std::lock_guard lock(mtxProduct_);
+    if (index >= lvProduct_.size())
+    {
+        return nullptr;
+    }
     return lvProduct_[index];
 }

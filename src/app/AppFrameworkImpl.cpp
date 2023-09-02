@@ -1175,7 +1175,7 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         {
             plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
             plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
-            LogInfo("product process:rotate:number={},value={}.", rotate->numBottom, rotate->locateResult);
+            LogInfo("product process:locate:number={},value={}.", rotate->numBottom, rotate->locateResult);
         }
         if (locateCheck)
         {
@@ -1185,9 +1185,13 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         }
         if (printer)
         {
-            domino_->dominoPrint(printer->logistics1, printer->logistics2);
-            LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
-                    printer->logistics2);
+            if (printer->locateCheckResult == "1")
+            {
+                invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
+                          Q_ARG(std::string, printer->logistics2));
+                LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
+                        printer->logistics2);
+            }
         }
         if (codeCheck)
         {
