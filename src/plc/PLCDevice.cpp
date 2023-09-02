@@ -190,24 +190,16 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     //     LogInfo("bottom {}: photo code check signal", FIFOGroup[5]);
     //     emit codeCheck(FIFOGroup[5]);
     // }
-    fifoInfo_.numQRCode = FIFOGroup[1];
     fifoInfo_.numPosition = FIFOGroup[2];
     fifoInfo_.numVerifyPos = FIFOGroup[3];
     fifoInfo_.numCoding = FIFOGroup[4];
     fifoInfo_.numVerifyCoding = FIFOGroup[5];
-    if (FIFOGroup[12] != fifoInfo_.signalMove)
+    fifoInfo_.signalMove = FIFOGroup[12];
+    if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
-        fifoInfo_.signalMove = FIFOGroup[12];
-        if (FIFOGroup[0])
-        {
-            fifoInfo_.signalSearchCoding != FIFOGroup[13];
-            LogInfo("bottom {}: bottom move signal", FIFOGroup[12]);
-            emit bottomMove(FIFOGroup[12]);
-        }
-        else
-        {
-            emit bottomMove(0);
-        }
+        fifoInfo_.numQRCode = FIFOGroup[1];
+        fifoInfo_.signalSearchCoding != FIFOGroup[13];
+        emit bottomMove(fifoInfo_.numQRCode);
     }
 }
 

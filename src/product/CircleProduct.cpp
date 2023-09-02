@@ -10,17 +10,11 @@ CircleProduct::~CircleProduct()
 
 void CircleProduct::newProduct(uint32_t number)
 {
-    if (number > 0)
     {
         auto ptr = new ProductItem(number);
         std::lock_guard lock(mtxProduct_);
         lvProduct_.push_front(ptr);
         LogInfo("product process:new:number={}", number);
-    }
-    else
-    {
-        std::lock_guard lock(mtxProduct_);
-        lvProduct_.emplace_front(nullptr);
     }
     if (lvProduct_.size() > 24)
     {
