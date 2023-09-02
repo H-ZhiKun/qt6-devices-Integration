@@ -10,16 +10,9 @@ CircleProduct::~CircleProduct()
 
 void CircleProduct::newProduct(uint32_t number)
 {
-    {
-        auto ptr = new ProductItem(number);
-        std::lock_guard lock(mtxProduct_);
-        lvProduct_.push_front(ptr);
-        LogInfo("product process:new:number={}", number);
-    }
-    if (lvProduct_.size() > 24)
-    {
-        completeProduct();
-    }
+    auto ptr = std::make_shared<ProductItem>(number);
+    std::lock_guard lock(mtxProduct_);
+    lvProduct_.push_front(ptr);
 }
 
 void CircleProduct::completeProduct()
@@ -27,11 +20,10 @@ void CircleProduct::completeProduct()
     std::lock_guard lock(mtxProduct_);
     if (lvProduct_.size() == 0)
         return;
-    const auto ptr = lvProduct_.back();
-    if (ptr)
+    auto ptr = lvProduct_.back();
+    if (ptr && ptr->isComplete)
     {
         LogInfo("product process:complete:number={},complete={}.", ptr->numBottom, ptr->isComplete);
-        delete ptr;
     }
     lvProduct_.pop_back();
 }
@@ -135,7 +127,7 @@ void CircleProduct::updateOCRResult(const uint32_t number, const std::string &va
     }
 }
 
-const ProductItem *CircleProduct::getNumber(const uint32_t number)
+std::shared_ptr<ProductItem> CircleProduct::getNumber(const uint32_t number)
 {
     std::lock_guard lock(mtxProduct_);
     for (const auto ptr : lvProduct_)
@@ -148,7 +140,7 @@ const ProductItem *CircleProduct::getNumber(const uint32_t number)
     return nullptr;
 }
 
-const ProductItem *CircleProduct::getIndex(const uint32_t index)
+std::shared_ptr<ProductItem> CircleProduct::getIndex(const uint32_t index)
 {
     std::lock_guard lock(mtxProduct_);
     if (index >= lvProduct_.size())

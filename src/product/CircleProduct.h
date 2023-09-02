@@ -47,12 +47,12 @@ class CircleProduct
     void updateLocateCheckResult(const uint32_t number, const std::string &value);
     void updateOCR(const cv::Mat &mat, const std::string &path);
     void updateOCRResult(const uint32_t number, const std::string &value);
-    const ProductItem *getNumber(const uint32_t number);
-    const ProductItem *getIndex(const uint32_t index);
+    std::shared_ptr<ProductItem> getNumber(const uint32_t number);
+    std::shared_ptr<ProductItem> getIndex(const uint32_t index);
 
   private:
     std::mutex mtxProduct_;
-    std::deque<ProductItem *> lvProduct_;
+    std::deque<std::shared_ptr<ProductItem>> lvProduct_;
     uint16_t OffsetQRCode = 0;
     uint16_t OffsetLocate = 3;
     uint16_t OffsetLocateCheck = 6;

@@ -1311,8 +1311,13 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
             LogInfo("product process:recv from tangle:number={},mat is null.", bottomNum);
             return;
         }
-        std::string result = jsValue["box"][0]["result"].asString();
-        LogInfo("product process:recv from tangle:number={},result={}", bottomNum, result);
+        std::string result = "0";
+        jsValue = Utils::stringToJson(jsValue["box"].asString());
+        for (const auto &item : jsValue)
+        {
+            result = item["result"].asString();
+        }
+        circleProduct_->updateLocateResult(bottomNum, result);
         result = "tangle; " + result + "; ";
         QImage Image = Utils::matToQImage(mat);
         drawText(Image, result.c_str());

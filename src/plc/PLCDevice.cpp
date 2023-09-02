@@ -198,7 +198,6 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
         fifoInfo_.numQRCode = FIFOGroup[1];
-        fifoInfo_.signalSearchCoding != FIFOGroup[13];
         emit bottomMove(fifoInfo_.numQRCode);
     }
 }
