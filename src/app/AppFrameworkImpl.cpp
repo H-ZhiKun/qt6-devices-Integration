@@ -755,24 +755,6 @@ void AppFrame::AppFrameworkImpl::updateVideo()
 //         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
 //     });
 // }
-void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
-{
-    // cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-    // Utils::asyncTask([this, target = std::move(temp), bottomNum] {
-    //     std::string url;
-    //     std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-    //     std::string modelName = "tangle";
-    //     url = config_["algorithm"]["url_predict"].as<std::string>();
-    //     LogInfo("LocationCamera bottom: ", bottomNum);
-    //     invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-    //               Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
-    //     QImage img = Utils::matToQImage(target);
-    //     if (img.isNull() == false)
-    //     {
-    //         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
-    //     }
-    // });
-}
 void AppFrame::AppFrameworkImpl::updateByMinute(const int minute)
 {
     // todo:电能信息写入数据库、上报
