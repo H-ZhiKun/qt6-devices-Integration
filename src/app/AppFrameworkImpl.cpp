@@ -1274,9 +1274,10 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t windId, const 
         }
         std::string sendJson;
         QByteArray sendBytes;
-        Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
         LogInfo("product process:send to algo:number={},model={},bytes={}.", bottomNum, windId, sendBytes.size());
-        webManager_->sendToALGO(windId, sendJson, sendBytes);
+        Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
+        invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, windId), Q_ARG(std::string, sendJson),
+                  Q_ARG(QByteArray, sendBytes));
     });
 }
 
