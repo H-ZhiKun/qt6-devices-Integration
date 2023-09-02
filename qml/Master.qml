@@ -502,11 +502,15 @@ Rectangle {
             }
         }
         onCurrentIndexChanged: {
-            console.log("onCurrentIndexChanged");
-            if (currentIndex == 0) {
+            if (currentIndex === 0) {
                 cameraItem.timeTask.start();
+                produceItem.timeTask.stop();
+            } else if (currentIndex === 1) {
+                cameraItem.timeTask.stop();
+                produceItem.timeTask.start();
             } else {
                 cameraItem.timeTask.stop();
+                produceItem.timeTask.stop();
             }
         }
     }
@@ -528,6 +532,7 @@ Rectangle {
         Item {
             id: produceDataTab
             ProduceData {
+                id: produceItem
                 x: 190
                 y: 30
             }

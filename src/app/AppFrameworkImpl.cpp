@@ -410,7 +410,23 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
 
 std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
 {
-    return std::string();
+    Json::Value jsPowerVal;
+    bool ret = true;
+    jsPowerVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
+    jsPowerVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
+    jsPowerVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
+    jsPowerVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
+    jsPowerVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
+    jsPowerVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
+    jsPowerVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
+    jsPowerVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
+    jsPowerVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
+    jsPowerVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
+    jsPowerVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
+    jsPowerVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
+    jsPowerVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
+    std::string result = Utils::makeResponse(ret, std::move(jsPowerVal));
+    return result;
 }
 
 void AppFrame::AppFrameworkImpl::loadConfig()
@@ -552,19 +568,6 @@ void AppFrame::AppFrameworkImpl::updateProduceRealData()
 {
     Json::Value jsProduceVal;
     /*生产数据界面实时更新数据*/
-    jsProduceVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
-    jsProduceVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
-    jsProduceVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
-    jsProduceVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
-    jsProduceVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
-    jsProduceVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
-    jsProduceVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
-    jsProduceVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
-    jsProduceVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
-    jsProduceVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
-    jsProduceVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
-    jsProduceVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
-    jsProduceVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
 
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
@@ -857,14 +860,6 @@ void AppFrame::AppFrameworkImpl::updateValveRealData()
               Q_ARG(PageIndex, PageIndex::PageValve), Q_ARG(QString, Utils::jsonToString(jsValveVal).c_str()));
 }
 
-void AppFrame::AppFrameworkImpl::updatePowerRealData()
-{
-    Json::Value jsPowerVal;
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PagePower), Q_ARG(QString, Utils::jsonToString(jsPowerVal).c_str()));
-}
-
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
     baumerManager_ = new BaumerManager();
@@ -994,7 +989,6 @@ void AppFrame::AppFrameworkImpl::timerTask()
             { // 更新每秒数据
                 recSecond = second;
                 updateRealData();
-                updateProduceRealData();
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
