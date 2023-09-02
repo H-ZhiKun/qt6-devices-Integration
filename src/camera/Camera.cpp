@@ -239,7 +239,9 @@ std::list<cv::Mat> Camera::getMatBuffer()
 cv::Mat Camera::getCurrentMat()
 {
     std::lock_guard lock(mtxCRT);
-    return currentMat_;
+    cv::Mat mat = currentMat_;
+    currentMat_.release();
+    return mat;
 }
 
 void Camera::startCollect()
