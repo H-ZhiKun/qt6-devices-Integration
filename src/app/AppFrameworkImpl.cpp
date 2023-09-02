@@ -1161,16 +1161,16 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
 
         // 电机旋转工位=5 下发定位在旋转前=5
-        const auto rotate = circleProduct_->getNumber(5);
+        const auto rotate = circleProduct_->getIndex(5);
 
         // 打码工位=9 下发复合定位在打码前=8
-        const auto locateCheck = circleProduct_->getNumber(8);
+        const auto locateCheck = circleProduct_->getIndex(8);
 
         // 打码工位=9 收到进入打码工位信号立刻下发数据到打印机=9
-        const auto printer = circleProduct_->getNumber(9);
+        const auto printer = circleProduct_->getIndex(9);
 
         // 打码复合工位=14 考虑图片接受时延+算法时延=16
-        const auto codeCheck = circleProduct_->getNumber(16);
+        const auto codeCheck = circleProduct_->getIndex(16);
         if (rotate)
         {
             plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);

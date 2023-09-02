@@ -2,7 +2,6 @@
 
 CircleProduct::CircleProduct()
 {
-    lvProduct_.resize(17);
 }
 
 CircleProduct::~CircleProduct()
@@ -15,16 +14,16 @@ void CircleProduct::newProduct(uint32_t number)
     {
         auto ptr = new ProductItem(number);
         std::lock_guard lock(mtxProduct_);
-        lvProduct_.emplace_front(ptr);
+        lvProduct_.push_front(ptr);
         LogInfo("product process:new:number={}", number);
     }
     else
     {
-        std::lock_guard lock(mtxProduct_);
         if (lvProduct_.size() > 24)
         {
             completeProduct();
         }
+        std::lock_guard lock(mtxProduct_);
         lvProduct_.emplace_front(nullptr);
     }
 }
@@ -152,4 +151,10 @@ const ProductItem *CircleProduct::getNumber(const uint32_t number)
         }
     }
     return nullptr;
+}
+
+const ProductItem *CircleProduct::getIndex(const uint32_t index)
+{
+    std::lock_guard lock(mtxProduct_);
+    return lvProduct_[index];
 }

@@ -1,9 +1,9 @@
 #pragma once
 #include "Logger.h"
 #include "Utils.h"
-#include <deque>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 struct ProductItem
 {
@@ -48,6 +48,7 @@ class CircleProduct
     void updateOCR(const cv::Mat &mat, const std::string &path);
     void updateOCRResult(const uint32_t number, const std::string &value);
     const ProductItem *getNumber(const uint32_t number);
+    const ProductItem *getIndex(const uint32_t index);
 
   private:
     std::mutex mtxProduct_;
