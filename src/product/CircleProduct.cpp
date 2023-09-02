@@ -2,6 +2,7 @@
 
 CircleProduct::CircleProduct()
 {
+    lvProduct_.resize(17);
 }
 
 CircleProduct::~CircleProduct()
@@ -15,6 +16,7 @@ void CircleProduct::newProduct(uint32_t number)
         auto ptr = new ProductItem(number);
         std::lock_guard lock(mtxProduct_);
         lvProduct_.emplace_front(ptr);
+        LogInfo("product process:new:number={}", number);
     }
     else
     {
