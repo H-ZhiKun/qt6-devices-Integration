@@ -76,7 +76,8 @@ int AppFrame::AppFrameworkImpl::run()
     initNetworkClient();
     initBaumerManager();
     initPLC();
-
+    // runtime task
+    timerTask();
     return 0;
 }
 
@@ -921,18 +922,24 @@ void AppFrame::AppFrameworkImpl::timerTask()
             {
                 afterCaputureImage(0, mat);
                 LogInfo("product process:image locate get.");
+                invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage",
+                          Q_ARG(QImage, Utils::matToQImage(mat)));
             }
             mat = baumerManager_->getCamaeraMat(1);
             if (!mat.empty())
             {
                 afterCaputureImage(1, mat);
                 LogInfo("product process:image code get.");
+                invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
+                          Q_ARG(QImage, Utils::matToQImage(mat)));
             }
             mat = baumerManager_->getCamaeraMat(2);
             if (!mat.empty())
             {
                 afterCaputureImage(2, mat);
                 LogInfo("product process:image locate check get.");
+                invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage",
+                          Q_ARG(QImage, Utils::matToQImage(mat)));
             }
         }
     }));
@@ -1240,7 +1247,8 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t windId, const 
         switch (windId)
         {
         case 0: {
-            cv::resize(image, image, {800, 800});
+            cv::Mat newMat;
+            cv::resize(image, newMat, {800, 800});
             modelName = "tangle";
             bottomNum = plcDev_->getFIFOInfo().numPosition;
             filePath = strTanglePath_ + currentDateTimeStr.toStdString() + ".jpg";
@@ -1278,10 +1286,6 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         if (circleProduct_ == nullptr)
             return;
         Json::Value jsValue = Utils::stringToJson(jsonData);
-        if (jsValue["success"].asString() == "0")
-        {
-            return;
-        }
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
     });
@@ -1321,10 +1325,6 @@ void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
         if (circleProduct_ == nullptr)
             return;
         Json::Value jsValue = Utils::stringToJson(jsonData);
-        if (jsValue["success"].asString() == "0")
-        {
-            return;
-        }
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
     });

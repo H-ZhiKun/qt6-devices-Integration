@@ -19,20 +19,20 @@ void CircleProduct::newProduct(uint32_t number)
     }
     else
     {
-        if (lvProduct_.size() > 24)
-        {
-            completeProduct();
-        }
         std::lock_guard lock(mtxProduct_);
         lvProduct_.emplace_front(nullptr);
+    }
+    if (lvProduct_.size() > 24)
+    {
+        completeProduct();
     }
 }
 
 void CircleProduct::completeProduct()
 {
+    std::lock_guard lock(mtxProduct_);
     if (lvProduct_.size() == 0)
         return;
-    std::lock_guard lock(mtxProduct_);
     const auto ptr = lvProduct_.back();
     if (ptr)
     {
@@ -44,10 +44,10 @@ void CircleProduct::completeProduct()
 
 uint16_t CircleProduct::updateQRCode(const std::string &code)
 {
+    std::lock_guard lock(mtxProduct_);
     auto ptr = lvProduct_[OffsetQRCode];
     if (ptr == nullptr)
         return 0;
-    std::lock_guard lock(mtxProduct_);
     ptr->QRCode = code;
     LogInfo("product process:update QRCode:code={}.", code);
     return OffsetQRCode;
@@ -58,7 +58,7 @@ void CircleProduct::updateLogistics(const uint32_t number, const std::string &lo
 {
     LogInfo("product process:update logistics:number={}, code1={}, code2={}.", number, code1, code2);
     std::lock_guard lock(mtxProduct_);
-    for (const auto &ptr : lvProduct_)
+    for (const auto ptr : lvProduct_)
     {
         if (ptr && ptr->numBottom == number)
         {
@@ -71,10 +71,10 @@ void CircleProduct::updateLogistics(const uint32_t number, const std::string &lo
 
 void CircleProduct::updateLocate(const cv::Mat &mat, const std::string &path)
 {
+    std::lock_guard lock(mtxProduct_);
     auto ptr = lvProduct_[OffsetLocate];
     if (ptr == nullptr)
         return;
-    std::lock_guard lock(mtxProduct_);
     ptr->locateImage = mat;
     ptr->locateImagePath = path;
     LogInfo("product process:update locate:number={}, path={}.", ptr->numBottom, path);
@@ -84,7 +84,7 @@ void CircleProduct::updateLocateResult(const uint32_t number, const std::string 
 {
     LogInfo("product process:update locate res:number={}, value={}.", number, value);
     std::lock_guard lock(mtxProduct_);
-    for (const auto &ptr : lvProduct_)
+    for (const auto ptr : lvProduct_)
     {
         if (ptr && ptr->numBottom == number)
         {
@@ -95,10 +95,10 @@ void CircleProduct::updateLocateResult(const uint32_t number, const std::string 
 
 void CircleProduct::updateLocateCheck(const cv::Mat &mat, const std::string &path)
 {
+    std::lock_guard lock(mtxProduct_);
     auto ptr = lvProduct_[OffsetLocateCheck];
     if (ptr == nullptr)
         return;
-    std::lock_guard lock(mtxProduct_);
     ptr->locateCheckImage = mat;
     ptr->locateCheckImagePath = path;
     LogInfo("product process:update locate check:number={}, path={}.", ptr->numBottom, path);
@@ -108,7 +108,7 @@ void CircleProduct::updateLocateCheckResult(const uint32_t number, const std::st
 {
     LogInfo("product process:update locate check res:number={}, value={}.", number, value);
     std::lock_guard lock(mtxProduct_);
-    for (const auto &ptr : lvProduct_)
+    for (const auto ptr : lvProduct_)
     {
         if (ptr && ptr->numBottom == number)
         {
@@ -119,10 +119,10 @@ void CircleProduct::updateLocateCheckResult(const uint32_t number, const std::st
 
 void CircleProduct::updateOCR(const cv::Mat &mat, const std::string &path)
 {
+    std::lock_guard lock(mtxProduct_);
     auto ptr = lvProduct_[OffsetOCR];
     if (ptr == nullptr)
         return;
-    std::lock_guard lock(mtxProduct_);
     ptr->codeCheckImage = mat;
     ptr->codeCheckImagePath = path;
     LogInfo("product process:update ocr:number={}, path={}.", ptr->numBottom, path);
@@ -132,7 +132,7 @@ void CircleProduct::updateOCRResult(const uint32_t number, const std::string &va
 {
     LogInfo("product process:update ocr res:number={}, value={}.", number, value);
     std::lock_guard lock(mtxProduct_);
-    for (const auto &ptr : lvProduct_)
+    for (const auto ptr : lvProduct_)
     {
         if (ptr && ptr->numBottom == number)
         {
@@ -143,7 +143,8 @@ void CircleProduct::updateOCRResult(const uint32_t number, const std::string &va
 
 const ProductItem *CircleProduct::getNumber(const uint32_t number)
 {
-    for (const auto &ptr : lvProduct_)
+    std::lock_guard lock(mtxProduct_);
+    for (const auto ptr : lvProduct_)
     {
         if (ptr && ptr->numBottom == number)
         {
