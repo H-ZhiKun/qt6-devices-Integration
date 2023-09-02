@@ -19,6 +19,10 @@ void CircleProduct::newProduct(uint32_t number)
     else
     {
         std::lock_guard lock(mtxProduct_);
+        if (lvProduct_.size() > 24)
+        {
+            completeProduct();
+        }
         lvProduct_.emplace_front(nullptr);
     }
 }
@@ -27,8 +31,11 @@ void CircleProduct::completeProduct()
 {
     std::lock_guard lock(mtxProduct_);
     const auto ptr = lvProduct_.back();
-    LogInfo("product process:\r\ncomplete:\r\nnumber={},complete={}.", ptr->numBottom, ptr->isComplete);
-    delete ptr;
+    if (ptr)
+    {
+        LogInfo("product process:\r\ncomplete:\r\nnumber={},complete={}.", ptr->numBottom, ptr->isComplete);
+        delete ptr;
+    }
     lvProduct_.pop_back();
 }
 
