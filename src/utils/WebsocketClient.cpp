@@ -63,7 +63,7 @@ void WebsocketClient::onTextMessageReceived(const QString &message)
 {
     if (message.indexOf("ping") != -1)
     {
-        LogInfo("WebsocketClient recv ping: {}", message.toStdString());
+        // LogInfo("WebsocketClient recv ping: {}", message.toStdString());
         return;
     }
     incompleteData_.append(message);
@@ -79,7 +79,7 @@ void WebsocketClient::onTextMessageReceived(const QString &message)
             {
                 QString jsonData = incompleteData_.mid(headIndex + 12, tailIndex - headIndex - 12);
                 emit messageReceived(jsonData.toStdString());
-                LogInfo("emit messageReceived jsonData={}", jsonData.toStdString());
+                // LogInfo("emit messageReceived jsonData={}", jsonData.toStdString());
                 incompleteData_ = incompleteData_.mid(tailIndex + 12);
             }
             else

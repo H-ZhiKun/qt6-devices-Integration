@@ -1153,21 +1153,24 @@ void AppFrame::AppFrameworkImpl::drawText(QImage &img, const QString &text)
 void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
 {
     Utils::asyncTask([this, number] {
+        if (circleProduct_ == nullptr)
+            return;
+
         circleProduct_->newProduct(number);
-        const auto &queCircle = circleProduct_->getCircleProduct();
+
         // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
 
         // 电机旋转工位=5 下发定位在旋转前=5
-        const auto &rotate = queCircle[5];
+        const auto rotate = circleProduct_->getNumber(5);
 
         // 打码工位=9 下发复合定位在打码前=8
-        const auto &locateCheck = queCircle[8];
+        const auto locateCheck = circleProduct_->getNumber(8);
 
         // 打码工位=9 收到进入打码工位信号立刻下发数据到打印机=9
-        const auto &printer = queCircle[9];
+        const auto printer = circleProduct_->getNumber(9);
 
         // 打码复合工位=14 考虑图片接受时延+算法时延=16
-        const auto &codeCheck = queCircle[16];
+        const auto codeCheck = circleProduct_->getNumber(16);
         if (rotate)
         {
             plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
@@ -1202,6 +1205,8 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
 void AppFrame::AppFrameworkImpl::whenCognexRecv(const std::string &code)
 {
     Utils::asyncTask([this, code] {
+        if (circleProduct_ == nullptr)
+            return;
         uint16_t number = circleProduct_->updateQRCode(code);
         if (number)
             invokeCpp(permission_, "sendQRCode", Q_ARG(const uint16_t, number), Q_ARG(std::string, code));
@@ -1211,12 +1216,16 @@ void AppFrame::AppFrameworkImpl::whenCognexRecv(const std::string &code)
 void AppFrame::AppFrameworkImpl::whenPermissionRecv(const uint16_t number, const std::string &describtion,
                                                     const std::string &code1, const std::string &code2)
 {
+    if (circleProduct_ == nullptr)
+        return;
     circleProduct_->updateLogistics(number, describtion, code1, code2);
 }
 
 void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t windId, const cv::Mat &mat)
 {
     Utils::asyncTask([this, windId, image = mat.clone()] {
+        if (circleProduct_ == nullptr)
+            return;
         uint32_t bottomNum = 0;
         std::string filePath;
         std::string modelName;
@@ -1259,6 +1268,8 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t windId, const 
 void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
 {
     Utils::asyncTask([this, jsonData] {
+        if (circleProduct_ == nullptr)
+            return;
         Json::Value jsValue = Utils::stringToJson(jsonData);
         if (jsValue["success"].asString() == "0")
         {
@@ -1272,6 +1283,8 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
 void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
 {
     Utils::asyncTask([this, jsonData] {
+        if (circleProduct_ == nullptr)
+            return;
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
@@ -1298,6 +1311,8 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
 void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
 {
     Utils::asyncTask([this, jsonData] {
+        if (circleProduct_ == nullptr)
+            return;
         Json::Value jsValue = Utils::stringToJson(jsonData);
         if (jsValue["success"].asString() == "0")
         {

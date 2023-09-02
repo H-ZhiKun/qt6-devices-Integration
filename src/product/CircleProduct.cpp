@@ -31,6 +31,8 @@ void CircleProduct::newProduct(uint32_t number)
 
 void CircleProduct::completeProduct()
 {
+    if (lvProduct_.size() == 0)
+        return;
     std::lock_guard lock(mtxProduct_);
     const auto ptr = lvProduct_.back();
     if (ptr)
@@ -138,11 +140,6 @@ void CircleProduct::updateOCRResult(const uint32_t number, const std::string &va
             ptr->OCRResult = value;
         }
     }
-}
-
-const std::deque<ProductItem *> &CircleProduct::getCircleProduct()
-{
-    return lvProduct_;
 }
 
 const ProductItem *CircleProduct::getNumber(const uint32_t number)
