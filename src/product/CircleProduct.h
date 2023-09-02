@@ -54,7 +54,6 @@ class CircleProduct
     std::mutex mtxProduct_;
     std::deque<ProductItem *> lvProduct_;
     uint16_t OffsetQRCode = 0;
-
     uint16_t OffsetLocate = 2;
     uint16_t OffsetLocateCheck = 3;
     uint16_t OffsetPrintCode = 4;

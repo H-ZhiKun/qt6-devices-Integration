@@ -1172,7 +1172,7 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         {
             plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
             plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
-            LogInfo("product process:\r\nrotate:\r\nnumber={},value={}.", rotate->numBottom, rotate->locateResult);
+            LogInfo("product process:rotate:number={},value={}.", rotate->numBottom, rotate->locateResult);
         }
         if (locateCheck)
         {
