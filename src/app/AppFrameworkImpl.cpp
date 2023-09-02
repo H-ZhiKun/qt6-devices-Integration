@@ -920,16 +920,19 @@ void AppFrame::AppFrameworkImpl::timerTask()
             if (!mat.empty())
             {
                 afterCaputureImage(0, mat);
+                LogInfo("product process:image locate get.");
             }
             mat = baumerManager_->getCamaeraMat(1);
             if (!mat.empty())
             {
                 afterCaputureImage(1, mat);
+                LogInfo("product process:image code get.");
             }
             mat = baumerManager_->getCamaeraMat(2);
             if (!mat.empty())
             {
                 afterCaputureImage(2, mat);
+                LogInfo("product process:image locate check get.");
             }
         }
     }));
