@@ -4,7 +4,7 @@
 
 WebsocketClient::WebsocketClient(QObject *parent) : QObject(parent)
 {
-    client_ = new QWebSocket();
+    client_ = new QWebSocket("", QWebSocketProtocol::VersionLatest, this);
     timerConnect = new QTimer(this);
     timerConnect->setInterval(5000); // 设置重连间隔为5秒
     timerPing = new QTimer(this);
@@ -28,14 +28,15 @@ void WebsocketClient::sendData(const std::string &jsonData, const QByteArray &im
     if (!bConnected_)
         return;
     QByteArray combinedData;
+    const auto &base64Data = imageBinaryData.toBase64().toStdString();
     combinedData.append("{-ALGOHead-}");
     combinedData.append(jsonData);
     combinedData.append("{-ALGOBound-}");
-    combinedData.append(imageBinaryData.toBase64().toStdString());
+    combinedData.append(base64Data);
     combinedData.append("{-ALGOTail-}");
 
     qint64 ret = client_->sendTextMessage(combinedData);
-    LogInfo("WebsocketClient send data size ={}, ret = {}", combinedData.size(), ret);
+    LogInfo("WebsocketClient send data size ={}, base64 = {}", combinedData.size(), base64Data.size());
 }
 
 void WebsocketClient::onConnected()
