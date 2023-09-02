@@ -26,7 +26,8 @@ class Camera
     bool getInitialized();
     void storeImg(unsigned char *bayerRG8Data, const std::string &pixFormat, uint64_t width, uint64_t height,
                   uint64_t frameId);
-    std::list<cv::Mat> getImage();
+    std::list<cv::Mat> getMatBuffer();
+    cv::Mat getCurrentMat();
     void startCollect(); // 开始采集
     void stopCollect();  // 停止采集
     const Json::Value &getROParams();
@@ -52,6 +53,8 @@ class Camera
     bool bActive_ = false;                 // 相机是否采集
     bool bOpen_ = false;                   // 相机打开状态
     LockFreeQueue<cv::Mat> matBuffers_;    // 图像对象 缓冲区
+    std::mutex mtxCRT;                     // 当前图像锁
+    cv::Mat currentMat_;                   // 最新缓存图像
     BGAPI2::Device *cameraPtr_ = nullptr;  // BGAPI相机对象
     BGAPI2::DataStream *stream_ = nullptr; // 流对象
     std::list<BGAPI2::Buffer *> streamBuffers_;
