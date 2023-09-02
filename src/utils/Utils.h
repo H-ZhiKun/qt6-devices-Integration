@@ -50,8 +50,7 @@ class Utils
      * @return 当前系统时间的字符串表示
      */
     static std::string getCurrentTime(bool hasMillisecond = false);
-    static void getCurrentTime(std::string &year, std::string &month, std::string &day, std::string &hour,
-                               std::string &minute, std::string &second);
+    static void getCurrentTime(int &nYear, int &nMonth, int &nDay, int &nHour, int &nMinute, int &nSecond);
     /**
      * @brief 获取当前时间的任意前后秒数的时间点的字符串表示
      *
