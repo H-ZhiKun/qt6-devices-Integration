@@ -72,6 +72,7 @@ int AppFrame::AppFrameworkImpl::run()
     initLogger();
     initFile();
     initSqlHelper();
+    initProduct();
     initNetworkClient();
     initBaumerManager();
     initPLC();
@@ -851,6 +852,11 @@ void AppFrame::AppFrameworkImpl::initFile()
             LogWarn("create LocateCheckCamera dir file!");
         }
     }
+}
+
+void AppFrame::AppFrameworkImpl::initProduct()
+{
+    circleProduct_ = new CircleProduct();
 }
 
 void AppFrame::AppFrameworkImpl::memoryClean()

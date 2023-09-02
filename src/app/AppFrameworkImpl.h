@@ -68,6 +68,7 @@ class AppFrameworkImpl final : public AppFramework
     void memoryClean();
     void initBaumerManager();
     void initFile();
+    void initProduct();
 
     void updateRealData();        // 主界面实时更新数据
     void updateProduceRealData(); // 生产数据界面实时更新数据
@@ -116,7 +117,7 @@ class AppFrameworkImpl final : public AppFramework
     std::atomic_bool bThreadHolder{true};
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
-    CircleProduct *circleProduct_;
+    CircleProduct *circleProduct_{nullptr};
     // Module 组装区域
     // tcp client begin
     Domino *domino_ = nullptr;
