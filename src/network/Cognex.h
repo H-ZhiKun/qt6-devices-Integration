@@ -29,5 +29,5 @@ class Cognex : public TCPClient
     void connected();
     void disconnected();
     void responseReceived(const QByteArray &response);
-    void finishReadQRCode(const std::string);
+    void ReadQRCode(const std::string &);
 };

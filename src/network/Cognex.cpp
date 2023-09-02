@@ -10,7 +10,7 @@ void Cognex::dealing(std::vector<unsigned char> buffer)
     if (str.find("HTTP") != std::string::npos)
     {
         LogInfo("Cognex recv: {}", str);
-        emit finishReadQRCode(str);
+        emit ReadQRCode(str);
     }
     else
     {

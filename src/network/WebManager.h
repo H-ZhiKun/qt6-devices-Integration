@@ -12,14 +12,14 @@ class WebManager : public QObject
     virtual ~WebManager() noexcept;
     void init(const YAML::Node &config);
   public slots:
-    void sendToALGO(uint8_t windId, const std::string &jsonData, const QByteArray &imageBinaryData);
+    void sendToALGO(const uint8_t windId, const std::string &jsonData, const QByteArray &imageBinaryData);
   signals:
     void ocrRecv(const std::string &);
     void tangleRecv(const std::string &);
     void tangleCheckRecv(const std::string &);
 
   private:
-    WebsocketClient *ocrClient_ {nullptr};
+    WebsocketClient *ocrClient_{nullptr};
     WebsocketClient *tangleClient_{nullptr};
     WebsocketClient *tangleCheckClient_{nullptr};
 };
