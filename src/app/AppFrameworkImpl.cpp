@@ -1172,25 +1172,24 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         {
             plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
             plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
-            LogInfo("product process:\r\nrotate:\r\nnumber={},value={}.", rotate->numBottom, rotate->locateResult);
+            LogInfo("product process:rotate:number={},value={}.", rotate->numBottom, rotate->locateResult);
         }
         if (locateCheck)
         {
             plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
-            LogInfo("product process:\r\nlocateCheck:\r\nnumber={},value={}.", locateCheck->numBottom,
+            LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
                     locateCheck->locateCheckResult);
         }
         if (printer)
         {
             domino_->dominoPrint(printer->logistics1, printer->logistics2);
-            LogInfo("product process:\r\nprint:\r\nnumber={},code1={},code2={}.", printer->numBottom,
-                    printer->logistics1, printer->logistics2);
+            LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
+                    printer->logistics2);
         }
         if (codeCheck)
         {
             plcDev_->writeDataToDevice("b", "13004", "1", codeCheck->OCRResult);
-            LogInfo("product process:\r\ncodeCheck:\r\nnumber={},value={}.", codeCheck->numBottom,
-                    codeCheck->OCRResult);
+            LogInfo("product process:codeCheck:number={},value={}.", codeCheck->numBottom, codeCheck->OCRResult);
             // 这里应该做流程结束保存数据记录的工作和清理工位。
             // 保存到数据库
             // todo
@@ -1252,8 +1251,7 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t windId, const 
         std::string sendJson;
         QByteArray sendBytes;
         Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
-        LogInfo("product process:\r\nsend to algo:\r\nnumber={},model={},bytes={}.", bottomNum, windId,
-                sendBytes.size());
+        LogInfo("product process:send to algo:number={},model={},bytes={}.", bottomNum, windId, sendBytes.size());
         webManager_->sendToALGO(windId, sendJson, sendBytes);
     });
 }
@@ -1279,17 +1277,17 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
         if (ptrBottom == nullptr)
         {
-            LogInfo("product process:\r\nrecv from tangle:\r\nnumber not found.");
+            LogInfo("product process:recv from tangle:number not found.");
             return;
         }
         cv::Mat mat = ptrBottom->locateImage;
         if (mat.empty())
         {
-            LogInfo("product process:\r\nrecv from tangle:\r\nnumber={},mat is null.", bottomNum);
+            LogInfo("product process:recv from tangle:number={},mat is null.", bottomNum);
             return;
         }
         std::string result = jsValue["box"][0]["result"].asString();
-        LogInfo("product process:\r\nrecv from tangle:\r\nnumber={},result={}", bottomNum, result);
+        LogInfo("product process:recv from tangle:number={},result={}", bottomNum, result);
         result = "tangle; " + result + "; ";
         QImage Image = Utils::matToQImage(mat);
         drawText(Image, result.c_str());

@@ -33,7 +33,7 @@ void CircleProduct::completeProduct()
     const auto ptr = lvProduct_.back();
     if (ptr)
     {
-        LogInfo("product process:\r\ncomplete:\r\nnumber={},complete={}.", ptr->numBottom, ptr->isComplete);
+        LogInfo("product process:complete:number={},complete={}.", ptr->numBottom, ptr->isComplete);
         delete ptr;
     }
     lvProduct_.pop_back();
@@ -46,14 +46,14 @@ uint16_t CircleProduct::updateQRCode(const std::string &code)
         return 0;
     std::lock_guard lock(mtxProduct_);
     ptr->QRCode = code;
-    LogInfo("product process:\r\nupdate QRCode:\r\ncode={}.", code);
+    LogInfo("product process:update QRCode:code={}.", code);
     return OffsetQRCode;
 }
 
 void CircleProduct::updateLogistics(const uint32_t number, const std::string &logisticsDes, const std::string &code1,
                                     const std::string &code2)
 {
-    LogInfo("product process:\r\nupdate logistics:\r\nnumber={}, code1={}, code2={}.", number, code1, code2);
+    LogInfo("product process:update logistics:number={}, code1={}, code2={}.", number, code1, code2);
     std::lock_guard lock(mtxProduct_);
     for (const auto &ptr : lvProduct_)
     {
@@ -74,12 +74,12 @@ void CircleProduct::updateLocate(const cv::Mat &mat, const std::string &path)
     std::lock_guard lock(mtxProduct_);
     ptr->locateImage = mat;
     ptr->locateImagePath = path;
-    LogInfo("product process:\r\nupdate locate:\r\nnumber={}, path={}.", ptr->numBottom, path);
+    LogInfo("product process:update locate:number={}, path={}.", ptr->numBottom, path);
 }
 
 void CircleProduct::updateLocateResult(const uint32_t number, const std::string &value)
 {
-    LogInfo("product process:\r\nupdate locate res:\r\nnumber={}, value={}.", number, value);
+    LogInfo("product process:update locate res:number={}, value={}.", number, value);
     std::lock_guard lock(mtxProduct_);
     for (const auto &ptr : lvProduct_)
     {
@@ -98,12 +98,12 @@ void CircleProduct::updateLocateCheck(const cv::Mat &mat, const std::string &pat
     std::lock_guard lock(mtxProduct_);
     ptr->locateCheckImage = mat;
     ptr->locateCheckImagePath = path;
-    LogInfo("product process:\r\nupdate locate check:\r\nnumber={}, path={}.", ptr->numBottom, path);
+    LogInfo("product process:update locate check:number={}, path={}.", ptr->numBottom, path);
 }
 
 void CircleProduct::updateLocateCheckResult(const uint32_t number, const std::string &value)
 {
-    LogInfo("product process:\r\nupdate locate check res:\r\nnumber={}, value={}.", number, value);
+    LogInfo("product process:update locate check res:number={}, value={}.", number, value);
     std::lock_guard lock(mtxProduct_);
     for (const auto &ptr : lvProduct_)
     {
@@ -122,12 +122,12 @@ void CircleProduct::updateOCR(const cv::Mat &mat, const std::string &path)
     std::lock_guard lock(mtxProduct_);
     ptr->codeCheckImage = mat;
     ptr->codeCheckImagePath = path;
-    LogInfo("product process:\r\nupdate ocr:\r\nnumber={}, path={}.", ptr->numBottom, path);
+    LogInfo("product process:update ocr:number={}, path={}.", ptr->numBottom, path);
 }
 
 void CircleProduct::updateOCRResult(const uint32_t number, const std::string &value)
 {
-    LogInfo("product process:\r\nupdate ocr res:\r\nnumber={}, value={}.", number, value);
+    LogInfo("product process:update ocr res:number={}, value={}.", number, value);
     std::lock_guard lock(mtxProduct_);
     for (const auto &ptr : lvProduct_)
     {

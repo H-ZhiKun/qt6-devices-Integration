@@ -198,7 +198,7 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     if (FIFOGroup[12] != fifoInfo_.signalMove)
     {
         fifoInfo_.signalMove = FIFOGroup[12];
-        if (FIFOGroup[13] != fifoInfo_.signalSearchCoding)
+        if (FIFOGroup[0])
         {
             fifoInfo_.signalSearchCoding != FIFOGroup[13];
             LogInfo("bottom {}: bottom move signal", FIFOGroup[12]);
