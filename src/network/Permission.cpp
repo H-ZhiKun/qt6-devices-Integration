@@ -16,7 +16,7 @@ Permission::~Permission()
 void Permission::dealing(std::vector<unsigned char> buffer)
 {
     std::string result(buffer.begin(), buffer.end());
-    LogWarn("produtc process: recieve peimisson : {}", result);
+    LogWarn("product process: recieve peimisson : {}", result);
     auto iter = mapSignals_.find(result);
     if (iter != mapSignals_.end())
     {

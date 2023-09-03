@@ -1208,13 +1208,25 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
             plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
             LogInfo("product process:write plc:number={},value={}.", rotate->numBottom, rotate->locateResult);
         }
-        if (locateCheck && !locateCheck->locateCheckResult.empty())
+        if (locateCheck)
         {
-            plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
-            LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
-                    locateCheck->locateCheckResult);
+            if (locateCheck->logistics1.empty())
+            {
+                plcDev_->writeDataToDevice("b", "13004", "0", "0");
+                plcDev_->writeDataToDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
+                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
+                        locateCheck->locateCheckResult);
+            }
+            else
+            {
+                // plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
+                plcDev_->writeDataToDevice("b", "13004", "00", "1");
+                plcDev_->writeDataToDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
+                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
+                        locateCheck->locateCheckResult);
+            }
         }
-        if (printer && printer->locateCheckResult == "1")
+        if (printer && !printer->logistics1.empty() && printer->locateCheckResult == "1")
         {
             invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
                       Q_ARG(std::string, printer->logistics2));
@@ -1385,14 +1397,10 @@ void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
         if (result == "1")
         {
             result = "定位成功！";
-            plcDev_->writeDataToDevice("b", "13004", "00", "1");
-            plcDev_->writeDataToDevice("n", "12994", "", std::to_string(bottomNum));
         }
         else if (result == "0")
         {
             result = "定位失败！";
-            plcDev_->writeDataToDevice("b", "13004", "00", "1");
-            plcDev_->writeDataToDevice("n", "12994", "", std::to_string(bottomNum));
         }
         QImage Image = Utils::matToQImage(mat);
         drawText(Image, result.c_str());
