@@ -206,10 +206,6 @@ void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint6
                       uint64_t frameId)
 {
     cv::Mat mat;
-    if (matBuffers_.getSize() > 10)
-    {
-        matBuffers_.dequeue(mat);
-    }
     if (pixFormat == "BayerRG8")
     {
         mat = bayerRG8ToMat(buffer, width, height);
@@ -222,10 +218,11 @@ void Camera::storeImg(unsigned char *buffer, const std::string &pixFormat, uint6
     {
         mat = mono8ToMat(buffer, width, height);
     }
-    matBuffers_.enqueue(mat);
+    std::lock_guard lock(mtxCRT);
+    currentMat_ = mat;
 }
 
-std::list<cv::Mat> Camera::getImage()
+std::list<cv::Mat> Camera::getMatBuffer()
 {
     std::list<cv::Mat> list;
     cv::Mat mat;
@@ -233,10 +230,18 @@ std::list<cv::Mat> Camera::getImage()
     {
         if (!mat.empty())
         {
-            list.push_back(std::move(mat));
+            list.push_back(mat.clone());
         }
     }
     return list;
+}
+
+cv::Mat Camera::getCurrentMat()
+{
+    std::lock_guard lock(mtxCRT);
+    cv::Mat mat = currentMat_;
+    currentMat_.release();
+    return mat;
 }
 
 void Camera::startCollect()

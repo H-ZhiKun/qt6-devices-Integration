@@ -274,41 +274,18 @@ std::string Utils::getCurrentTime(bool hasMillisecond)
     return curTime;
 }
 
-void Utils::getCurrentTime(std::string &year, std::string &month, std::string &day, std::string &hour,
-                           std::string &minute, std::string &second)
+void Utils::getCurrentTime(int &nYear, int &nMonth, int &nDay, int &nHour, int &nMinute, int &nSecond)
 {
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
     // 将时间点转换为时间值
     std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
     std::tm *localTime = std::localtime(&currentTime);
-    int nYear = localTime->tm_year + 1900; // 年份需要加上1900
-    int nMonth = localTime->tm_mon + 1;    // 月份从0开始，需要加1
-    int nDay = localTime->tm_mday;
-    int nHour = localTime->tm_hour;
-    int nMinute = localTime->tm_min;
-    int nSecond = localTime->tm_sec;
-    // 将各个时间部分转换为字符串
-    std::stringstream ss;
-    ss << std::setw(4) << std::setfill('0') << nYear;
-    year = ss.str();
-    ss.str(""); // 清空stringstream
-    ss << std::setw(2) << std::setfill('0') << nMonth;
-    month = ss.str();
-    ss.str("");
-    ss << std::setw(2) << std::setfill('0') << nDay;
-    day = ss.str();
-    ss.str("");
-
-    ss << std::setw(2) << std::setfill('0') << nHour;
-    hour = ss.str();
-    ss.str("");
-
-    ss << std::setw(2) << std::setfill('0') << nMinute;
-    minute = ss.str();
-    ss.str("");
-
-    ss << std::setw(2) << std::setfill('0') << nSecond;
-    second = ss.str();
+    nYear = localTime->tm_year + 1900; // 年份需要加上1900
+    nMonth = localTime->tm_mon + 1;    // 月份从0开始，需要加1
+    nDay = localTime->tm_mday;
+    nHour = localTime->tm_hour;
+    nMinute = localTime->tm_min;
+    nSecond = localTime->tm_sec;
 }
 
 std::string Utils::getTimeOffset(int seconds, const std::string &currentTime)
@@ -437,25 +414,16 @@ void Utils::makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottom
     jsVal["imageHeight"] = std::to_string(algoImage.rows);
     jsVal["bottomNum"] = bottomNum;
     jsonBody = jsonToString(jsVal);
-    LogInfo("makeJsonAndByteArray json size: {}", jsonBody.length());
-    LogInfo("makeJsonAndByteArray byte size: {}", byteArray.size());
     saveImageToFile(byteArray, savePath);
 }
 
 void Utils::saveImageToFile(const QByteArray &byteArray, const std::string &filePath)
 {
-    QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-    QString fileName = filePath.c_str() + currentDateTimeStr + ".jpg";
-    QFile file(fileName);
+    QFile file(filePath.c_str());
     if (file.open(QIODevice::WriteOnly))
     {
         file.write(byteArray);
         file.close();
-        LogInfo("success save image: {}.", fileName.toStdString());
-    }
-    else
-    {
-        LogInfo("failed save image: {}.", fileName.toStdString());
     }
 }
 

@@ -3,7 +3,7 @@
 
 ConcurrentTaskQueue::ConcurrentTaskQueue()
 {
-    queueCount_ = std::thread::hardware_concurrency() / 2;
+    queueCount_ = std::thread::hardware_concurrency();
     assert(queueCount_ > 0);
     for (unsigned int i = 0; i < queueCount_; ++i)
     {

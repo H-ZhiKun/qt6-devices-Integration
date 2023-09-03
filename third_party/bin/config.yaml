@@ -59,21 +59,21 @@ baumer:
     - sn_number: 700009842711
       display_window: 0
       trigger_mode: 1
-      expose: 1
+      expose: 0.8
       gain: 1
       width: 1024
       height: 1024
       offset_x: 592
-      offset_y: 390
+      offset_y: 490
     - sn_number: 700009842699
       display_window: 1
       trigger_mode: 1
       expose: 0.8
-      gain: 1
+      gain: 2
       width: 800
       height: 800
-      offset_x: 0
-      offset_y: 0
+      offset_x: 496
+      offset_y: 632
     - sn_number: 700009429371
       display_window: 2
       trigger_mode: 1
@@ -81,5 +81,5 @@ baumer:
       gain: 2
       width: 800
       height: 800
-      offset_x: 768
-      offset_y: 576
+      offset_x: 1088
+      offset_y: 776

@@ -666,7 +666,6 @@ GroupBox {
         triggeredOnStart: false // 是否开启定时就触发onTriggered，一些特殊用户可以用来设置初始值。
         onTriggered: {
             refreshItemState();
-            console.log("in timer");
         }
     }
 

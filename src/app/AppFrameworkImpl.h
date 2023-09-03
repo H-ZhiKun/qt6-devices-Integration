@@ -1,6 +1,7 @@
 #pragma once
 #include "AppFramework.h"
 #include "BaumerManager.h"
+#include "CircleProduct.h"
 #include "Cognex.h"
 #include "Domino.h"
 #include "Logger.h"
@@ -8,7 +9,6 @@
 #include "Permission.h"
 #include "PgsqlHelper.h"
 #include "WebManager.h"
-#include <Product.h>
 #include <QBrush>
 #include <QDir>
 #include <QPainter>
@@ -68,6 +68,7 @@ class AppFrameworkImpl final : public AppFramework
     void memoryClean();
     void initBaumerManager();
     void initFile();
+    void initProduct();
 
     void updateRealData();        // 主界面实时更新数据
     void updateProduceRealData(); // 生产数据界面实时更新数据
@@ -80,10 +81,19 @@ class AppFrameworkImpl final : public AppFramework
     void refreshLocate(const uint64_t bottomNum);
     void refreshLocateCheck(const uint64_t bottomNum);
     void refreshCodeCheck(const uint64_t bottomNum);
-    void updateByMinute(const std::string &minute);                                              // 每分钟更新
-    void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
+    void updateByMinute(const int minute);                            // 每分钟更新
+    void updateByDay(const int year, const int month, const int day); // 每日更新
     void updateUserData();
     void timerTask(); // 定时任务
+
+    void whenBottomMove(const uint64_t number);
+    void whenCognexRecv(const std::string &code);
+    void whenPermissionRecv(const uint16_t number, const std::string &describtion, const std::string &code1,
+                            const std::string &code2);
+    void afterCaputureImage(const uint8_t windId, const cv::Mat &mat);
+    void processOCR(const std::string &);
+    void processTangle(const std::string &);
+    void processTangleCheck(const std::string &);
 
     void processPaddleOCR(const std::string &);  // 处理检测算法
     void processYoloTangle(const std::string &); // 处理角度预测算法
@@ -92,7 +102,7 @@ class AppFrameworkImpl final : public AppFramework
     void processCode(const std::string code1, const std::string code2);
     void doPrintCode(uint8_t bottomNum);
     void sendOneToAlgo(); // 初始化服务端的python模型
-    void drawText(QImage &img, QString &text);
+    void drawText(QImage &img, const QString &text);
 
   private:
     // 私有变量区域
@@ -107,7 +117,7 @@ class AppFrameworkImpl final : public AppFramework
     std::atomic_bool bThreadHolder{true};
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
-    std::list<Product *> productList_;
+    CircleProduct *circleProduct_{nullptr};
     // Module 组装区域
     // tcp client begin
     Domino *domino_ = nullptr;

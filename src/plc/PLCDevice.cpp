@@ -166,47 +166,39 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
+    // if (FIFOGroup[1] != fifoInfo_.numQRCode)
+    // {
+    //     fifoInfo_.numQRCode = FIFOGroup[1];
+    // }
+    // if (FIFOGroup[2] != fifoInfo_.numPosition)
+    // {
+    //     fifoInfo_.numPosition = FIFOGroup[2];
+    // }
+    // if (FIFOGroup[3] != fifoInfo_.numVerifyPos)
+    // {
+    //     fifoInfo_.numVerifyPos = FIFOGroup[3];
+    // }
+    // if (FIFOGroup[4] != fifoInfo_.numCoding)
+    // {
+    //     fifoInfo_.numCoding = FIFOGroup[4];
+    //     LogInfo("bottom {}: code Logistics signal", FIFOGroup[4]);
+    //     emit codeLogistics(FIFOGroup[4]);
+    // }
+    // if (FIFOGroup[5] != fifoInfo_.numVerifyCoding)
+    // {
+    //     fifoInfo_.numVerifyCoding = FIFOGroup[5];
+    //     LogInfo("bottom {}: photo code check signal", FIFOGroup[5]);
+    //     emit codeCheck(FIFOGroup[5]);
+    // }
+    fifoInfo_.numPosition = FIFOGroup[2];
+    fifoInfo_.numVerifyPos = FIFOGroup[3];
+    fifoInfo_.numCoding = FIFOGroup[4];
+    fifoInfo_.numVerifyCoding = FIFOGroup[5];
+    fifoInfo_.signalMove = FIFOGroup[12];
     if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
-        LogInfo("numQRCode emit.");
         fifoInfo_.numQRCode = FIFOGroup[1];
-        emit readQRCode(FIFOGroup[1]);
-    }
-    if (FIFOGroup[2] != fifoInfo_.numPosition)
-    {
-        LogInfo("numPosition emit.");
-        fifoInfo_.numPosition = FIFOGroup[2];
-        emit locatePhoto(FIFOGroup[2]);
-    }
-    if (FIFOGroup[3] != fifoInfo_.numVerifyPos)
-    {
-        fifoInfo_.numVerifyPos = FIFOGroup[3];
-        LogInfo("bottom {}: Photo locate check image signal", FIFOGroup[3]);
-        emit locateCheckPhoto(FIFOGroup[3]);
-    }
-    if (FIFOGroup[4] != fifoInfo_.numCoding)
-    {
-        fifoInfo_.numCoding = FIFOGroup[4];
-        LogInfo("bottom {}: code Logistics signal", FIFOGroup[4]);
-        emit codeLogistics(FIFOGroup[4]);
-    }
-    if (FIFOGroup[5] != fifoInfo_.numVerifyCoding)
-    {
-        fifoInfo_.numVerifyCoding = FIFOGroup[5];
-        LogInfo("bottom {}: photo code check signal", FIFOGroup[5]);
-        emit codeCheck(FIFOGroup[5]);
-    }
-    if (FIFOGroup[12] != fifoInfo_.signalMove)
-    {
-        fifoInfo_.signalMove = FIFOGroup[12];
-        LogInfo("bottom {}: bottomMove signal", FIFOGroup[12]);
-        emit bottomMove(FIFOGroup[12]);
-    }
-    if (FIFOGroup[13] != fifoInfo_.signalSearchCoding)
-    {
-        fifoInfo_.signalSearchCoding = FIFOGroup[13];
-        LogInfo("bottom {}: code serch signal", FIFOGroup[13]);
-        emit codeSerch(FIFOGroup[13]);
+        emit bottomMove(fifoInfo_.numQRCode);
     }
 }
 

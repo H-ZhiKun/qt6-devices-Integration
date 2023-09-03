@@ -10,15 +10,15 @@ WebManager::~WebManager() noexcept
 
 void WebManager::init(const YAML::Node &config)
 {
-    std::string urlTangle = config["algorithm"]["ws_tangle"].as<std::string>();
-    std::string urlOcr = config["algorithm"]["url_ocr"].as<std::string>();
+    const std::string &urlTangle = config["algorithm"]["ws_tangle"].as<std::string>();
+    const std::string &urlOcr = config["algorithm"]["url_ocr"].as<std::string>();
     tangleClient_ = new WebsocketClient(this);
     tangleClient_->connectToServer(urlTangle);
     QObject::connect(tangleClient_, &WebsocketClient::messageReceived,
                      [this](const std::string &data) { emit tangleRecv(data); });
 }
 
-void WebManager::sendToALGO(uint8_t windId, const std::string &jsonData, const QByteArray &imageBinaryData)
+void WebManager::sendToALGO(const uint8_t windId, const std::string &jsonData, const QByteArray &imageBinaryData)
 {
     switch (windId)
     {

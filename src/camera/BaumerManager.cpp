@@ -138,12 +138,12 @@ void BaumerManager::stop()
     deinitializeBGAPI();
 }
 
-std::list<cv::Mat> BaumerManager::getImageBySN(uint8_t number)
+cv::Mat BaumerManager::getCamaeraMat(uint8_t windId)
 {
     std::lock_guard lock(mtxCamera_);
-    if (lvCameras_[number])
+    if (lvCameras_[windId])
     {
-        return lvCameras_[number]->getImage();
+        return lvCameras_[windId]->getCurrentMat();
     }
     return {};
 };
