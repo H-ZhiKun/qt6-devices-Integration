@@ -681,6 +681,8 @@ GroupBox {
             result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
             result.details.image1 === "1" ? imageCodeCheck.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
             result.details.image2 === "1" ? imageLocateCheck.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
+            textCountPauseWaste = result.details.textProduceState;
+            textEquipmentSteps = result.details.textEquipmentSteps;
         }
     }
     Connections {
