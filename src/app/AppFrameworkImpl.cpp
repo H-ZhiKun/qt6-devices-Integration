@@ -400,6 +400,9 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
     jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
     jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    jsMainVal["textProduceState"] = plcDev_->readDevice("n", "12612");
+
+    jsMainVal["textEquipmentSteps"] = plcDev_->readDevice("n", "12613");
     std::vector<uint8_t> cameraState = baumerManager_->cameraState();
     for (uint8_t i = 0; i < cameraState.size(); i++)
     {
