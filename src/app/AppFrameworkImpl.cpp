@@ -1239,6 +1239,10 @@ void AppFrame::AppFrameworkImpl::whenCognexRecv(const std::string &code)
     Utils::asyncTask([this, code] {
         if (circleProduct_ == nullptr)
             return;
+        if (code == "no read")
+        {
+            // 失败逻辑
+        }
         uint16_t number = circleProduct_->updateQRCode(code);
         if (number)
             invokeCpp(permission_, "sendQRCode", Q_ARG(const uint16_t, number), Q_ARG(std::string, code));
@@ -1335,7 +1339,9 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
         {
             result = item["result"].asString();
         }
-        circleProduct_->updateLocateResult(bottomNum, result);
+        int tangleResult = std::atoi(result.c_str());
+        tangleResult = (tangleResult + 93) % 360;
+        circleProduct_->updateLocateResult(bottomNum, std::to_string(tangleResult));
         result = "tangle; " + result + "; ";
         QImage Image = Utils::matToQImage(mat);
         drawText(Image, result.c_str());
@@ -1357,6 +1363,46 @@ void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
+        if (ptrBottom == nullptr)
+        {
+            LogInfo("product process:recv from tangleCheck:number not found.");
+            return;
+        }
+        cv::Mat mat = ptrBottom->locateCheckImage;
+        if (mat.empty())
+        {
+            LogInfo("product process:recv from tangleCheck:number={},mat is null.", bottomNum);
+            return;
+        }
+        std::string result = "0";
+        jsValue = Utils::stringToJson(jsValue["box"].asString());
+        for (const auto &item : jsValue)
+        {
+            result = item["result"].asString();
+        }
+        // circleProduct_->updateLocateCheckResult(bottomNum, result);
+        circleProduct_->updateLocateCheckResult(bottomNum, "1"); // 测试
+        if (result == "1")
+        {
+            result = "定位成功！";
+            plcDev_->writeDataToDevice("b", "13004", "00", "1");
+            plcDev_->writeDataToDevice("n", "12994", "", std::to_string(bottomNum));
+        }
+        else if (result == "0")
+        {
+            result = "定位失败！";
+            plcDev_->writeDataToDevice("b", "13004", "00", "1");
+            plcDev_->writeDataToDevice("n", "12994", "", std::to_string(bottomNum));
+        }
+        QImage Image = Utils::matToQImage(mat);
+        drawText(Image, result.c_str());
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        Image.save(&buffer, "jpg");
+        Utils::saveImageToFile(byteArray, strTangleCheckResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage", Q_ARG(QImage, Image));
     });
 }
 

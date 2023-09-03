@@ -37,6 +37,7 @@ algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
   url_predict: 'http://127.0.0.1:5000/predict_tangle'
   ws_tangle: 'ws://localhost:5000/'
+  ws_tangleCheck: 'ws://localhost:5002/'
 domino:
   host: 127.0.0.1
   port: 20001
@@ -81,5 +82,5 @@ baumer:
       gain: 2
       width: 800
       height: 800
-      offset_x: 1088
-      offset_y: 776
+      offset_x: 768
+      offset_y: 784

@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS plc_register_rw (
 );
 
 -- Table structure for users
-CREATE TABLE IF NOT EXISTS "users"  (
+CREATE TABLE IF NOT EXISTS users  (
   "id" serial NOT NULL PRIMARY KEY,
   "name" varchar(32) NOT NULL UNIQUE,
   "password" varchar(32) NOT NULL,
@@ -134,4 +134,25 @@ CREATE TABLE IF NOT EXISTS "users"  (
 	"user_manage_permission" smallint,
   created_time timestamp DEFAULT CURRENT_TIMESTAMP,
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table structure for bottles_record
+CREATE TABLE IF NOT EXISTS bottles_record (
+  id SERIAL PRIMARY KEY,
+  qrcode VARCHAR(256) NOT NULL,           -- 二维码读码结果
+  logistics_code VARCHAR(64) NOT NULL,    -- 物流码
+  locate_path VARCHAR(256) NOT NULL,      -- 定位图像路径
+  locate_result VARCHAR(64) NOT NULL,     -- 定位结果
+  locate_write VARCHAR(64) NOT NULL,      -- 写入PLC的定位结果
+  check_path VARCHAR(256) NOT NULL,       -- 定位复核图像路径
+  check_result VARCHAR(8) NOT NULL,       -- 定位复核结果
+  check_write VARCHAR(64) NOT NULL,       -- 写入PLC的定位复核结果
+  printer_send VARCHAR(128) NOT NULL,     -- 打码机写入数据
+  printer_result VARCHAR(32) NOT NULL,    -- 打码机返回结果
+  ocr_path VARCHAR(256) NOT NULL,         -- 打码复核图像路径
+  ocr_code VARCHAR(64) NOT NULL,          -- 打码复核结果
+  ocr_result VARCHAR(128) NOT NULL,       -- 打码复核是否成功
+  ocr_write VARCHAR(128) NOT NULL,        -- 写入PLC的打码复核结果
+  is_complete BOOLEAN,                    -- 是否完成
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
