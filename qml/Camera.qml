@@ -54,7 +54,7 @@ GroupBox {
         }
 
         Text {
-            x: 10
+            x: 40
             y: -20
             text: "定位相机"
             font.pointSize: 10
@@ -62,7 +62,7 @@ GroupBox {
 
         Image {
             id: imageLocate
-            x: 90
+            x: 10
             y: -25
             width: 28
             height: 26
@@ -106,14 +106,14 @@ GroupBox {
             //anchors.topMargin: 35
         }
         Text {
-            x: 10
+            x: 40
             y: -20
             text: "定位复核相机"
             font.pointSize: 10
         }
         Image {
             id: imageLocateCheck
-            x: 90
+            x: 10
             y: -23
             width: 28
             height: 26
@@ -157,7 +157,7 @@ GroupBox {
         }
 
         Text {
-            x: 10
+            x: 40
             y: -20
             text: "打码复核相机"
             font.pointSize: 10
@@ -165,7 +165,7 @@ GroupBox {
 
         Image {
             id: imageCodeCheck
-            x: 90
+            x: 10
             y: -25
             width: 28
             height: 26

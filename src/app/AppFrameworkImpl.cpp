@@ -832,12 +832,14 @@ void AppFrame::AppFrameworkImpl::initFile()
     strTanglePath_ = saveImageDir + "/LocationCamera/";
     strOcrPath_ = saveImageDir + "/CodeCheckCamera/";
     strTangleCheckPath_ = saveImageDir + "/LocateCheckCamera/";
+    strTangleResultPath_ = saveImageDir + "/LocationCameraResult/";
+    strTangleCheckResultPath_ = saveImageDir + "/LocateCheckCameraResult/";
     if (!qdir.exists(strTanglePath_.c_str()))
     {
         bool res = qdir.mkdir(strTanglePath_.c_str());
         if (!res)
         {
-            LogWarn("create LocationCamera dir file!");
+            LogWarn("create Location dir file!");
         }
     }
     if (!qdir.exists(strOcrPath_.c_str()))
@@ -845,7 +847,7 @@ void AppFrame::AppFrameworkImpl::initFile()
         bool res = qdir.mkdir(strOcrPath_.c_str());
         if (!res)
         {
-            LogWarn("create CodeCheckCamera dir file!");
+            LogWarn("create OcrPath dir file!");
         }
     }
     if (!qdir.exists(strTangleCheckPath_.c_str()))
@@ -854,6 +856,22 @@ void AppFrame::AppFrameworkImpl::initFile()
         if (!res)
         {
             LogWarn("create LocateCheckCamera dir file!");
+        }
+    }
+    if (!qdir.exists(strTangleResultPath_.c_str()))
+    {
+        bool res = qdir.mkdir(strTangleResultPath_.c_str());
+        if (!res)
+        {
+            LogWarn("create TangleResultPath dir file!");
+        }
+    }
+    if (!qdir.exists(strTangleCheckResultPath_.c_str()))
+    {
+        bool res = qdir.mkdir(strTangleCheckResultPath_.c_str());
+        if (!res)
+        {
+            LogWarn("create TangleCheckResultPath dir file!");
         }
     }
 }
@@ -1321,6 +1339,12 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
         result = "tangle; " + result + "; ";
         QImage Image = Utils::matToQImage(mat);
         drawText(Image, result.c_str());
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        Image.save(&buffer, "jpg");
+        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, Image));
     });
 }
