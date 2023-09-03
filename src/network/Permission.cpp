@@ -16,6 +16,7 @@ Permission::~Permission()
 void Permission::dealing(std::vector<unsigned char> buffer)
 {
     std::string result(buffer.begin(), buffer.end());
+    LogWarn("produtc process: recieve peimisson : {}", result);
     auto iter = mapSignals_.find(result);
     if (iter != mapSignals_.end())
     {
@@ -37,7 +38,7 @@ void Permission::dealing(std::vector<unsigned char> buffer)
 void Permission::sendQRCode(const uint16_t number, const std::string &code)
 {
     curNumber = number;
-    std::string cmd = strHead + code;
+    std::string cmd = strHead + code + strTail;
     QByteArray byteArray = QByteArray(cmd.c_str(), static_cast<int>(cmd.size()));
     sendData(byteArray);
 }

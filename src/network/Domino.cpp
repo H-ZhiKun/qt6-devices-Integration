@@ -51,6 +51,7 @@ void Domino::dominoCheck()
 
 void Domino::dominoPrint(std::string code1, std::string code2)
 {
+    LogInfo("product process: send logistic: code1-{}, code2-{}", code1, code2);
     if (code1.empty() || code2.empty())
         return;
     int index = 3;

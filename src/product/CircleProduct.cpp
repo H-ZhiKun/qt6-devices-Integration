@@ -2,11 +2,11 @@
 
 CircleProduct::CircleProduct()
 {
+    lvProduct_.resize(24);
 }
 
 CircleProduct::~CircleProduct()
 {
-    lvProduct_.resize(24);
 }
 
 void CircleProduct::newProduct(uint32_t number)
@@ -37,7 +37,7 @@ uint16_t CircleProduct::updateQRCode(const std::string &code)
         return 0;
     ptr->QRCode = code;
     LogInfo("product process:update QRCode:code={}.", code);
-    return OffsetQRCode;
+    return ptr->numBottom;
 }
 
 void CircleProduct::updateLogistics(const uint32_t number, const std::string &logisticsDes, const std::string &code1,
@@ -49,6 +49,10 @@ void CircleProduct::updateLogistics(const uint32_t number, const std::string &lo
     {
         if (ptr && ptr->numBottom == number)
         {
+            if (!ptr->logistics1.empty())
+            {
+                return;
+            }
             ptr->logistics1 = code1;
             ptr->logistics2 = code2;
             ptr->logisticsDes = logisticsDes;

@@ -111,6 +111,8 @@ class AppFrameworkImpl final : public AppFramework
     std::string strTanglePath_;
     std::string strTangleCheckPath_;
     std::string strOcrPath_;
+    std::string strTangleResultPath_;
+    std::string strTangleCheckResultPath_;
     // 程序路径 end
     YAML::Node config_;
     std::list<std::thread> lvFulltimeThread_;
