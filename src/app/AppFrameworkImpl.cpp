@@ -839,7 +839,7 @@ void AppFrame::AppFrameworkImpl::initFile()
         bool res = qdir.mkdir(strTanglePath_.c_str());
         if (!res)
         {
-            LogWarn("create LocationCamera dir file!");
+            LogWarn("create Location dir file!");
         }
     }
     if (!qdir.exists(strOcrPath_.c_str()))
@@ -847,7 +847,7 @@ void AppFrame::AppFrameworkImpl::initFile()
         bool res = qdir.mkdir(strOcrPath_.c_str());
         if (!res)
         {
-            LogWarn("create CodeCheckCamera dir file!");
+            LogWarn("create OcrPath dir file!");
         }
     }
     if (!qdir.exists(strTangleCheckPath_.c_str()))
