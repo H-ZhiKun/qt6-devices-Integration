@@ -1198,7 +1198,7 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         const auto locateCheck = circleProduct_->getIndex(8);
 
         // 打码工位=9 收到进入打码工位信号立刻下发数据到打印机=9
-        const auto printer = circleProduct_->getIndex(9);
+        // const auto printer = circleProduct_->getIndex(9);
 
         // 打码复合工位=14 考虑图片接受时延+算法时延=16
         const auto codeCheck = circleProduct_->getIndex(16);
@@ -1213,9 +1213,6 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
             if (locateCheck->logistics1.empty())
             {
                 plcDev_->writeDataToDevice("b", "13004", "0", "0");
-                plcDev_->writeDataToDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
-                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
-                        locateCheck->locateCheckResult);
             }
             else
             {
@@ -1224,15 +1221,19 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
                 plcDev_->writeDataToDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
                 LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
                         locateCheck->locateCheckResult);
+                invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, locateCheck->logistics1),
+                          Q_ARG(std::string, locateCheck->logistics2));
+                LogInfo("product process:print:number={},code1={},code2={}.", locateCheck->numBottom,
+                        locateCheck->logistics1, locateCheck->logistics2);
             }
         }
-        if (printer && !printer->logistics1.empty() && printer->locateCheckResult == "1")
-        {
-            invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
-                      Q_ARG(std::string, printer->logistics2));
-            LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
-                    printer->logistics2);
-        }
+        // if (printer && !printer->logistics1.empty() && printer->locateCheckResult == "1")
+        // {
+        //     invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
+        //               Q_ARG(std::string, printer->logistics2));
+        //     LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
+        //             printer->logistics2);
+        // }
         if (codeCheck)
         {
             plcDev_->writeDataToDevice("b", "13004", "1", codeCheck->OCRResult);
@@ -1352,7 +1353,7 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
             result = item["result"].asString();
         }
         int tangleResult = std::atoi(result.c_str());
-        tangleResult = (tangleResult + 93) % 360;
+        tangleResult = (tangleResult + 98) % 360;
         circleProduct_->updateLocateResult(bottomNum, std::to_string(tangleResult));
         result = "tangle; " + result + "; ";
         QImage Image = Utils::matToQImage(mat);
@@ -1403,7 +1404,7 @@ void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
             result = "定位失败！";
         }
         QImage Image = Utils::matToQImage(mat);
-        drawText(Image, result.c_str());
+        // drawText(Image, result.c_str());
         QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
         QByteArray byteArray;
         QBuffer buffer(&byteArray);
