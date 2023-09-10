@@ -139,20 +139,29 @@ CREATE TABLE IF NOT EXISTS users  (
 -- Table structure for bottles_record
 CREATE TABLE IF NOT EXISTS bottles_record (
   id SERIAL PRIMARY KEY,
+  batch_number VARCHAR(64),               -- 批号
+  formula_name VARCHAR(64),               -- 配方名
+  bottle_number VARCHAR(64),              -- 玻瓶号
   qrcode VARCHAR(256) NOT NULL,           -- 二维码读码结果
   logistics_code VARCHAR(64) NOT NULL,    -- 物流码
   locate_path VARCHAR(256) NOT NULL,      -- 定位图像路径
-  locate_result VARCHAR(64) NOT NULL,     -- 定位结果
-  locate_write VARCHAR(64) NOT NULL,      -- 写入PLC的定位结果
+  locate_result VARCHAR(64) NOT NULL,     -- 定位结果路径
   check_path VARCHAR(256) NOT NULL,       -- 定位复核图像路径
-  check_result VARCHAR(8) NOT NULL,       -- 定位复核结果
-  check_write VARCHAR(64) NOT NULL,       -- 写入PLC的定位复核结果
+  check_result VARCHAR(256) NOT NULL,     -- 定位复核结果路径
   printer_send VARCHAR(128) NOT NULL,     -- 打码机写入数据
   printer_result VARCHAR(32) NOT NULL,    -- 打码机返回结果
   ocr_path VARCHAR(256) NOT NULL,         -- 打码复核图像路径
-  ocr_code VARCHAR(64) NOT NULL,          -- 打码复核结果
-  ocr_result VARCHAR(128) NOT NULL,       -- 打码复核是否成功
-  ocr_write VARCHAR(128) NOT NULL,        -- 写入PLC的打码复核结果
+  ocr_result VARCHAR(256) NOT NULL,       -- 打码复核结果路径
   is_complete BOOLEAN,                    -- 是否完成
+  created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bottles_record (
+  id SERIAL PRIMARY KEY,
+  bottle_number VARCHAR(64),              -- 玻瓶号
+  qrcode_signal_time TIMESTAMP,           -- 二维码读码工位信号
+  qrcode_time TIMESTAMP,                  -- 二维码读码
+  logistics_req_time TIMESTAMP,           -- 物流码请求时间
+  logistics_ret_time TIMESTAMP,                  -- 物流码回复时间
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
