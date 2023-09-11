@@ -732,6 +732,9 @@ GroupBox {
                     "speed_r_12952": deviceProduceSpeedInput.text,
                     "add_r_12954": deviceproduceAccelerationInput.text,
                     "reduce_r_12596": deviceproduceDecelerationInput.text
+                    "xPosision_r_12960": xPositionInput.text
+                    "yPosision_r_12962": yPositionInput.text
+                    
                 };
                 var strSend = JSON.stringify(json);
                 var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, strSend);
