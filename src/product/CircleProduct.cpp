@@ -40,15 +40,6 @@ uint16_t CircleProduct::updateQRCode(const std::string &code)
     return ptr->numBottom;
 }
 
-uint16_t CircleProduct::updateCodeNum()
-{
-    std::lock_guard lock(mtxProduct_);
-    auto ptr = lvProduct_[offsetPrintBottom];
-    if (ptr == nullptr)
-        return 0;
-    return ptr->numBottom;
-}
-
 void CircleProduct::updateLogistics(const uint32_t number, const std::string &logisticsDes, const std::string &code1,
                                     const std::string &code2)
 {
