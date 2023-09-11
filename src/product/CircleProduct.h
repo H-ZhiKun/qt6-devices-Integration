@@ -39,6 +39,7 @@ class CircleProduct
     void newProduct(uint32_t number);
     void completeProduct();
     uint16_t updateQRCode(const std::string &code);
+    uint16_t updateCodeNum();
     void updateLogistics(const uint32_t number, const std::string &logisticsDes, const std::string &code1,
                          const std::string &code2);
     void updateLocate(const cv::Mat &mat, const std::string &path);
@@ -56,6 +57,7 @@ class CircleProduct
     uint16_t OffsetQRCode = 0;
     uint16_t OffsetLocate = 3;
     uint16_t OffsetLocateCheck = 6;
+    uint16_t offsetPrintBottom = 8;
     uint16_t OffsetPrintCode = 9;
     uint16_t OffsetOCR = 14;
 };

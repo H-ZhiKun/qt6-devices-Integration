@@ -1376,45 +1376,6 @@ void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
-<<<<<<< HEAD
-=======
-        if (ptrBottom == nullptr)
-        {
-            LogInfo("product process:recv from tangleCheck:number not found.");
-            return;
-        }
-        cv::Mat mat = ptrBottom->locateCheckImage;
-        if (mat.empty())
-        {
-            LogInfo("product process:recv from tangleCheck:number={},mat is null.", bottomNum);
-            return;
-        }
-        std::string result = "0";
-        jsValue = Utils::stringToJson(jsValue["box"].asString());
-        for (const auto &item : jsValue)
-        {
-            result = item["result"].asString();
-        }
-        // circleProduct_->updateLocateCheckResult(bottomNum, result);
-        circleProduct_->updateLocateCheckResult(bottomNum, "1"); // 测试
-        if (result == "1")
-        {
-            result = "定位成功！";
-        }
-        else if (result == "0")
-        {
-            result = "定位失败！";
-        }
-        QImage Image = Utils::matToQImage(mat);
-        // drawText(Image, result.c_str());
-        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        buffer.open(QIODevice::WriteOnly);
-        Image.save(&buffer, "jpg");
-        Utils::saveImageToFile(byteArray, strTangleCheckResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage", Q_ARG(QImage, Image));
->>>>>>> a80c3487584352f4c9e29089708c36914d9de1d4
     });
 }
 

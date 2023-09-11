@@ -73,7 +73,7 @@ baumer:
       gain: 2
       width: 800
       height: 800
-      offset_x: 496
+      offset_x: 960
       offset_y: 632
     - sn_number: 700009429371
       display_window: 2
