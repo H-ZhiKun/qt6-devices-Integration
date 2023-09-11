@@ -7,6 +7,8 @@
 #include "cryptopp/osrng.h"
 #include <QBuffer>
 #include <QByteArray>
+#include <QDataStream>
+#include <QDir>
 #include <QImage>
 #include <chrono>
 #include <ctime>
@@ -48,8 +50,7 @@ class Utils
      * @return 当前系统时间的字符串表示
      */
     static std::string getCurrentTime(bool hasMillisecond = false);
-    static void getCurrentTime(std::string &year, std::string &month, std::string &day, std::string &hour,
-                               std::string &minute, std::string &second);
+    static void getCurrentTime(int &nYear, int &nMonth, int &nDay, int &nHour, int &nMinute, int &nSecond);
     /**
      * @brief 获取当前时间的任意前后秒数的时间点的字符串表示
      *
@@ -141,10 +142,11 @@ class Utils
         ss >> value;
         return value;
     }
-
+    static void saveImageToFile(const QByteArray &byteArray, const std::string &filePath);
     static cv::Mat qImageToMat(QImage &qim);
     static std::vector<std::string> splitString(const std::string &input, const std::string &delimiter);
-    static std::string makeHttpBodyWithCVMat(const cv::Mat &algoImage, const uint16_t bottomNum,
-                                             const std::string &imageName, const std::string &modelName);
+    static void makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, const std::string &imageName,
+                                     const std::string &modelName, const std::string &savePath, std::string &jsonBody,
+                                     QByteArray &byteArray);
     static std::string compressMatToZlib(const cv::Mat &inputMat);
 };

@@ -445,7 +445,7 @@ GroupBox {
             for (var k = 0; k < keys.length; k++) {
                 var key = keys[k];
                 if (k < 5) {
-                    console.log("keys: ", key);
+                    //console.log("keys: ", key);
                     if (key === "0") {
                         valveListView1.itemAtIndex(k).imageSource = "file:///" + appdir + "/ico/red.png";
                     } else {

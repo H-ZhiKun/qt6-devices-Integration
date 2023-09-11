@@ -3,6 +3,7 @@
 
 #include "Logger.h"
 #include <QByteArray>
+#include <QEventLoop>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>

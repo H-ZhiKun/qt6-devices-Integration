@@ -16,30 +16,30 @@ Permission::~Permission()
 void Permission::dealing(std::vector<unsigned char> buffer)
 {
     std::string result(buffer.begin(), buffer.end());
+    LogWarn("product process: recieve peimisson : {}", result);
     auto iter = mapSignals_.find(result);
     if (iter != mapSignals_.end())
     {
         LogInfo("permission signal: {}", result);
         iter->second();
     }
-    else if (result.length() == 30)
+    std::string code1, code2;
+    if (result.length() == 30)
     {
-        std::string code1 = result.substr(4, 12);
-        std::string code2 = result.substr(16, 12);
-        LogInfo("code1 = ", code1);
-        LogInfo("code2 = ", code2);
-        emit codeRight(code1, code2);
+        code1 = result.substr(4, 12);
+        code2 = result.substr(16, 12);
     }
     else
     {
         LogError("permission code error.");
     }
+    emit codeRight(curNumber, describtion, code1, code2);
 }
-void Permission::sendQRCode(const std::string &code)
+void Permission::sendQRCode(const uint16_t number, const std::string &code)
 {
-    std::string cmd = strHead + code;
+    curNumber = number;
+    std::string cmd = strHead + code + strTail;
     QByteArray byteArray = QByteArray(cmd.c_str(), static_cast<int>(cmd.size()));
-    qDebug() << "qrcode send to permission: " << byteArray;
     sendData(byteArray);
 }
 void Permission::pingBehavior()

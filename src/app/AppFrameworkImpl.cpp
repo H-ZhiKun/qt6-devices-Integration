@@ -57,6 +57,8 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
     registerExpectation(ExpectedFunction::ReadPLC, std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::WritePLC,
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
+    registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -70,9 +72,11 @@ int AppFrame::AppFrameworkImpl::run()
     initLogger();
     initFile();
     initSqlHelper();
+    initProduct();
     initNetworkClient();
     initBaumerManager();
     initPLC();
+    // runtime task
     timerTask();
     return 0;
 }
@@ -330,7 +334,6 @@ std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
         if (vKeys.size() == 3)
         {
             temp = plcDev_->readDevice(vKeys[1], vKeys[2]);
-            qDebug() << "temp" << temp;
         }
         else if (vKeys.size() == 4)
         {
@@ -384,6 +387,50 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
         }
     }
     return Utils::makeResponse(ret);
+}
+
+std::string AppFrame::AppFrameworkImpl::refreshMainPage()
+{
+    bool ret = true;
+    Json::Value jsMainVal;
+    jsMainVal["image0"] = "0";
+    jsMainVal["image1"] = "0";
+    jsMainVal["image2"] = "0";
+    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
+    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
+    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
+    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    jsMainVal["textProduceState"] = plcDev_->readDevice("n", "12612");
+
+    jsMainVal["textEquipmentSteps"] = plcDev_->readDevice("n", "12613");
+    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
+    for (uint8_t i = 0; i < cameraState.size(); i++)
+    {
+        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
+    }
+    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
+    return result;
+}
+
+std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
+{
+    Json::Value jsPowerVal;
+    bool ret = true;
+    jsPowerVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
+    jsPowerVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
+    jsPowerVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
+    jsPowerVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
+    jsPowerVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
+    jsPowerVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
+    jsPowerVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
+    jsPowerVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
+    jsPowerVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
+    jsPowerVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
+    jsPowerVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
+    jsPowerVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
+    jsPowerVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
+    std::string result = Utils::makeResponse(ret, std::move(jsPowerVal));
+    return result;
 }
 
 void AppFrame::AppFrameworkImpl::loadConfig()
@@ -464,56 +511,21 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     cognex_->startClient(cognexIp.c_str(), cognexPort);
     permission_ = new Permission();
     permission_->startClient(permissionIp.c_str(), permissionPort);
-    httpClient_ = new HttpClient();
-    QObject::connect(httpClient_, &HttpClient::responseReceived, [this](const std::string &json) {
-        if (json.empty())
-        {
-            LogError("http network error.");
-        }
-        else
-        {
-            processHttpRes(json);
-            // processHttpResTest(json);
-        }
-    });
-    LogInfo("network client start success.");
+    webManager_ = new WebManager();
+    webManager_->init(config_);
+
+    QObject::connect(webManager_, &WebManager::ocrRecv, [this](const std::string &json) { processOCR(json); });
+    QObject::connect(webManager_, &WebManager::tangleRecv, [this](const std::string &json) { processTangle(json); });
+    QObject::connect(webManager_, &WebManager::tangleCheckRecv,
+                     [this](const std::string &json) { processTangleCheck(json); });
+
     // 获取到二维码并发送
-    QObject::connect(cognex_, &Cognex::finishReadQRCode, [this](const std::string value) {
-        cognex_->scanStop();
-        Product *curProduct = productList_.back();
-        LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
-        if (value == curProduct->qrCodeRes)
-        {
-            return;
-        }
-        else
-        {
-            curProduct->qrCodeRes = value;
-            // 如果和上一瓶相同，则是上一瓶没读到，错误的读到此瓶
-            if (productList_.size() >= 2)
-            {
-                --curProduct;
-                if (curProduct->qrCodeRes == value)
-                {
-                    curProduct->qrCodeRes = "";
-                    curProduct->logisticsFalseFlag = true;
-                }
-            }
-            permission_->sendQRCode(value);
-        }
-    });
+    QObject::connect(cognex_, &Cognex::ReadQRCode, [this](const std::string &value) { whenCognexRecv(value); });
     // 获取到物流码并存储
-    QObject::connect(permission_, &Permission::codeRight, [this](const std::string code1, const std::string code2) {
-        for (auto &value : productList_)
-        {
-            if (value->logistics1.empty() && !(value->qrCodeRes.empty()))
-            {
-                value->logistics1 = code1;
-                value->logistics2 = code2;
-                break;
-            }
-        }
-    });
+    QObject::connect(permission_, &Permission::codeRight,
+                     [this](const uint16_t number, const std::string &des, const std::string &code1,
+                            const std::string &code2) { whenPermissionRecv(number, des, code1, code2); });
+    LogInfo("network client start success.");
 }
 
 void AppFrame::AppFrameworkImpl::initPLC()
@@ -526,32 +538,7 @@ void AppFrame::AppFrameworkImpl::initPLC()
     plcDev_ = new PLCDevice;
     plcDev_->init(plcIp, plcPort, io, fifo);
     LogInfo("{} PLC device start success.", plcType);
-    QObject::connect(plcDev_, &PLCDevice::locatePhoto, [this](const uint64_t bottomNum) { refreshLocate(bottomNum); });
-    QObject::connect(plcDev_, &PLCDevice::locateCheckPhoto,
-                     [this](const uint64_t bottomNum) { refreshLocateCheck(bottomNum); });
-    QObject::connect(plcDev_, &PLCDevice::codeCheck, [this](const uint64_t bottomNum) { refreshCodeCheck(bottomNum); });
-
-    // 获得读二维码信号
-    QObject::connect(plcDev_, &PLCDevice::readQRCode, [this](uint8_t bottomNum) {
-        cognex_->scanOnce();
-        productList_.push_back(new Product());
-    });
-
-    QObject::connect(plcDev_, &PLCDevice::codeLogistics, [this](uint8_t bottomNum) {
-        for (auto &pro_ : productList_)
-        {
-            if (pro_->isCode)
-            {
-                continue;
-            }
-            if (!pro_->logistics1.empty() && !pro_->logistics2.empty())
-            {
-                pro_->isCode = true;
-            }
-            domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
-            LogInfo("bottom {}: send data to domino, in {}", bottomNum, Utils::getCurrentTime(true));
-        }
-    });
+    QObject::connect(plcDev_, &PLCDevice::bottomMove, [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -566,10 +553,6 @@ void AppFrame::AppFrameworkImpl::updateRealData()
     jsMainVal["count_pause_waste"] = 0;     // 暂停、终止废品数
     jsMainVal["equipmentSteps"] = "未启动"; // 设备步骤
     jsMainVal["produceState"] = 3;          // 生产状态
-    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
-    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
-    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
-    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageMain), Q_ARG(QString, Utils::jsonToString(jsMainVal).c_str()));
 }
@@ -578,19 +561,6 @@ void AppFrame::AppFrameworkImpl::updateProduceRealData()
 {
     Json::Value jsProduceVal;
     /*生产数据界面实时更新数据*/
-    jsProduceVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
-    jsProduceVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
-    jsProduceVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
-    jsProduceVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
-    jsProduceVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
-    jsProduceVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
-    jsProduceVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
-    jsProduceVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
-    jsProduceVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
-    jsProduceVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
-    jsProduceVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
-    jsProduceVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
-    jsProduceVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
 
     invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
               Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
@@ -657,177 +627,145 @@ void AppFrame::AppFrameworkImpl::updateVideo()
     // }
 }
 
-void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
-{
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(1);
-    LogInfo("Get image size = {}, window = 1", matData.size());
-    if (matData.size() == 0)
-    {
-        qDebug() << fmt::format("refreshImage mat null wind = 1, bottomNum = {}", bottomNum);
-        return;
-    }
-    cv::Mat temp = matData.back();
-    QImage saveImg = Utils::matToQImage(temp);
-    saveImageToFile(saveImg, DisplayWindows::CodeCheckCamera);
-    Utils::asyncTask([this, temp, bottomNum] {
-        std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-        std::string modelName;
-        static uint16_t countCode = 0;
-        url = config_["algorithm"]["url_ocr"].as<std::string>();
-        LogInfo("CodeCheckCamera count: {}", countCode);
-        if (productList_.size() == 0)
-        {
-            LogInfo("add product in code check func");
-            productList_.push_back(new Product());
-        }
-        for (auto &product_ : productList_)
-        {
-            if (product_->codeCheckImage.empty() && !product_->logistics1.empty())
-            {
-                product_->codeCheckImage = temp;
-                product_->codeCheckImageName = imageName + "CC";
-                modelName = "paddleOCR";
-                // 1 保存数据
-            }
-        }
-        countCode++;
-        QImage img = Utils::matToQImage(temp);
+// void AppFrame::AppFrameworkImpl::refreshCodeCheck(const uint64_t bottomNum)
+// {
+//     std::list<cv::Mat> matData = baumerManager_->getImageBySN(1);
+//     LogInfo("Get image size = {}, window = 1", matData.size());
+//     if (matData.size() == 0)
+//     {
+//         qDebug() << fmt::format("refreshImage mat null wind = 1, bottomNum = {}", bottomNum);
+//         return;
+//     }
+//     cv::Mat temp = matData.back();
+//     Utils::asyncTask([this, temp, bottomNum] {
+//         std::string url;
+//         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "CC";
+//         url = config_["algorithm"]["url_ocr"].as<std::string>();
+//         if (productList_.size() == 0)
+//         {
+//             LogInfo("add product in code check func");
+//             productList_.push_back(new Product());
+//         }
+//         for (auto &product_ : productList_)
+//         {
+//             if (product_->codeCheckImage.empty() && !product_->logistics1.empty())
+//             {
+//                 product_->codeCheckImage = temp.clone();
+//                 product_->codeCheckImageName = imageName;
+//                 // invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
+//                 //           Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName,
+//                 "paddleOCR"))); break;
+//             }
+//         }
+//         QImage img = Utils::matToQImage(temp);
+//         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage", Q_ARG(QImage, img));
+//     });
+// }
 
-        invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage", Q_ARG(QImage, img));
-    });
+// void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
+// {
+//     std::list<cv::Mat> matData = baumerManager_->getImageBySN(2);
+//     LogInfo("Get image size = {}, window = 2", matData.size());
+//     if (matData.size() == 0)
+//     {
+//         qDebug() << fmt::format("refreshImage mat null wind = 2, bottomNum = {}", bottomNum);
+//         return;
+//     }
+//     cv::Mat temp = matData.back();
+//     Utils::asyncTask([this, temp, bottomNum] {
+//         std::string url;
+//         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "LC";
+//         url = config_["algorithm"]["url_predict"].as<std::string>();
+//         if (productList_.size() == 0)
+//         {
+//             LogInfo("add product in locate check func");
+//             productList_.push_back(new Product());
+//         }
+//         for (auto &product_ : productList_)
+//         {
+//             if (product_->locateCheckImage.empty())
+//             {
+//                 LogInfo("send locate check image to algorithm");
+//                 product_->locateCheckImage = temp.clone();
+//                 product_->locateCheckImageName = imageName;
+//                 std::string jsonData;
+//                 QByteArray byteArray;
+//                 Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangleCheck", strTangleCheckPath_, jsonData,
+//                                             byteArray);
+//                 invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, 2), Q_ARG(std::string, jsonData),
+//                           Q_ARG(QByteArray, byteArray));
+//                 break;
+//             }
+//         }
+//         QImage img = Utils::matToQImage(temp);
+//         invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage", Q_ARG(QImage, img));
+//     });
+// }
+
+// void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
+// {
+//     Utils::asyncTask([this, bottomNum] {
+//         LogInfo("tangle timer: get singnal, bottom {}", bottomNum);
+//         std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
+//         auto startTime = std::chrono::steady_clock::now(); // 记录开始时间
+//         while (true)
+//         {
+//             // 执行您的循环操作
+//             matData = baumerManager_->getImageBySN(0);
+//             auto currentTime = std::chrono::steady_clock::now(); // 获取当前时间
+//             auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime);
+
+//             if (elapsedTime.count() >= 2500 || matData.size())
+//             {
+//                 // 如果经过200毫秒或更长时间，退出循环
+//                 break;
+//             }
+//             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//         }
+//         if (matData.size() == 0)
+//         {
+//             qDebug() << fmt::format("refreshImage mat timeout, bottomNum: {}", bottomNum);
+//             return;
+//         }
+//         LogInfo("tangle timer: get image, size: {}", matData.size());
+//         cv::Mat temp = matData.back();
+//         cv::resize(temp, temp, {800, 800});
+//         LogInfo("mat resize cols: {}, rows: {}", temp.cols, temp.rows);
+
+//         std::string url;
+//         std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
+//         url = config_["algorithm"]["url_predict"].as<std::string>();
+//         LogInfo("productList_ cur size: {}", productList_.size());
+//         if (productList_.size() == 0)
+//         {
+//             LogInfo("add product in locate func");
+//             productList_.push_back(new Product());
+//         }
+//         for (auto &product_ : productList_)
+//         {
+//             if (product_->locateImage.empty())
+//             {
+//                 LogInfo("tangle timer: send image to algothm");
+//                 product_->locateImage = temp.clone();
+//                 product_->locateImageName = imageName;
+//                 std::string jsonData;
+//                 QByteArray byteArray;
+//                 Utils::makeJsonAndByteArray(temp, bottomNum, imageName, "tangle", strTanglePath_, jsonData,
+//                 byteArray); invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, 0), Q_ARG(std::string, jsonData),
+//                           Q_ARG(QByteArray, byteArray));
+//                 break;
+//             }
+//         }
+//         QImage img = Utils::matToQImage(temp);
+//         invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
+//     });
+// }
+void AppFrame::AppFrameworkImpl::updateByMinute(const int minute)
+{
+    // todo:电能信息写入数据库、上报
 }
 
-void AppFrame::AppFrameworkImpl::refreshLocateCheck(const uint64_t bottomNum)
-{
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(2);
-    LogInfo("Get image size = {}, window = 2", matData.size());
-    if (matData.size() == 0)
-    {
-        qDebug() << fmt::format("refreshImage mat null wind = 2, bottomNum = {}", bottomNum);
-        return;
-    }
-    cv::Mat temp = matData.back();
-    QImage saveImg = Utils::matToQImage(temp);
-    saveImageToFile(saveImg, DisplayWindows::LocateCheckCamera);
-    Utils::asyncTask([this, temp, bottomNum] {
-        std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "LC";
-        static uint16_t countLocateCheck = 0;
-        url = config_["algorithm"]["url_predict"].as<std::string>();
-        LogInfo("LocateCheckCamera: {}", countLocateCheck);
-        countLocateCheck++;
-        if (productList_.size() == 0)
-        {
-            LogInfo("add product in locate check func");
-            productList_.push_back(new Product());
-        }
-        for (auto &product_ : productList_)
-        {
-            if (product_->locateCheckImage.empty())
-            {
-                product_->locateCheckImage = temp;
-                product_->locateCheckImageName = imageName;
-                invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "tangleCheck")));
-                break;
-            }
-        }
-        QImage img = Utils::matToQImage(temp);
-        invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage", Q_ARG(QImage, img));
-    });
-}
-
-void AppFrame::AppFrameworkImpl::refreshLocate(const uint64_t bottomNum)
-{
-    std::list<cv::Mat> matData = baumerManager_->getImageBySN(0);
-    LogInfo("Get image size = {}, window = 0", matData.size());
-    if (matData.size() == 0)
-    {
-        qDebug() << fmt::format("refreshImage mat null wind = 0, bottomNum = {}", bottomNum);
-        return;
-    }
-    cv::Mat temp = matData.back();
-    QImage saveImg = Utils::matToQImage(temp);
-    saveImageToFile(saveImg, DisplayWindows::LocationCamera);
-
-    Utils::asyncTask([this, temp, bottomNum] {
-        std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString() + "L";
-        static uint16_t countLocation = 0;
-        url = config_["algorithm"]["url_predict"].as<std::string>();
-        LogInfo("LocationCamera: {}", countLocation);
-        LogInfo("productList_ cur size: {}", productList_.size());
-        countLocation++;
-        if (productList_.size() == 0)
-        {
-            LogInfo("add product in locate func");
-            productList_.push_back(new Product());
-        }
-        for (auto &product_ : productList_)
-        {
-            if (product_->locateImage.empty())
-            {
-                LogInfo("get locateImage");
-                product_->locateImage = temp.clone();
-                product_->locateImageName = imageName;
-                invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                          Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(temp, bottomNum, imageName, "tangle")));
-                break;
-            }
-        }
-        QImage img = Utils::matToQImage(temp);
-        invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
-    });
-}
-
-void AppFrame::AppFrameworkImpl::refreshImageTest(const int bottomNum)
-{
-    // cv::Mat temp = cv::imread("D:/test.jpg");
-    cv::Mat temp(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-    Utils::asyncTask([this, target = std::move(temp), bottomNum] {
-        std::string url;
-        std::string imageName = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz").toStdString();
-        std::string modelName = "tangle";
-        url = config_["algorithm"]["url_predict"].as<std::string>();
-        LogInfo("LocationCamera bottom: ", bottomNum);
-        invokeCpp(httpClient_, "sendPostRequest", Q_ARG(std::string, url),
-                  Q_ARG(std::string, Utils::makeHttpBodyWithCVMat(target, bottomNum, imageName, modelName)));
-        QImage img = Utils::matToQImage(target);
-        if (img.isNull() == false)
-        {
-            invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, img));
-        }
-    });
-}
-void AppFrame::AppFrameworkImpl::updateByMinute(const std::string &minute)
-{
-    // 每分钟更新电能数据
-    QList<QVariantMap> dataList;
-    Json::Value dataEle;
-    // 与PLC通信得到数据
-    float num = atoi(minute.c_str());
-    // dataEle["id"] = 0;
-    dataEle["positive_active_energy"] = 34.54;
-    dataEle["reverse_active_energy"] = 43.5452;
-    dataEle["a_phase_voltage"] = num;
-    dataEle["b_phase_voltage"] = 43.45;
-    dataEle["c_phase_voltage"] = 43.475;
-    dataEle["temperature"] = 43.0;
-    dataEle["total_active_power"] = 43.045;
-    dataEle["total_apparent_power"] = 43.00;
-    dataEle["total_active_energy"] = 43.0745;
-
-    dataEle["a_direction_current"] = 43.454545;
-    dataEle["b_direction_current"] = 43.45;
-    dataEle["c_direction_current"] = 43.77;
-    dataEle["humidity"] = 43;
-
-    PgsqlHelper::getSqlHelper().insertData("electric_data", std::move(dataEle));
-    // updateAlarmData("test"); // TODO：有报错才发送
-}
-
-void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std::string &month, const std::string &day)
+void AppFrame::AppFrameworkImpl::updateByDay(const int year, const int month, const int day)
 {
     // 每日创建当月份数据表和下月份数据表做冗余
     // 动态创建月份数据库表
@@ -855,39 +793,6 @@ void AppFrame::AppFrameworkImpl::updateByDay(const std::string &year, const std:
     {
         LogInfo("Failed to create this month table");
     }
-
-    int tempMonth = atoi(month.c_str());
-    std::string lastMonth;
-    // 月份数字小于10，前面需要加上0
-    if (++tempMonth < 10)
-    {
-        lastMonth = "0" + std::to_string(tempMonth);
-    }
-
-    // 动态创建下月份数据库表
-    std::string lastMonthSingle = year + lastMonth + "single_bottle";
-    std::list<std::string> lastFields{"id SERIAL PRIMARY KEY",
-                                      "qr_code_reslut varchar(256)",
-                                      "logistics_code_gt char(24)",
-                                      "locate_camera_image varchar(256)",
-                                      "locate_res real",
-                                      "locate_check_camera_image varchar(256)",
-                                      "locate_check_res boolean",
-                                      "code_check_camera_image varchar(256)",
-                                      "logistics_code char(24)",
-                                      "logistics_code_res boolean",
-                                      "batch_num varchar(256)",
-                                      "formula_name varchar(128)",
-                                      "created_time timestamp DEFAULT CURRENT_TIMESTAMP",
-                                      "UNIQUE (id)"};
-    if (PgsqlHelper::getSqlHelper().createTable(lastMonthSingle, std::move(lastFields)))
-    {
-        LogInfo("Last month table created successfully");
-    }
-    else
-    {
-        LogInfo("Failed to create Last month table");
-    }
 }
 
 void AppFrame::AppFrameworkImpl::updateSensorRealData()
@@ -906,170 +811,75 @@ void AppFrame::AppFrameworkImpl::updateValveRealData()
               Q_ARG(PageIndex, PageIndex::PageValve), Q_ARG(QString, Utils::jsonToString(jsValveVal).c_str()));
 }
 
-void AppFrame::AppFrameworkImpl::updatePowerRealData()
-{
-    Json::Value jsPowerVal;
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PagePower), Q_ARG(QString, Utils::jsonToString(jsPowerVal).c_str()));
-}
-
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
     baumerManager_ = new BaumerManager();
     baumerManager_->start(config_);
 }
 
-// void AppFrame::AppFrameworkImpl::initHttp()
-// {
-//     HttpApiManager *httpLogistics = new HttpApiManager();
-//     HttpApiManager *httpLocate = new HttpApiManager();
-//     HttpApiManager *httpLocateCheck = new HttpApiManager();
-//     http_.emplace_back(httpLogistics);
-//     http_.emplace_back(httpLocate);
-//     http_.emplace_back(httpLocateCheck);
-//     QObject::connect(http_[0], &HttpApiManager::requestFinished,
-//                      [this](const QString &response, cv::Mat matImage, const int bottomNum) {
-//                          if (response.isEmpty())
-//                          {
-//                              return;
-//                          }
-//                          LogInfo("resJS", response.toStdString());
-//                          // 1 获取方框位置，绘制
-//                          QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-//                          // QVariantMap dataMap = jsonDocumentData.toVariant().toMap();
-//                          // ocr:识别物流码  yolovn5_tagle：定位  yolov5：定位复核
-//                          //  检查是否解析成功
-//                          if (!jsonDocument.isNull())
-//                          {
-//                              Utils::asyncTask([this, jsonDocument = std::move(jsonDocument),
-//                                                matImage = std::move(matImage), bottomNum]() {
-//                                  processPaddleOCR(std::move(jsonDocument), std::move(matImage), bottomNum);
-//                              });
-//                          }
-//                      });
-//     QObject::connect(http_[1], &HttpApiManager::requestFinished,
-//                      [this](const QString &response, cv::Mat matImage, const int bottomNum) {
-//                          if (response.isEmpty())
-//                          {
-//                              return;
-//                          }
-//                          LogInfo("resJS", response.toStdString());
-//                          // 1 获取方框位置，绘制
-//                          QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-//                          //  检查是否解析成功
-//                          if (!jsonDocument.isNull())
-//                          {
-//                              processYoloTangle(jsonDocument, matImage, bottomNum);
-//                          }
-//                      });
-//     QObject::connect(http_[2], &HttpApiManager::requestFinished,
-//                      [this](const QString &response, cv::Mat matImage, const int bottomNum) {
-//                          if (response.isEmpty())
-//                          {
-//                              return;
-//                          }
-//                          LogInfo("resJS", response.toStdString());
-//                          QJsonDocument jsonDocument = QJsonDocument::fromJson(response.toUtf8());
-//                          if (!jsonDocument.isNull())
-//                          {
-//                              processYoloTangle(jsonDocument, matImage, bottomNum);
-//                          }
-//                      });
-// }
-
 void AppFrame::AppFrameworkImpl::initFile()
 {
     QDir qdir;
-    saveImageDir = qdir.currentPath() + "/" + "Image";
-    if (!qdir.exists(saveImageDir))
+    std::string saveImageDir = strAppPath_ + "/Image";
+    if (!qdir.exists(saveImageDir.c_str()))
     {
-        bool res = qdir.mkdir(saveImageDir);
+        bool res = qdir.mkdir(saveImageDir.c_str());
         if (!res)
         {
             LogWarn("create saveImageDir dir file!");
         }
     }
-    QString saveImageSubDir1 = saveImageDir + "/LocationCamera";
-    QString saveImageSubDir2 = saveImageDir + "/CodeCheckCamera";
-    QString saveImageSubDir3 = saveImageDir + "/LocateCheckCamera";
-    if (!qdir.exists(saveImageSubDir1))
+    strTanglePath_ = saveImageDir + "/LocationCamera/";
+    strOcrPath_ = saveImageDir + "/CodeCheckCamera/";
+    strTangleCheckPath_ = saveImageDir + "/LocateCheckCamera/";
+    strTangleResultPath_ = saveImageDir + "/LocationCameraResult/";
+    strTangleCheckResultPath_ = saveImageDir + "/LocateCheckCameraResult/";
+    if (!qdir.exists(strTanglePath_.c_str()))
     {
-        bool res = qdir.mkdir(saveImageSubDir1);
+        bool res = qdir.mkdir(strTanglePath_.c_str());
         if (!res)
         {
-            LogWarn("create LocationCamera dir file!");
+            LogWarn("create Location dir file!");
         }
     }
-    if (!qdir.exists(saveImageSubDir2))
+    if (!qdir.exists(strOcrPath_.c_str()))
     {
-        bool res = qdir.mkdir(saveImageSubDir2);
+        bool res = qdir.mkdir(strOcrPath_.c_str());
         if (!res)
         {
-            LogWarn("create CodeCheckCamera dir file!");
+            LogWarn("create OcrPath dir file!");
         }
     }
-    if (!qdir.exists(saveImageSubDir3))
+    if (!qdir.exists(strTangleCheckPath_.c_str()))
     {
-        bool res = qdir.mkdir(saveImageSubDir3);
+        bool res = qdir.mkdir(strTangleCheckPath_.c_str());
         if (!res)
         {
             LogWarn("create LocateCheckCamera dir file!");
         }
     }
+    if (!qdir.exists(strTangleResultPath_.c_str()))
+    {
+        bool res = qdir.mkdir(strTangleResultPath_.c_str());
+        if (!res)
+        {
+            LogWarn("create TangleResultPath dir file!");
+        }
+    }
+    if (!qdir.exists(strTangleCheckResultPath_.c_str()))
+    {
+        bool res = qdir.mkdir(strTangleCheckResultPath_.c_str());
+        if (!res)
+        {
+            LogWarn("create TangleCheckResultPath dir file!");
+        }
+    }
 }
 
-// void AppFrame::AppFrameworkImpl::runHttp(const std::string &&modeleName, const std::string &imageName,
-//                                          cv::Mat &matImage, const int bottomNum)
-// {
-//     std::string apiUrl;
-//     if (matImage.empty())
-//     {
-//         LogWarn("Failed to read the image.");
-//         return;
-//     }
-//     QImage saveImage = Utils::matToQImage(matImage);
-//     // saveImageToFile(saveImage, DisplayWindows::CodeCheckCamera);
-//     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//     if (modeleName == "paddleOCR")
-//     {
-//         apiUrl = "http://192.168.101.8:5001/paddleOCR";
-//         // 将图像转换为QByteArray
-//         std::vector<uchar> buffer;
-//         cv::imencode(".jpg", matImage, buffer);
-//         QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
-
-//         Json::Value jsVal;
-//         jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
-//         jsVal["imageName"] = imageName;
-//         jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
-//         jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
-//         std::string strJS = jsVal.toStyledString();
-//         http_[0]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
-//         std::string imagePath = "D:/deviceintegration/build/Debug/image/test.jpg";
-//     }
-//     else if (modeleName == "tangle" || modeleName == "tangleCheck")
-//     {
-//         // apiUrl = "http://192.168.101.8:5000/predict_tangle";
-//         apiUrl = "http://127.0.0.1:5000/predict_tangle";
-//         // 将图像转换为QByteArray
-//         std::vector<uchar> buffer;
-//         cv::imencode(".jpg", matImage, buffer);
-//         QByteArray imageData(reinterpret_cast<const char *>(buffer.data()), buffer.size());
-
-//         Json::Value jsVal;
-//         jsVal["imageData"] = QString(imageData.toBase64()).toStdString(); // 将QByteArray转换为base64
-//         jsVal["imageName"] = imageName;
-//         jsVal["imageWidth"] = QString::number(matImage.cols).toStdString();
-//         jsVal["imageHeight"] = QString::number(matImage.rows).toStdString();
-//         std::string strJS = jsVal.toStyledString();
-//         if (modeleName == "tangle")
-//             http_[1]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
-//         else if (modeleName == "tangleCheck")
-//             http_[2]->post(QString::fromStdString(apiUrl), QString::fromStdString(strJS), matImage, bottomNum);
-//     }
-//     return;
-// }
+void AppFrame::AppFrameworkImpl::initProduct()
+{
+    circleProduct_ = new CircleProduct();
+}
 
 void AppFrame::AppFrameworkImpl::memoryClean()
 {
@@ -1104,15 +914,15 @@ void AppFrame::AppFrameworkImpl::memoryClean()
         delete permission_;
         permission_ = nullptr;
     }
-    if (httpClient_ != nullptr)
+    if (webManager_ != nullptr)
     {
-        delete httpClient_;
-        httpClient_ = nullptr;
+        delete webManager_;
+        webManager_ = nullptr;
     }
-    for (auto &ptr_ : productList_)
+    if (circleProduct_)
     {
-        delete ptr_;
-        ptr_ = nullptr;
+        delete circleProduct_;
+        circleProduct_ = nullptr;
     }
     if (baumerManager_ != nullptr)
     {
@@ -1123,40 +933,35 @@ void AppFrame::AppFrameworkImpl::memoryClean()
 
 void AppFrame::AppFrameworkImpl::timerTask()
 {
-    // refreshImageTest(5);
     lvFulltimeThread_.push_back(std::thread([this] {
-        std::string recYear = "-1", recMonth = "-1", recDay = "-1";
-        std::string recHour = "-1", recMinute = "-1", recSecond = "-1";
-        std::string year, month, day, hour, minute, second;
         while (bThreadHolder) // 线程退出Flag
         {
-            // 实时更新数据
-            updateRealData();
-            updateProduceRealData();
-            /*分解日期字符串*/
-            Utils::getCurrentTime(year, month, day, hour, minute, second);
-            if (recDay != day)
-            { // 更新每日数据
-                updateByDay(year, month, day);
-                // 新增自然日变化逻辑
-                std::string monthSingleBoottleTB = year + month + day;
-                recDay = day;
+            // 实时捕获摄像头采集
+            cv::Mat mat;
+            mat = baumerManager_->getCamaeraMat(0);
+            if (!mat.empty())
+            {
+                afterCaputureImage(0, mat);
+                LogInfo("product process:image locate get.");
+                invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage",
+                          Q_ARG(QImage, Utils::matToQImage(mat)));
             }
-
-            if (recHour != hour)
-            { // 更新每小时数据
+            mat = baumerManager_->getCamaeraMat(1);
+            if (!mat.empty())
+            {
+                afterCaputureImage(1, mat);
+                LogInfo("product process:image code get.");
+                invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
+                          Q_ARG(QImage, Utils::matToQImage(mat)));
             }
-
-            if (recMinute != minute)
-            { // 更新每分钟数据
-                updateByMinute(minute);
-                recMinute = minute;
+            mat = baumerManager_->getCamaeraMat(2);
+            if (!mat.empty())
+            {
+                afterCaputureImage(2, mat);
+                LogInfo("product process:image locate check get.");
+                invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage",
+                          Q_ARG(QImage, Utils::matToQImage(mat)));
             }
-            if (second != recSecond)
-            { // 更新每秒数据
-                recSecond = second;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     }));
 
@@ -1170,322 +975,524 @@ void AppFrame::AppFrameworkImpl::timerTask()
     // }));
 }
 
-void AppFrame::AppFrameworkImpl::processHttpRes(const std::string &jsonData)
+// void AppFrame::AppFrameworkImpl::processYoloTangle(const std::string &jsonString)
+// {
+//     // 转换为QJsonObject
+//     QString qString = QString::fromStdString(jsonString);
+//     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+//     QJsonObject jsonObject = jsonDocu.object();
+//     cv::Mat matImage;
+//     std::string imageName = jsonObject["imageName"].toString().toStdString();
+//     int bottomNum = jsonObject["bottomNum"].toInt();
+//     std::string bottomstr = std::to_string(bottomNum);
+//     bool isCheck = false;
+//     Product *pro_;
+//     for (auto &tempPro : productList_)
+//     {
+//         if (tempPro->locateImageName == imageName)
+//         {
+//             matImage = tempPro->locateImage;
+//             LogInfo("tangle timer: get image from algothm");
+//             isCheck = false;
+//             pro_ = tempPro;
+//             break;
+//         }
+//         else if (tempPro->locateCheckImageName == imageName)
+//         {
+//             matImage = tempPro->locateCheckImage;
+//             LogInfo("process locateCheck image in tangle");
+//             isCheck = true;
+//             pro_ = tempPro;
+//             break;
+//         }
+//     }
+//     if (matImage.empty())
+//     {
+//         LogInfo("imag: {} requre null", imageName);
+//         return;
+//     }
+
+//     LogInfo("process image: {}", imageName);
+//     QImage resImg = Utils::matToQImage(matImage);
+//     // qDebug() << jsonObject["imageName"];
+//     // 检查是否含有键box
+//     if (jsonObject.contains("box"))
+//     {
+//         QString boxJsonString = jsonObject["box"].toString();
+//         QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
+
+//         // 遍历json array
+//         foreach (const QJsonValue &boxValue, boxJsonArray)
+//         {
+//             QJsonObject boxObject = boxValue.toObject();
+//             QString result = boxObject["result"].toString().toUtf8();
+
+//             QString resstr = "tangle; " + result + "; ";
+//             Json::Value jsParams, jsNum;
+//             if (isCheck)
+//             {
+//                 if (result.toInt() < 5 && result.toInt() != 360)
+//                 { // 小于5度定位成功
+//                     plcDev_->writeDataToDevice("b", "13004", "00", "1");
+//                     QString drawStr = "定位成功！";
+//                     drawText(resImg, drawStr);
+//                 }
+//                 else
+//                 {
+//                     plcDev_->writeDataToDevice("b", "13004", "00", "0");
+//                     QString drawStr = "定位失败！";
+//                     drawText(resImg, drawStr);
+//                 }
+//                 plcDev_->writeDataToDevice("n", "12994", "", bottomstr);
+//             }
+//             else
+//             {
+//                 plcDev_->writeDataToDevice("r", "13002", "", result.toStdString());
+//                 plcDev_->writeDataToDevice("n", "12993", "", bottomstr);
+//                 LogInfo("tangle timer: write to plc: 13002_{}, 12993_{}", result.toStdString(), bottomstr);
+//                 drawText(resImg, resstr);
+//             }
+//             // cv::putText(*matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
+//             //             cv::Scalar(0, 0, 255), 2, 8); // 输出文字
+//         }
+//         // 1 图像操作：显示在界面、保存
+//         if (isCheck)
+//         {
+//             invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage", Q_ARG(QImage, resImg));
+//         }
+//         else
+//         {
+//             invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, resImg));
+//         }
+
+//         // cv::imwrite("Utils::getCurrentTime(true)", matImage);
+//     }
+//     else
+//     {
+//         // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
+//         if (isCheck)
+//         {
+//             pro_->locateCheckFalseFlag = true;
+//             plcDev_->writeDataToDevice("n", "12994", "", jsonObject["bottomNum"].toString().toStdString());
+//             plcDev_->writeDataToDevice("b", "13004", "00", "0");
+//         }
+//         else
+//         {
+//             pro_->locateFalseFlag = true;
+//             plcDev_->writeDataToDevice("n", "12993", "", jsonObject["bottomNum"].toString().toStdString());
+//             plcDev_->writeDataToDevice("r", "13002", "", "0");
+//         }
+//     }
+//     LogInfo("processYoloTangle finish");
+// }
+
+// void AppFrame::AppFrameworkImpl::processYoloTangleTest(QJsonDocument jsonDocument, cv::Mat matImage)
+// {
+//     // 转换为QJsonObject
+//     QJsonObject jsonObject = jsonDocument.object();
+//     std::string imageName = jsonObject["imageName"].toString().toStdString();
+//     if (jsonObject.contains("box"))
+//     {
+//         QString boxJsonString = jsonObject["box"].toString();
+//         QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
+
+//         // 遍历json array
+//         foreach (const QJsonValue &boxValue, boxJsonArray)
+//         {
+//             QJsonObject boxObject = boxValue.toObject();
+//             QString result = boxObject["result"].toString().toUtf8();
+//             QString resstr = "tangle; " + result + "; ";
+//             cv::putText(matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
+//                         cv::Scalar(0, 0, 255), 2, 8); // 输出文字
+//         }
+//         // cv::imwrite("Utils::getCurrentTime(true)", matImage);
+//         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
+//                   Q_ARG(QImage, Utils::matToQImage(matImage)));
+//     }
+//     else
+//     {
+//         // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
+//     }
+// }
+
+// void AppFrame::AppFrameworkImpl::processQrCode(const std::string value)
+// {
+//     Product *curProduct = productList_.back();
+//     LogInfo("read qrCode {}, in {}", value, Utils::getCurrentTime(true));
+//     if (value == curProduct->qrCodeRes)
+//     {
+//         return;
+//     }
+//     else
+//     {
+//         curProduct->qrCodeRes = value;
+//         permission_->sendQRCode(value);
+//     }
+// }
+
+// void AppFrame::AppFrameworkImpl::processCode(const std::string code1, const std::string code2)
+// {
+//     for (auto &value : productList_)
+//     {
+//         if (value->logistics1.empty() && !(value->qrCodeRes.empty()))
+//         {
+//             value->logistics1 = code1;
+//             value->logistics2 = code2;
+//             break;
+//         }
+//     }
+// }
+
+// void AppFrame::AppFrameworkImpl::doPrintCode(uint8_t bottomNum)
+// {
+//     for (auto &pro_ : productList_)
+//     {
+//         if (pro_->isCode)
+//         {
+//             continue;
+//         }
+//         if (!pro_->logistics1.empty() && !pro_->logistics2.empty())
+//         {
+//             pro_->isCode = true;
+//         }
+//         domino_->dominoPrint(pro_->logistics1, pro_->logistics2);
+//         LogInfo("bottom {}: send data to domino, in {}", bottomNum, Utils::getCurrentTime(true));
+//     }
+// }
+
+void AppFrame::AppFrameworkImpl::sendOneToAlgo()
 {
-    // 调用yolo或者ocr处理过程
-    QString qString = QString::fromStdString(jsonData);
-    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
-    QString type = jsonDocu["model"].toString();
-    if (type == "paddleOCR")
-    {
-        LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
-        Utils::asyncTask([this, jsonDocu] { processPaddleOCR(jsonDocu); });
-    }
-    else if (type == "tangle")
-    {
-        LogInfo("recieve tangle algorithm return, in {}", Utils::getCurrentTime(true));
-        Utils::asyncTask([this, jsonDocu] { processYoloTangle(jsonDocu); });
-    }
+    std::string jsonData;
+    QByteArray byteArray;
+    Utils::makeJsonAndByteArray(cv::Mat(800, 800, CV_8UC3, cv::Scalar(255, 255, 255)), 0, "init", "tangle",
+                                strTanglePath_, jsonData, byteArray);
+    webManager_->sendToALGO(0, jsonData, byteArray);
 }
 
-void AppFrame::AppFrameworkImpl::processHttpResTest(const std::string &jsonData)
+void AppFrame::AppFrameworkImpl::drawText(QImage &img, const QString &text)
 {
-    QString qString = QString::fromStdString(jsonData);
-    QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
-    QString type = jsonDocu["model"].toString();
-    // cv::Mat test = cv::imread("D:/test.jpg");
-    cv::Mat test(400, 400, CV_8UC3, cv::Scalar(255, 255, 255));
-    Utils::asyncTask([this, jsonDocu, test] { processYoloTangleTest(jsonDocu, test); });
+    QPainter pp(&img);
+    QFont font = pp.font();
+    font.setPixelSize(50); // 改变字体大小
+    font.setFamily("Microsoft YaHei");
+    pp.setFont(font);
+    pp.setPen(QPen(Qt::red, 5));
+    pp.setBrush(QBrush(Qt::red));
+    pp.drawText(QPointF(20, 50), text);
 }
 
-void AppFrame::AppFrameworkImpl::processYoloTangle(QJsonDocument jsonDocument)
+void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
 {
-    // 转换为QJsonObject
-    QJsonObject jsonObject = jsonDocument.object();
-    cv::Mat matImage;
-    std::string imageName = jsonObject["imageName"].toString().toStdString();
-    int bottomNum = jsonObject["bottomNum"].toInt();
-    bool isCheck = false;
-    Product *pro_;
-    for (auto &tempPro : productList_)
-    {
-        if (tempPro->locateImageName == imageName)
+    Utils::asyncTask([this, number] {
+        if (circleProduct_ == nullptr)
+            return;
+
+        circleProduct_->newProduct(number);
+
+        // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
+
+        // 电机旋转工位=5 下发定位在旋转前=5
+        const auto rotate = circleProduct_->getIndex(5);
+
+        // 打码工位=9 下发复合定位在打码前=8
+        const auto locateCheck = circleProduct_->getIndex(8);
+
+        // 打码工位=9 收到进入打码工位信号立刻下发数据到打印机=9
+        // const auto printer = circleProduct_->getIndex(9);
+
+        // 打码复合工位=14 考虑图片接受时延+算法时延=16
+        const auto codeCheck = circleProduct_->getIndex(16);
+        if (rotate && !rotate->locateResult.empty())
         {
-            matImage = tempPro->locateImage;
-            LogInfo("process locate image in tangle");
-            isCheck = false;
-            pro_ = tempPro;
-            break;
+            plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
+            plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
+            LogInfo("product process:write plc:number={},value={}.", rotate->numBottom, rotate->locateResult);
         }
-        else if (tempPro->locateCheckImageName == imageName)
+        if (locateCheck)
         {
-            matImage = tempPro->locateCheckImage;
-            LogInfo("process locateCheck image in tangle");
-            isCheck = true;
-            pro_ = tempPro;
-            break;
-        }
-    }
-    if (matImage.empty())
-    {
-        LogInfo("imag: {} requre null", imageName);
-        return;
-    }
-
-    LogInfo("process image: {}", imageName);
-    QImage resImg = Utils::matToQImage(matImage);
-    // qDebug() << jsonObject["imageName"];
-    // 检查是否含有键box
-    if (jsonObject.contains("box"))
-    {
-        QString boxJsonString = jsonObject["box"].toString();
-        QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
-
-        // 遍历json array
-        foreach (const QJsonValue &boxValue, boxJsonArray)
-        {
-            QJsonObject boxObject = boxValue.toObject();
-            QString result = boxObject["result"].toString().toUtf8();
-
-            QString resstr = "tangle; " + result + "; ";
-            Json::Value jsParams, jsNum;
-            if (isCheck)
+            if (locateCheck->logistics1.empty())
             {
-                QPainter pp(&resImg);
-                QFont font = pp.font();
-                font.setPixelSize(50); // 改变字体大小
-                font.setFamily("Microsoft YaHei");
-                pp.setFont(font);
-                pp.setPen(QPen(Qt::red, 5));
-                pp.setBrush(QBrush(Qt::red));
-                if (result.toInt() < 5)
-                { // 小于5度定位成功
-                    plcDev_->writeDataToDevice("b", "13004", "00", "1");
-                    pp.drawText(QPointF(20, 50), "定位成功！");
-                }
-                else
-                {
-                    plcDev_->writeDataToDevice("b", "13004", "00", "0");
-                    pp.drawText(QPointF(20, 50), "定位失败！");
-                }
-                plcDev_->writeDataToDevice("n", "12994", "", jsonObject["bottomNum"].toString().toStdString());
+                plcDev_->writeDataToDevice("b", "13004", "0", "0");
             }
             else
             {
-                plcDev_->writeDataToDevice("n", "13002", "", result.toStdString());
-                plcDev_->writeDataToDevice("n", "12993", "", jsonObject["bottomNum"].toString().toStdString());
-
-                QPainter pp(&resImg);
-                QFont font = pp.font();
-                font.setPixelSize(50); // 改变字体大小
-                font.setFamily("Microsoft YaHei");
-                pp.setFont(font);
-                pp.setPen(QPen(Qt::red, 5));
-                pp.setBrush(QBrush(Qt::red));
-                pp.drawText(QPointF(20, 50), resstr);
+                // plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
+                plcDev_->writeDataToDevice("b", "13004", "00", "1");
+                plcDev_->writeDataToDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
+                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
+                        locateCheck->locateCheckResult);
+                invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, locateCheck->logistics1),
+                          Q_ARG(std::string, locateCheck->logistics2));
+                LogInfo("product process:print:number={},code1={},code2={}.", locateCheck->numBottom,
+                        locateCheck->logistics1, locateCheck->logistics2);
             }
-            // cv::putText(*matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
-            //             cv::Scalar(0, 0, 255), 2, 8); // 输出文字
         }
-        // 1 图像操作：显示在界面、保存
-        if (isCheck)
+        // if (printer && !printer->logistics1.empty() && printer->locateCheckResult == "1")
+        // {
+        //     invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
+        //               Q_ARG(std::string, printer->logistics2));
+        //     LogInfo("product process:print:number={},code1={},code2={}.", printer->numBottom, printer->logistics1,
+        //             printer->logistics2);
+        // }
+        if (codeCheck)
         {
-            invokeCpp(mapStorePainter_[DisplayWindows::LocateCheckCamera], "updateImage", Q_ARG(QImage, resImg));
+            plcDev_->writeDataToDevice("b", "13004", "1", codeCheck->OCRResult);
+
+            // 这里应该做流程结束保存数据记录的工作和清理工位。
+            // 保存到数据库
+            // todo
+            // 清理工位
+            circleProduct_->completeProduct();
         }
-        else
-        {
-            invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, resImg));
-        }
-
-        // cv::imwrite("Utils::getCurrentTime(true)", matImage);
-    }
-    else
-    {
-        // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
-        if (isCheck)
-        {
-            pro_->locateCheckFalseFlag = true;
-            plcDev_->writeDataToDevice("n", "12994", "", jsonObject["bottomNum"].toString().toStdString());
-            plcDev_->writeDataToDevice("b", "13004", "00", "0");
-        }
-        else
-        {
-            pro_->locateFalseFlag = true;
-            plcDev_->writeDataToDevice("n", "12993", "", jsonObject["bottomNum"].toString().toStdString());
-            plcDev_->writeDataToDevice("r", "13002", "", "0");
-        }
-    }
-    LogInfo("processYoloTangle finish");
-}
-
-void AppFrame::AppFrameworkImpl::processYoloTangleTest(QJsonDocument jsonDocument, cv::Mat matImage)
-{
-    // 转换为QJsonObject
-    QJsonObject jsonObject = jsonDocument.object();
-    std::string imageName = jsonObject["imageName"].toString().toStdString();
-
-    // qDebug() << jsonObject["imageName"];
-    // 检查是否含有键box
-    if (jsonObject.contains("box"))
-    {
-        QString boxJsonString = jsonObject["box"].toString();
-        QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
-
-        // 遍历json array
-        foreach (const QJsonValue &boxValue, boxJsonArray)
-        {
-            QJsonObject boxObject = boxValue.toObject();
-            QString result = boxObject["result"].toString().toUtf8();
-            QString resstr = "tangle; " + result + "; ";
-            cv::putText(matImage, resstr.toStdString(), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 1,
-                        cv::Scalar(0, 0, 255), 2, 8); // 输出文字
-        }
-        // cv::imwrite("Utils::getCurrentTime(true)", matImage);
-        invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
-                  Q_ARG(QImage, Utils::matToQImage(matImage)));
-    }
-    else
-    {
-        // 2 算法没有识别到的逻辑: 添加报警信息、数据库中错误瓶数+1
-    }
-}
-
-void AppFrame::AppFrameworkImpl::runMainProcess()
-{
-}
-
-void AppFrame::AppFrameworkImpl::processPaddleOCR(QJsonDocument jsonDocument)
-{
-    // 找出图像
-    Product *product_;
-    for (auto &tempPro : productList_)
-    {
-        if (!tempPro->logisticsPredict.empty())
-        {
-            continue;
-        }
-        if (tempPro->logistics1.empty() || tempPro->logisticsFalseFlag == true)
-        {
-            continue;
-        }
-        product_ = tempPro;
-    }
-    if (product_ = nullptr)
-    {
-        LogWarn("no match product of ocr");
-        return;
-    }
-    // 转换为QJsonObject
-    QJsonObject jsonObject = jsonDocument.object();
-    // qDebug() << jsonObject["imageName"];
-    // 检查是否含有键box
-    if (jsonObject.contains("box"))
-    {
-        // 定义颜色列表
-        static std::vector<cv::Scalar> colorList = {
-            cv::Scalar(0, 0, 255),   // 红色
-            cv::Scalar(0, 255, 0),   // 绿色
-            cv::Scalar(0, 255, 255), // 黄色
-            cv::Scalar(255, 0, 255), // 紫色
-            cv::Scalar(255, 255, 0), // 青色
-            cv::Scalar(0, 165, 255), // 橙色
-        };
-        int colorIndex = 0;  // 颜色Index
-        int dataLocate = 30; // 数据统一显示位置
-        // boxstring不是json格式
-        QString boxJsonString = jsonObject["box"].toString();
-        QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
-
-        // 遍历json array
-        foreach (const QJsonValue &boxValue, boxJsonArray)
-        {
-            QJsonObject boxObject = boxValue.toObject();
-            QString result = boxObject["result"].toString().toUtf8();
-            // todo 物流码是否正确
-            if ((product_->logistics1 + product_->logistics2) == result.toStdString())
-            {
-                plcDev_->writeDataToDevice("b", "13004", "01", "1");
-                // 添加生产数据
-            }
-            else
-            {
-                plcDev_->writeDataToDevice("b", "13004", "01", "0");
-                // 添加生产数据
-            }
-            LogInfo("result str", result.toStdString());
-            QString confidence = boxObject["confidence"].toString();
-            float num = confidence.toFloat();
-            confidence = QString::number(num, 'f', 2);
-
-            QString lefttop = boxObject["lefttop"].toString();
-            QString righttop = boxObject["righttop"].toString();
-            QString rightbottom = boxObject["rightbottom"].toString();
-            QString leftbottom = boxObject["leftbottom"].toString();
-
-            QJsonArray lefttopArray = QJsonDocument::fromJson(lefttop.toUtf8()).array();
-            QJsonArray righttopArray = QJsonDocument::fromJson(righttop.toUtf8()).array();
-            QJsonArray rightbottomArray = QJsonDocument::fromJson(rightbottom.toUtf8()).array();
-            QJsonArray leftbottomArray = QJsonDocument::fromJson(leftbottom.toUtf8()).array();
-
-            QString resstr = result + "; " + confidence + ";";
-            cv::putText(product_->codeCheckImage, resstr.toStdString(), cv::Point(5, dataLocate),
-                        cv::FONT_HERSHEY_SIMPLEX, 1, colorList[colorIndex], 2, 8); // 输出文字
-            dataLocate += 35;                                                      // 文字换行
-            cv::line(product_->codeCheckImage, cv::Point(lefttopArray[0].toInt(), lefttopArray[1].toInt()),
-                     cv::Point(righttopArray[0].toInt(), righttopArray[1].toInt()), colorList[colorIndex], 2);
-            cv::line(product_->codeCheckImage, cv::Point(righttopArray[0].toInt(), righttopArray[1].toInt()),
-                     cv::Point(rightbottomArray[0].toInt(), rightbottomArray[1].toInt()), colorList[colorIndex], 2);
-            cv::line(product_->codeCheckImage, cv::Point(rightbottomArray[0].toInt(), rightbottomArray[1].toInt()),
-                     cv::Point(leftbottomArray[0].toInt(), leftbottomArray[1].toInt()), colorList[colorIndex], 2);
-            cv::line(product_->codeCheckImage, cv::Point(leftbottomArray[0].toInt(), leftbottomArray[1].toInt()),
-                     cv::Point(lefttopArray[0].toInt(), lefttopArray[1].toInt()), colorList[colorIndex], 2);
-
-            colorIndex = (colorIndex + 1) % 6; // 颜色轮转
-        }
-
-        // 1 图像操作：显示在界面、保存
-        QImage saveImage = Utils::matToQImage(product_->codeCheckImage);
-        saveImageToFile(saveImage, DisplayWindows::LocateCheckCamera);
-        invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
-                  Q_ARG(QImage, Utils::matToQImage(product_->codeCheckImage)));
-    }
-    else
-    {
-        // 2 算法没有识别到的逻辑
-        plcDev_->writeDataToDevice("b", "13004", "01", "0");
-        // 添加生产数据
-    }
-    while (productList_.front() != product_)
-    {
-        // todo 循环清理ng数据
-        productList_.pop_front();
-    }
-    // 清理当前数据
-    productList_.pop_front();
-}
-
-void AppFrame::AppFrameworkImpl::saveImageToFile(QImage &imgSave, const DisplayWindows &camId)
-{
-    Utils::asyncTask([this, imgSave, camId] {
-        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        QString saveImageSubDir = "";
-        switch (camId)
-        {
-        case DisplayWindows::LocationCamera:
-            saveImageSubDir = saveImageDir + "/LocationCamera/";
-            break;
-        case DisplayWindows::CodeCheckCamera:
-            saveImageSubDir = saveImageDir + "/CodeCheckCamera/";
-            break;
-        case DisplayWindows::LocateCheckCamera:
-            saveImageSubDir = saveImageDir + "/LocateCheckCamera/";
-            break;
-        }
-        QString imagePath = saveImageSubDir + currentDateTimeStr + ".jpg";
-        if (!imgSave.save(imagePath, "JPG"))
-        {
-            qDebug() << "save image failed : " + imagePath;
-        }
-        LogInfo("save image : {}", imagePath.toStdString());
     });
 }
+
+void AppFrame::AppFrameworkImpl::whenCognexRecv(const std::string &code)
+{
+    Utils::asyncTask([this, code] {
+        if (circleProduct_ == nullptr)
+            return;
+        if (code == "no read")
+        {
+            // 失败逻辑
+        }
+        uint16_t number = circleProduct_->updateQRCode(code);
+        if (number)
+            invokeCpp(permission_, "sendQRCode", Q_ARG(const uint16_t, number), Q_ARG(std::string, code));
+    });
+}
+
+void AppFrame::AppFrameworkImpl::whenPermissionRecv(const uint16_t number, const std::string &describtion,
+                                                    const std::string &code1, const std::string &code2)
+{
+    if (circleProduct_ == nullptr)
+        return;
+    circleProduct_->updateLogistics(number, describtion, code1, code2);
+}
+
+void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t windId, const cv::Mat &mat)
+{
+    Utils::asyncTask([this, windId, image = mat.clone()] {
+        if (circleProduct_ == nullptr)
+            return;
+        uint32_t bottomNum = 0;
+        std::string filePath;
+        std::string modelName;
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        switch (windId)
+        {
+        case 0: {
+            cv::Mat newMat;
+            cv::resize(image, newMat, {800, 800});
+            modelName = "tangle";
+            bottomNum = plcDev_->getFIFOInfo().numPosition;
+            filePath = strTanglePath_ + currentDateTimeStr.toStdString() + ".jpg";
+            circleProduct_->updateLocate(image, filePath);
+            break;
+        }
+        case 1: {
+            modelName = "ocr";
+            bottomNum = plcDev_->getFIFOInfo().numVerifyCoding;
+            filePath = strOcrPath_ + currentDateTimeStr.toStdString() + ".jpg";
+            circleProduct_->updateOCR(image, filePath);
+            break;
+        }
+        case 2: {
+            modelName = "tangleCheck";
+            bottomNum = plcDev_->getFIFOInfo().numVerifyPos;
+            filePath = strTangleCheckPath_ + currentDateTimeStr.toStdString() + ".jpg";
+            circleProduct_->updateLocateCheck(image, filePath);
+            break;
+        }
+        default:
+            break;
+        }
+        std::string sendJson;
+        QByteArray sendBytes;
+        LogInfo("product process:send to algo:number={},model={},bytes={}.", bottomNum, windId, sendBytes.size());
+        Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
+        invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, windId), Q_ARG(std::string, sendJson),
+                  Q_ARG(QByteArray, sendBytes));
+    });
+}
+
+void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
+{
+    Utils::asyncTask([this, jsonData] {
+        if (circleProduct_ == nullptr)
+            return;
+        Json::Value jsValue = Utils::stringToJson(jsonData);
+        uint32_t bottomNum = jsValue["bottomNum"].asUInt();
+        const auto ptrBottom = circleProduct_->getNumber(bottomNum);
+    });
+}
+
+void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
+{
+    Utils::asyncTask([this, jsonData] {
+        if (circleProduct_ == nullptr)
+            return;
+        Json::Value jsValue = Utils::stringToJson(jsonData);
+        uint32_t bottomNum = jsValue["bottomNum"].asUInt();
+        const auto ptrBottom = circleProduct_->getNumber(bottomNum);
+        if (ptrBottom == nullptr)
+        {
+            LogInfo("product process:recv from tangle:number not found.");
+            return;
+        }
+        cv::Mat mat = ptrBottom->locateImage;
+        if (mat.empty())
+        {
+            LogInfo("product process:recv from tangle:number={},mat is null.", bottomNum);
+            return;
+        }
+        std::string result = "0";
+        jsValue = Utils::stringToJson(jsValue["box"].asString());
+        for (const auto &item : jsValue)
+        {
+            result = item["result"].asString();
+        }
+        int tangleResult = std::atoi(result.c_str());
+        tangleResult = (tangleResult + 98) % 360;
+        circleProduct_->updateLocateResult(bottomNum, std::to_string(tangleResult));
+        result = "tangle; " + result + "; ";
+        QImage Image = Utils::matToQImage(mat);
+        drawText(Image, result.c_str());
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        Image.save(&buffer, "jpg");
+        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        invokeCpp(mapStorePainter_[DisplayWindows::LocationCamera], "updateImage", Q_ARG(QImage, Image));
+    });
+}
+
+void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
+{
+    Utils::asyncTask([this, jsonData] {
+        if (circleProduct_ == nullptr)
+            return;
+        Json::Value jsValue = Utils::stringToJson(jsonData);
+        uint32_t bottomNum = jsValue["bottomNum"].asUInt();
+        const auto ptrBottom = circleProduct_->getNumber(bottomNum);
+    });
+}
+
+// void AppFrame::AppFrameworkImpl::processPaddleOCR(const std::string &jsonString)
+// {
+//     // 找出图像
+//     LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
+//     QString qString = QString::fromStdString(jsonString);
+//     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+//     Product *product_;
+//     for (auto &tempPro : productList_)
+//     {
+//         if (!tempPro->logisticsPredict.empty())
+//         {
+//             continue;
+//         }
+//         if (tempPro->logistics1.empty() || tempPro->logisticsFalseFlag == true)
+//         {
+//             continue;
+//         }
+//         product_ = tempPro;
+//     }
+//     if (product_ = nullptr)
+//     {
+//         LogWarn("no match product of ocr");
+//         return;
+//     }
+//     // 转换为QJsonObject
+//     QJsonObject jsonObject = jsonDocu.object();
+//     // qDebug() << jsonObject["imageName"];
+//     // 检查是否含有键box
+//     if (jsonObject.contains("box"))
+//     {
+//         // 定义颜色列表
+//         static std::vector<cv::Scalar> colorList = {
+//             cv::Scalar(0, 0, 255),   // 红色
+//             cv::Scalar(0, 255, 0),   // 绿色
+//             cv::Scalar(0, 255, 255), // 黄色
+//             cv::Scalar(255, 0, 255), // 紫色
+//             cv::Scalar(255, 255, 0), // 青色
+//             cv::Scalar(0, 165, 255), // 橙色
+//         };
+//         int colorIndex = 0;  // 颜色Index
+//         int dataLocate = 30; // 数据统一显示位置
+//         // boxstring不是json格式
+//         QString boxJsonString = jsonObject["box"].toString();
+//         QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
+
+//         // 遍历json array
+//         foreach (const QJsonValue &boxValue, boxJsonArray)
+//         {
+//             QJsonObject boxObject = boxValue.toObject();
+//             QString result = boxObject["result"].toString().toUtf8();
+//             // todo 物流码是否正确
+//             if ((product_->logistics1 + product_->logistics2) == result.toStdString())
+//             {
+//                 plcDev_->writeDataToDevice("b", "13004", "01", "1");
+//                 // 添加生产数据
+//             }
+//             else
+//             {
+//                 plcDev_->writeDataToDevice("b", "13004", "01", "0");
+//                 // 添加生产数据
+//             }
+//             LogInfo("result str", result.toStdString());
+//             QString confidence = boxObject["confidence"].toString();
+//             float num = confidence.toFloat();
+//             confidence = QString::number(num, 'f', 2);
+
+//             QString lefttop = boxObject["lefttop"].toString();
+//             QString righttop = boxObject["righttop"].toString();
+//             QString rightbottom = boxObject["rightbottom"].toString();
+//             QString leftbottom = boxObject["leftbottom"].toString();
+
+//             QJsonArray lefttopArray = QJsonDocument::fromJson(lefttop.toUtf8()).array();
+//             QJsonArray righttopArray = QJsonDocument::fromJson(righttop.toUtf8()).array();
+//             QJsonArray rightbottomArray = QJsonDocument::fromJson(rightbottom.toUtf8()).array();
+//             QJsonArray leftbottomArray = QJsonDocument::fromJson(leftbottom.toUtf8()).array();
+
+//             QString resstr = result + "; " + confidence + ";";
+//             cv::putText(product_->codeCheckImage, resstr.toStdString(), cv::Point(5, dataLocate),
+//                         cv::FONT_HERSHEY_SIMPLEX, 1, colorList[colorIndex], 2, 8); // 输出文字
+//             dataLocate += 35;                                                      // 文字换行
+//             cv::line(product_->codeCheckImage, cv::Point(lefttopArray[0].toInt(), lefttopArray[1].toInt()),
+//                      cv::Point(righttopArray[0].toInt(), righttopArray[1].toInt()), colorList[colorIndex],
+//                      2);
+//             cv::line(product_->codeCheckImage, cv::Point(righttopArray[0].toInt(), righttopArray[1].toInt()),
+//                      cv::Point(rightbottomArray[0].toInt(), rightbottomArray[1].toInt()),
+//                      colorList[colorIndex], 2);
+//             cv::line(product_->codeCheckImage, cv::Point(rightbottomArray[0].toInt(),
+//             rightbottomArray[1].toInt()),
+//                      cv::Point(leftbottomArray[0].toInt(), leftbottomArray[1].toInt()),
+//                      colorList[colorIndex], 2);
+//             cv::line(product_->codeCheckImage, cv::Point(leftbottomArray[0].toInt(),
+//             leftbottomArray[1].toInt()),
+//                      cv::Point(lefttopArray[0].toInt(), lefttopArray[1].toInt()), colorList[colorIndex], 2);
+
+//             colorIndex = (colorIndex + 1) % 6; // 颜色轮转
+//         }
+
+//         // 1 图像操作：显示在界面、保存
+//         // QImage saveImage = Utils::matToQImage(product_->codeCheckImage);
+//         // Utils::saveImageToFile(saveImage, 2);
+//         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
+//                   Q_ARG(QImage, Utils::matToQImage(product_->codeCheckImage)));
+//     }
+//     else
+//     {
+//         // 2 算法没有识别到的逻辑
+//         plcDev_->writeDataToDevice("b", "13004", "01", "0");
+//         // 添加生产数据
+//     }
+//     while (productList_.front() != product_)
+//     {
+//         // todo 循环清理ng数据
+//         productList_.pop_front();
+//     }
+//     // 清理当前数据
+//     productList_.pop_front();
+// }

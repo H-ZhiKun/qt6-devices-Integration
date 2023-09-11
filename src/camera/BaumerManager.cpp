@@ -83,7 +83,7 @@ void BaumerManager::searchCamera()
                     count++;
                 }
             }
-            if (count == lvCameras_.size())
+            if (count == lvCameras_.size() || lvCameras_.size() == 0)
             {
                 break;
             }
@@ -138,12 +138,12 @@ void BaumerManager::stop()
     deinitializeBGAPI();
 }
 
-std::list<cv::Mat> BaumerManager::getImageBySN(uint8_t number)
+cv::Mat BaumerManager::getCamaeraMat(uint8_t windId)
 {
     std::lock_guard lock(mtxCamera_);
-    if (lvCameras_[number])
+    if (lvCameras_[windId])
     {
-        return lvCameras_[number]->getImage();
+        return lvCameras_[windId]->getCurrentMat();
     }
     return {};
 };
@@ -292,6 +292,20 @@ void BaumerManager::saveConfig(YAML::Node &launchConfig)
         curItem["offset_y"] = params["offset_y"].asUInt();
         launchConfig["baumer"]["paramters"][index] = curItem;
     }
+}
+
+std::vector<uint8_t> BaumerManager::cameraState()
+{
+    std::vector<uint8_t> res;
+    for (uint8_t index = 0; index < lvSNNumber_.size(); index++)
+    {
+        std::lock_guard lock(mtxCamera_);
+        if (lvCameras_[index])
+        {
+            res.push_back(index);
+        }
+    }
+    return res;
 }
 
 bool BaumerManager::setCamera(const Json::Value &param, std::string &des)

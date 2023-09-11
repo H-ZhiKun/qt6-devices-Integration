@@ -7,19 +7,15 @@ Cognex::Cognex(QObject *parent)
 void Cognex::dealing(std::vector<unsigned char> buffer)
 {
     std::string str(buffer.begin(), buffer.end());
-    QString result = QString::fromStdString(str);
-    if (!result.isEmpty())
+    if (str.find("HTTP") != std::string::npos)
     {
-        // QStringList parts = result.split(',');
-        // qDebug() << "scanCode" << parts.first(); // 返回第一个逗号前的内容
-        // emit finishReadQRCode(parts.first().toStdString());
-        emit finishReadQRCode(result.toStdString());
+        LogInfo("Cognex recv: {}", str);
+        emit ReadQRCode(str);
     }
     else
     {
-        LogWarn("cognex return null.");
+        LogInfo("Cognex recv other: {}", str);
     }
-    return;
 }
 
 // void Cognex::pingBehavior()

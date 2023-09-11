@@ -36,6 +36,8 @@ plc:
 algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
   url_predict: 'http://127.0.0.1:5000/predict_tangle'
+  ws_tangle: 'ws://localhost:5000/'
+  ws_tangleCheck: 'ws://localhost:5002/'
 domino:
   host: 127.0.0.1
   port: 20001
@@ -58,21 +60,21 @@ baumer:
     - sn_number: 700009842711
       display_window: 0
       trigger_mode: 1
-      expose: 0.4
-      gain: 2
+      expose: 0.8
+      gain: 1
       width: 1024
       height: 1024
-      offset_x: 704
-      offset_y: 400
+      offset_x: 592
+      offset_y: 490
     - sn_number: 700009842699
       display_window: 1
       trigger_mode: 1
       expose: 0.8
-      gain: 1
+      gain: 2
       width: 800
       height: 800
-      offset_x: 0
-      offset_y: 0
+      offset_x: 960
+      offset_y: 632
     - sn_number: 700009429371
       display_window: 2
       trigger_mode: 1
@@ -80,5 +82,5 @@ baumer:
       gain: 2
       width: 800
       height: 800
-      offset_x: 800
-      offset_y: 650
+      offset_x: 592
+      offset_y: 784

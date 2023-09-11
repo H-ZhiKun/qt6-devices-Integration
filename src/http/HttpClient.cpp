@@ -53,8 +53,30 @@ void HttpClient::sendImageRequest(const std::string &urlStr, const QByteArray &i
 
     QNetworkReply *reply = m_manager->post(request, multiPart);
 
-    connect(reply, &QNetworkReply::finished, this, &HttpClient::handleReply);
+    QEventLoop loop;
+    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    // 下面处理异常
+    // connect(reply, &QNetworkReply::finished, this, &HttpClient::handleReply);
     connect(reply, &QNetworkReply::finished, multiPart, &QHttpMultiPart::deleteLater);
+    loop.exec(); // 阻塞，直到回复完成
+
+    // 在这里可以处理 reply 的结果，以及其它你需要的操作
+    // reply->error() 可以检查是否有错误发生
+    if (!reply)
+        return;
+
+    if (reply->error() == QNetworkReply::NoError)
+    {
+        QByteArray response = reply->readAll();
+        std::string resString(response.constData(), response.size());
+        emit responseReceived(resString);
+    }
+    else
+    {
+        emit responseReceived("");
+    }
+
+    reply->deleteLater(); // 清理 reply 对象
 }
 
 void HttpClient::handleReply()

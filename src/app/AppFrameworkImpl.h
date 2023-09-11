@@ -1,14 +1,14 @@
 #pragma once
 #include "AppFramework.h"
 #include "BaumerManager.h"
+#include "CircleProduct.h"
 #include "Cognex.h"
 #include "Domino.h"
-#include "HttpClient.h"
 #include "Logger.h"
 #include "PLCDevice.h"
 #include "Permission.h"
 #include "PgsqlHelper.h"
-#include <Product.h>
+#include "WebManager.h"
 #include <QBrush>
 #include <QDir>
 #include <QPainter>
@@ -56,6 +56,8 @@ class AppFrameworkImpl final : public AppFramework
     std::string collectImage(const std::string &);
     std::string readPLC(const std::string &);
     std::string writePLC(const std::string &);
+    std::string refreshMainPage();
+    std::string refreshPowerPage();
     // 差异调用 接口区域
     void loadConfig();
     void saveConfig();
@@ -66,54 +68,71 @@ class AppFrameworkImpl final : public AppFramework
     void memoryClean();
     void initBaumerManager();
     void initFile();
+    void initProduct();
 
-    void updateRealData();                                             // 主界面实时更新数据
-    void updateProduceRealData();                                      // 生产数据界面实时更新数据
-    void updateSensorRealData();                                       // 传感器界面实时更新数据
-    void updateValveRealData();                                        // 阀门界面实时更新数据
-    void updatePowerRealData();                                        // 电机界面实时更新数据
-    void updateAlertData();                                            // 更新报警信息
-    void updateFormulaData();                                          // 初始化配方界面
-    void updateVideo();                                                // 实时视频
-    void refreshImage(const uint8_t winint, const uint64_t bottomNum); // 实时图像
-    void refreshImageTest(const int bottomNum);
+    void updateRealData();        // 主界面实时更新数据
+    void updateProduceRealData(); // 生产数据界面实时更新数据
+    void updateSensorRealData();  // 传感器界面实时更新数据
+    void updateValveRealData();   // 阀门界面实时更新数据
+    void updateAlertData();       // 更新报警信息
+    void updateFormulaData();     // 初始化配方界面
+    void updateVideo();           // 实时视频
+
     void refreshLocate(const uint64_t bottomNum);
     void refreshLocateCheck(const uint64_t bottomNum);
     void refreshCodeCheck(const uint64_t bottomNum);
-    void updateByMinute(const std::string &minute);                                              // 每分钟更新
-    void updateByDay(const std::string &year, const std::string &month, const std::string &day); // 每日更新
+    void updateByMinute(const int minute);                            // 每分钟更新
+    void updateByDay(const int year, const int month, const int day); // 每日更新
     void updateUserData();
-    void timerTask();                                 // 定时任务
-    void processHttpRes(const std::string &jsonData); // 处理http 返回参数
-    void processHttpResTest(const std::string &jsonData);
-    void processPaddleOCR(QJsonDocument);  // 处理检测算法
-    void processYoloTangle(QJsonDocument); // 处理角度预测算法
+    void timerTask(); // 定时任务
+
+    void whenBottomMove(const uint64_t number);
+    void whenCognexRecv(const std::string &code);
+    void whenPermissionRecv(const uint16_t number, const std::string &describtion, const std::string &code1,
+                            const std::string &code2);
+    void afterCaputureImage(const uint8_t windId, const cv::Mat &mat);
+    void processOCR(const std::string &);
+    void processTangle(const std::string &);
+    void processTangleCheck(const std::string &);
+
+    void processPaddleOCR(const std::string &);  // 处理检测算法
+    void processYoloTangle(const std::string &); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
-    void saveImageToFile(QImage &imgSave, const DisplayWindows &camId);
-    void runMainProcess();
+    void processQrCode(const std::string value);
+    void processCode(const std::string code1, const std::string code2);
+    void doPrintCode(uint8_t bottomNum);
+    void sendOneToAlgo(); // 初始化服务端的python模型
+    void drawText(QImage &img, const QString &text);
 
   private:
     // 私有变量区域
+    // 程序路径 begin
     std::string strAppPath_;
+    std::string strTanglePath_;
+    std::string strTangleCheckPath_;
+    std::string strOcrPath_;
+    std::string strTangleResultPath_;
+    std::string strTangleCheckResultPath_;
+    // 程序路径 end
     YAML::Node config_;
     std::list<std::thread> lvFulltimeThread_;
     std::atomic_bool bThreadHolder{true};
-    QString saveImageDir;
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
-    std::list<Product *> productList_;
+    CircleProduct *circleProduct_{nullptr};
     // Module 组装区域
     // tcp client begin
     Domino *domino_ = nullptr;
     Cognex *cognex_ = nullptr;
     Permission *permission_ = nullptr;
-    HttpClient *httpClient_ = nullptr;
+    WebManager *webManager_ = nullptr;
     // tcp client end
     PLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
     std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
     std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
     std::unordered_map<DisplayWindows, uint16_t> mapSaveImage_;     // 图片保存数量控制
+    std::atomic<u_int> curbottomnum;
 
   public:
     // 调用qml 对象函数工具
