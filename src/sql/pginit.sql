@@ -1,3 +1,4 @@
+CREATE DATABASE integration;
 -- Create the tables
 
 -- Table structure for system_config
