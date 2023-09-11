@@ -12,6 +12,7 @@ ListView {
     clip: true  // 超出view部分裁剪
     model: 5  // 每个listview包含几个item
     focus: true
+    interactive: false
 
     // 单个item
     delegate: ItemDelegate {
@@ -71,16 +72,13 @@ ListView {
                     singalComponent.curentSensor = (modelData + baseIndex);
                     singalComponent.curItem = singleItem;
                     if (singleItem.startAddr === "") {
-                        console.log("sensor item");
                         // 传感器
                         return;
                     }
                     if (singleItem.locateAddr === "") {
                         // 阀门
-                        console.log("volve item");
                         return;
                     } else {
-                        console.log("power item");
                         // 电机
                         var json = {
                             [singleItem.modeAddr]: "0",

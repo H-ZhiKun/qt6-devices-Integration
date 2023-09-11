@@ -349,9 +349,7 @@ std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
             ret = true;
         }
     }
-    std::string result = Utils::makeResponse(ret, std::move(res));
-    qDebug() << result;
-    return result;
+    return Utils::makeResponse(ret, std::move(res));
 }
 
 std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
