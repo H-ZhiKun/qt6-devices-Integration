@@ -11,17 +11,19 @@ GroupBox {
     objectName: "valveControllWin"
     width: 1110  //Screen.desktopAvailableWidth
     height: 640  //Screen.desktopAvailableHeight
-    property string objName: "阀门XY00"
+    property string objName: "阀门"
+    property int curPage: 0
+    property bool openFlag: true
     visible: true
-    background: Rectangle{
-        anchors.fill : parent
+    background: Rectangle {
+        anchors.fill: parent
         border.color: "gray"
         border.width: 1
         radius: 10
-        color: Qt.rgba(245/255,248/255,245/255,1)
+        color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     }
 
-    GroupBox{
+    GroupBox {
         id: valveControll
         objectName: "valveControll"
         anchors.fill: parent
@@ -30,55 +32,53 @@ GroupBox {
         font.pointSize: 20
         anchors.leftMargin: 610
         anchors.bottomMargin: 40
-        background: Rectangle{
-            anchors.fill : parent
+        background: Rectangle {
+            anchors.fill: parent
             border.color: "gray"
             border.width: 1
             radius: 10
             anchors.topMargin: 50
-            color: Qt.rgba(245/255,248/255,245/255,1)
+            color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
         }
-        GroupBox{
-
+        GroupBox {
             id: singalComponent
             objectName: "singalComponent"
-            y:20
-            x:0
+            y: 20
+            x: 0
             width: parent.width
-            height: parent.height-200
+            height: parent.height - 200
             title: "当前未选中" + valveControllWin.objName
             property var curItem: valveListView1.itemAtIndex(0)
             property int curentSensor: -1
             font.pointSize: 12
-            background: Rectangle{
-                anchors.fill : parent
+            background: Rectangle {
+                anchors.fill: parent
                 border.color: "gray"
                 border.width: 1
                 radius: 10
                 anchors.topMargin: 30
-                color: Qt.rgba(245/255,248/255,245/255,1)
+                color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
 
             MySwitch {
                 id: switchModel
                 anchors.horizontalCenter: parent.horizontalCenter
-                y:126
+                y: 126
                 anchors.horizontalCenterOffset: 0
                 focusPolicy: Qt.NoFocus
-                enabled: handMoveState
                 onClicked: {
-                    var handMoveAddr = singalComponent.curItem.handMoveAddr
+                    var handMoveAddr = singalComponent.curItem.handMoveAddr;
                     var json = {
-                        [handMoveAddr]: switchModel.checked ? "0" : "1",
+                        [handMoveAddr]: switchModel.checked ? "0" : "1"
                     };
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
                     var result = JSON.parse(jsRet);
-                    if(result.ok === true){
-                        setInfo.text = "保存失败！"
-                        setInfo.color = "red"
-                    }else{
-                        setInfo.text = "保存成功！"
-                        setInfo.color = "green"
+                    if (result.ok === true) {
+                        setInfo.text = "保存失败！";
+                        setInfo.color = "red";
+                    } else {
+                        setInfo.text = "保存成功！";
+                        setInfo.color = "green";
                     }
                 }
             }
@@ -86,17 +86,16 @@ GroupBox {
             Text {
                 text: qsTr("自动")
                 font.pointSize: 11
-                x:switchModel.x-50
-                y:switchModel.y
+                x: switchModel.x - 50
+                y: switchModel.y
             }
 
             Text {
                 text: qsTr("点动")
                 font.pointSize: 11
-                x:switchModel.x+83
-                y:switchModel.y
+                x: switchModel.x + 83
+                y: switchModel.y
             }
-
         }
 
         Label {
@@ -106,10 +105,9 @@ GroupBox {
             text: qsTr("")
             font.pointSize: 15
         }
-
     }
 
-    GroupBox{
+    GroupBox {
         id: valveDisplay
         objectName: "valveDisplay"
         anchors.fill: parent
@@ -119,49 +117,43 @@ GroupBox {
         anchors.bottomMargin: 40
         anchors.rightMargin: 510
 
-        background: Rectangle{
-            anchors.fill : parent
+        background: Rectangle {
+            anchors.fill: parent
             border.color: "gray"
             border.width: 1
             radius: 10
             anchors.topMargin: 50
-            color: Qt.rgba(245/255,248/255,245/255,1)
+            color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
         }
 
-
-        StackLayout {   //栈布局管理器
-            id:stacklaout
+        StackLayout {
+            //栈布局管理器
+            id: stacklaout
             objectName: "stacklaout"
             width: parent.width
-            y:60
-            x:0
-            height: parent.height-50
-            currentIndex: bar.currentIndex  //当前视图的索引
-            Rectangle  {
-                color: Qt.rgba(248/255,248/255,248/255,1)
+            y: 60
+            x: 0
+            height: parent.height - 50
+            Rectangle {
+                color: Qt.rgba(248 / 255, 248 / 255, 248 / 255, 1)
                 //anchors.fill: stacklaout
-                ComponentList{
-                    anchors.leftMargin: 135
+                ComponentList {
                     id: valveListView1
+                    anchors.leftMargin: 130
                     objectName: "valveListView1"
                     baseIndex: 1
                     listName: valveControllWin.objName
-
                 }
-                ComponentList{
-                    anchors.leftMargin: 260
+                ComponentList {
                     id: valveListView2
+                    anchors.leftMargin: 265
                     objectName: "valveListView2"
-                    baseIndex:6
+                    baseIndex: 6
                     listName: valveControllWin.objName
-                    model:1
+                    model: 1
                 }
-
             }
         }
-
-
-
     }
 
     function requireValveState() {
@@ -206,21 +198,19 @@ GroupBox {
         }
     }
 
-    function initValve(){
+    function initValve() {
         var item0 = valveListView1.itemAtIndex(0);
         var item1 = valveListView1.itemAtIndex(1);
         var item2 = valveListView1.itemAtIndex(2);
         var item3 = valveListView1.itemAtIndex(3);
         var item4 = valveListView1.itemAtIndex(4);
         var item5 = valveListView2.itemAtIndex(0);
-
         if (item0 === null) {
             console.log("阀1 no item");
         } else {
             item0.itemName = "阀1";
             item0.handMoveAddr = "XY001_di_0100";
         }
-
         if (item1 === null) {
             console.log("阀2 no item");
         } else {
@@ -233,21 +223,18 @@ GroupBox {
             item2.itemName = "阀3";
             item2.handMoveAddr = "XY003_di_0104";
         }
-
         if (item3 === null) {
             console.log("阀4 no item");
         } else {
             item3.itemName = "阀4";
             item3.handMoveAddr = "XY004_di_0106";
         }
-
         if (item4 === null) {
             console.log("阀5 no item");
         } else {
             item4.itemName = "阀5";
             item4.handMoveAddr = "XY005_di_0108";
         }
-
         if (item5 === null) {
             console.log("阀6 no item");
         } else {
@@ -256,11 +243,11 @@ GroupBox {
         }
     }
     Connections {
-            target: appMetaFlash // C++ 对象实例
-            function onPageValveChange(value) {
-                // 执行其他操作...
-                var jsonData = JSON.parse(value);
-                var val = jsonData.valve;
-            }
+        target: appMetaFlash // C++ 对象实例
+        function onPageValveChange(value) {
+            // 执行其他操作...
+            var jsonData = JSON.parse(value);
+            var val = jsonData.valve;
+        }
     }
 }

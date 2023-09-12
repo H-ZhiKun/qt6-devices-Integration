@@ -568,7 +568,8 @@ Rectangle {
         // 阀门
         Item {
             id: valvePageTab
-            ValvePage {
+            StrightValvePage {
+                //ValvePage {
                 id: volveItem
                 x: 190
                 y: 30
