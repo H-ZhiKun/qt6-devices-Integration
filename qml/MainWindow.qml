@@ -11,6 +11,7 @@ Window {
     maximumHeight: 705
     title: "德图福思"
     property int changeFlag: 0
+
     enum ExpectedFunction {
         DominoConnect,    //0 多米诺设备连接
         DeleteFormula,    //1 删除某个配方数据
