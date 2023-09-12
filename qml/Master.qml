@@ -577,12 +577,14 @@ Rectangle {
         // 电机
         Item {
             id: powerPageTab
-            PowerPage {
+            // PowerPage {
+            StrightPowerPage {
                 id: powerItem
                 x: 190
                 y: 30
             }
         }
+
         // 用户管理
         Item {
             id: userPageTab
