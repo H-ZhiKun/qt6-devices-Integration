@@ -31,6 +31,9 @@ ListView {
         property string setSpeedAddr: "" // 设置速度
         property string realLocateAddr: "" // 实际位置
         property string realSpeedAddr: "" // 实际速度
+        property string enableAddr: "" // 驱动使能
+        property string failureAddr: "" // 驱动故障
+        property string resetAddr: "" // 故障复位
         // 大小
         height: 70
         width: 130
