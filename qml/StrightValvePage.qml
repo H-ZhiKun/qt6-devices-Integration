@@ -65,7 +65,7 @@ GroupBox {
                 y:126
                 anchors.horizontalCenterOffset: 0
                 focusPolicy: Qt.NoFocus
-                //            enabled: powerHandMove.checked ? true : false
+                enabled: handMoveState
                 onClicked: {
                     var handMoveAddr = singalComponent.curItem.handMoveAddr
                     var json = {
@@ -218,41 +218,41 @@ GroupBox {
             console.log("阀1 no item");
         } else {
             item0.itemName = "阀1";
-            item0.handMoveAddr = "XY001_d_40100";
+            item0.handMoveAddr = "XY001_di_0100";
         }
 
         if (item1 === null) {
             console.log("阀2 no item");
         } else {
             item1.itemName = "阀2";
-            item1.handMoveAddr = "XY002_d_40102";
+            item1.handMoveAddr = "XY002_di_0102";
         }
         if (item2 === null) {
             console.log("阀3 no item");
         } else {
             item2.itemName = "阀3";
-            item2.handMoveAddr = "XY003_d_40104";
+            item2.handMoveAddr = "XY003_di_0104";
         }
 
         if (item3 === null) {
             console.log("阀4 no item");
         } else {
             item3.itemName = "阀4";
-            item3.handMoveAddr = "XY004_d_40106";
+            item3.handMoveAddr = "XY004_di_0106";
         }
 
         if (item4 === null) {
             console.log("阀5 no item");
         } else {
             item4.itemName = "阀5";
-            item4.handMoveAddr = "XY005_d_40108";
+            item4.handMoveAddr = "XY005_di_0108";
         }
 
         if (item5 === null) {
             console.log("阀6 no item");
         } else {
             item5.itemName = "阀6";
-            item5.handMoveAddr = "XY006_d_40110";
+            item5.handMoveAddr = "XY006_di_0110";
         }
     }
     Connections {
