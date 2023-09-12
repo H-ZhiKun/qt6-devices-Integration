@@ -165,3 +165,26 @@ CREATE TABLE IF NOT EXISTS bottles_record (
   logistics_ret_time TIMESTAMP,                  -- 物流码回复时间
   created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Table structure for stright_alarm_data
+CREATE TABLE IF NOT EXISTS stright_alarm_data (
+  id serial PRIMARY KEY,
+  type varchar(16),
+  content varchar(64),
+  register_address varchar(10),
+  state boolean DEFAULT TRUE,
+  created_time timestamp DEFAULT CURRENT_TIMESTAMP,
+  updated_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table structure for stright_count_data
+CREATE TABLE IF NOT EXISTS stright_count_data(
+  id serial PRIMARY KEY,
+  count_in integer,
+  count_detect integer,
+  count_remove_all integer,
+  count_remove_code integer,
+  created_time timestamp DEFAULT CURRENT_TIMESTAMP,
+  updated_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
