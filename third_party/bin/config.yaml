@@ -23,16 +23,45 @@ app:
     # passwd: release '' by default,password security considerations
     passwd: ''
 plc:
-  # type: circle or line
+  # type: circle or line,cap required
   type: circle
-  # host: plc address,192.168.1.10 by default
-  host: 192.168.123.10
-  # port: plc port, 502 by default
-  port: 502
-  # io_freq read registers freq, the read interval milliseconds
-  io_freq: 500
-  # FIFO read interval milliseconds
-  fifo_freq: 50
+  # this block define the kind of registers address and size
+  # normal_address interval 500ms
+  # realtime_address interval 5ms
+  details:
+    - name: circle
+      # host: plc address,192.168.1.10 by default
+      host: 192.168.123.10
+      # port: plc port, 502 by default
+      port: 502
+      normal_address: 412289
+      normal_size: 400
+      realtime_address: 412642
+      realtime_size: 14
+      write_address: 412689
+      write_size: 316
+    - name: line
+      # host: plc address,192.168.1.10 by default
+      host: 192.168.123.10
+      # port: plc port, 502 by default
+      port: 502
+      normal_address: 40001
+      normal_size: 110
+      realtime_address: 40112
+      realtime_size: 2
+      write_address: 40001
+      write_size: 110
+    - name: cap
+      # host: plc address,192.168.1.10 by default
+      host: 192.168.123.10
+      # port: plc port, 502 by default
+      port: 502
+      normal_address: 40001
+      normal_size: 116
+      realtime_address: 40117
+      realtime_size: 2
+      write_address: 0
+      write_size: 0
 algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
   url_predict: 'http://127.0.0.1:5000/predict_tangle'

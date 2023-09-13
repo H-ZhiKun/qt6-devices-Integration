@@ -34,9 +34,9 @@ void ModbusClient::work()
     // 根据启动参数列表创建任务线程
     tasks_.emplace_back(std::thread([this]() {
         std::vector<uint16_t> cacheBuffer;
-        cacheBuffer.resize(rCacheInfo_.size);
-        std::vector<uint16_t> FIFOBuffer;
-        FIFOBuffer.resize(FIFOCacheInfo_.size);
+        cacheBuffer.resize(normalCacheInfo_.size);
+        std::vector<uint16_t> realtimeBuffer;
+        realtimeBuffer.resize(realCacheInfo_.size);
         uint16_t offsetCount = 0;
         while (bThreadHolder_.load(std::memory_order_acquire))
         {
@@ -54,21 +54,17 @@ void ModbusClient::work()
                 // 读缓存
                 if (offsetCount >= 500)
                 {
-                    if (readRegisters(rCacheInfo_.address, rCacheInfo_.size, cacheBuffer))
+                    if (readRegisters(normalCacheInfo_.address, normalCacheInfo_.size, cacheBuffer))
                     {
                         std::lock_guard lock(mtxReadCache_);
-                        std::copy(cacheBuffer.begin(), cacheBuffer.end(), rCacheInfo_.cache.begin());
-                        // qDebug() << fmt::format("updated by addr = {}, size = {}", rCacheInfo_.address,
-                        //                         rCacheInfo_.size);
+                        std::copy(cacheBuffer.begin(), cacheBuffer.end(), normalCacheInfo_.cache.begin());
                     }
                     offsetCount = 0;
                 }
-                if (readRegisters(FIFOCacheInfo_.address, FIFOCacheInfo_.size, FIFOBuffer))
+                if (readRegisters(realCacheInfo_.address, realCacheInfo_.size, realtimeBuffer))
                 {
-                    std::lock_guard lock(mtxFIFO_);
-                    std::copy(FIFOBuffer.begin(), FIFOBuffer.end(), FIFOCacheInfo_.cache.begin());
-                    // qDebug() << fmt::format("updated by addr = {}, size = {}", FIFOCacheInfo_.address,
-                    //                         FIFOCacheInfo_.size);
+                    std::lock_guard lock(mtxRealtime_);
+                    std::copy(realtimeBuffer.begin(), realtimeBuffer.end(), realCacheInfo_.cache.begin());
                 }
                 offsetCount++;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -81,78 +77,76 @@ void ModbusClient::work()
     }));
 }
 
-void ModbusClient::addReadCache(uint16_t addr, uint16_t size, int32_t offset)
+void ModbusClient::addNormalCache(uint16_t addr, uint16_t size)
 {
-    rCacheInfo_.offset = offset;
-    rCacheInfo_.size = size;
-    rCacheInfo_.address = addr;
-    rCacheInfo_.cache.resize(size);
+    normalCacheInfo_.size = size;
+    normalCacheInfo_.address = addr;
+    normalCacheInfo_.cache.resize(size);
 }
 
-void ModbusClient::addFIFOCache(uint16_t addr, uint16_t size, int32_t offset)
+void ModbusClient::addRealtimeCache(uint16_t addr, uint16_t size)
 {
-    FIFOCacheInfo_.offset = offset;
-    FIFOCacheInfo_.size = size;
-    FIFOCacheInfo_.address = addr;
-    FIFOCacheInfo_.cache.resize(size);
+    realCacheInfo_.size = size;
+    realCacheInfo_.address = addr;
+    realCacheInfo_.cache.resize(size);
 }
 
 void ModbusClient::addWriteCache(uint16_t addr, uint16_t size)
 {
-    wCacheInfo_.address = addr;
-    wCacheInfo_.size = size;
-    wCacheInfo_.cache.resize(size);
+    writeCacheInfo_.address = addr;
+    writeCacheInfo_.size = size;
+    writeCacheInfo_.cache.resize(size);
 }
 
 bool ModbusClient::readCache(uint16_t address, uint16_t count, std::vector<uint16_t> &outData)
 {
     // 检查是否越界
-    uint16_t addr = address - 1 - rCacheInfo_.address;
-    if (addr + count > rCacheInfo_.cache.size())
+    uint16_t addr = address - 1 - normalCacheInfo_.address;
+    if (addr + count > normalCacheInfo_.cache.size())
     {
         // 如果请求的范围超过了缓存的容量，返回一个空的结果向量
         return false;
     }
     // 使用std::copy进行批量读取
     std::lock_guard lock(mtxReadCache_); // 加缓存读锁
-    std::copy(rCacheInfo_.cache.begin() + addr, rCacheInfo_.cache.begin() + addr + count, outData.begin());
+    std::copy(normalCacheInfo_.cache.begin() + addr, normalCacheInfo_.cache.begin() + addr + count, outData.begin());
 
     return true;
 }
 
-CacheInfo ModbusClient::readFIFO()
+CacheInfo ModbusClient::readRealtimeInfo()
 {
-    std::lock_guard lock(mtxFIFO_);
-    return FIFOCacheInfo_;
+    std::lock_guard lock(mtxRealtime_);
+    return realCacheInfo_;
 }
 
 bool ModbusClient::writeCache(uint16_t address, WriteRegisterType type, const uint16_t *data)
 {
     bool ret = true;
-    uint16_t cacheIndex = address - wCacheInfo_.address;
-    if (cacheIndex >= wCacheInfo_.cache.size() || cacheIndex < 0)
+    uint16_t cacheIndex = address - 1 - writeCacheInfo_.address;
+    if (cacheIndex < 0)
     {
         return false;
     }
     switch (type)
     {
     case WriteRegisterType::RegBool: {
-        auto tempVal = std::bitset<16>(wCacheInfo_.cache[cacheIndex]);
+        auto tempVal = std::bitset<16>(writeCacheInfo_.cache[cacheIndex]);
         tempVal.set(data[0], data[1]);
         uint16_t uint16Val = tempVal.to_ulong();
-        wCacheInfo_.cache[cacheIndex] = uint16Val;
-        qWriteData_.enqueue(RegisterWriteData(address - 1, uint16Val));
+        writeCacheInfo_.cache[cacheIndex] = uint16Val;
+        qWriteData_.enqueue(RegisterWriteData(address, uint16Val));
         break;
     }
     case WriteRegisterType::RegInt: {
-        wCacheInfo_.cache[cacheIndex] = data[0];
-        qWriteData_.enqueue(RegisterWriteData(address - 1, data[0]));
+        writeCacheInfo_.cache[cacheIndex] = data[0];
+        qWriteData_.enqueue(RegisterWriteData(address, data[0]));
         break;
     }
     case WriteRegisterType::RegReal: {
-        wCacheInfo_.cache[cacheIndex] = data[0];
-        wCacheInfo_.cache[cacheIndex + 1] = data[1];
-        qWriteData_.enqueue(RegisterWriteData(address - 1, data));
+        writeCacheInfo_.cache[cacheIndex] = data[0];
+        writeCacheInfo_.cache[cacheIndex + 1] = data[1];
+        qWriteData_.enqueue(RegisterWriteData(address, data));
         break;
     }
 
