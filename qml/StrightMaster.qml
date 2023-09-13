@@ -191,111 +191,7 @@ Rectangle {
                 }
             }
         }
-        TabButton {
-            id: formulaBtn
-            text: qsTr("          配        方")
-            height: 71
-            font.pointSize: 14
-            width: master.width / 8
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: alarmBtn.bottom
-            contentItem: IconLabel {
-                spacing: formulaBtn.spacing
-                mirrored: formulaBtn.mirrored
-                display: formulaBtn.display
 
-                icon: formulaBtn.icon
-                text: formulaBtn.text
-                font: formulaBtn.font
-                color: formulaBtn.palette.windowText
-            }
-            Image {
-                source: "file:///" + appdir + "/ico/peifang.png"
-                width: 33
-                height: 33
-                fillMode: Image.PreserveAspectFit //保持宽高比
-                mipmap: true
-                x: 25
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            background: Rectangle {
-                id: formulaRec
-                radius: 10
-                border.width: 2
-                border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 3 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-            }
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: {
-                    bar.currentIndex = 3;
-                }
-                onEntered: {
-                    formulaRec.border.color = "lightblue";
-                }
-                onExited: {
-                    formulaRec.border.color = Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1);
-                }
-            }
-        }
-        TabButton {
-            id: sensorBtn
-            text: qsTr("         传  感  器")
-            height: 71
-            font.pointSize: 14
-            width: master.width / 8
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: formulaBtn.bottom
-            contentItem: IconLabel {
-                spacing: sensorBtn.spacing
-                mirrored: sensorBtn.mirrored
-                display: sensorBtn.display
-
-                icon: sensorBtn.icon
-                text: sensorBtn.text
-                font: sensorBtn.font
-                color: sensorBtn.palette.windowText
-            }
-            Image {
-                source: "file:///" + appdir + "/ico/chuanganqi.png"
-                width: 44
-                height: 44
-                fillMode: Image.PreserveAspectFit //保持宽高比
-                mipmap: true
-                x: 19
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            background: Rectangle {
-                id: sensorRec
-                radius: 10
-                border.width: 2
-                border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 4 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-            }
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: {
-                    bar.currentIndex = 4;
-                    if (sensorItem.openFlag) {
-                        sensorItem.curPage = 1;
-                        sensorItem.curPage = 2;
-                        sensorItem.curPage = 3;
-                        sensorItem.curPage = 0;
-                        sensorItem.initSensor();
-                        sensorItem.openFlag = false;
-                    }
-                    sensorItem.requireSensorState();
-                }
-                onEntered: {
-                    sensorRec.border.color = "lightblue";
-                }
-                onExited: {
-                    sensorRec.border.color = Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1);
-                }
-            }
-        }
         TabButton {
             id: valveBtn
             text: qsTr("         阀        门")
@@ -303,7 +199,7 @@ Rectangle {
             font.pointSize: 14
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: sensorBtn.bottom
+            anchors.top: alarmBtn.bottom
             contentItem: IconLabel {
                 spacing: valveBtn.spacing
                 mirrored: valveBtn.mirrored
@@ -328,13 +224,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 5 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 3 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 5;
+                    bar.currentIndex = 3;
                     if (volveItem.openFlag) {
                         volveItem.curPage = 1;
                         volveItem.curPage = 0;
@@ -383,13 +279,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 6 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 4 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 6;
+                    bar.currentIndex = 4;
                     if (powerItem.initFlag) {
                         powerItem.curPage = 1;
                         powerItem.curPage = 0;
@@ -438,13 +334,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 7 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 5 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 7;
+                    bar.currentIndex = 5;
                 }
                 onEntered: {
                     manageRec.border.color = "lightblue";
@@ -486,13 +382,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 8 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 6 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 8;
+                    bar.currentIndex = 6;
                 }
                 onEntered: {
                     operateRec.border.color = "lightblue";
@@ -523,7 +419,7 @@ Rectangle {
         // 相机
         Item {
             id: cameraTab
-            Camera {
+            StrightCamera {
                 id: cameraItem
                 x: 190
                 y: 30
@@ -532,7 +428,7 @@ Rectangle {
         // 生产数据
         Item {
             id: produceDataTab
-            ProduceData {
+            StrightProduceData {
                 id: produceItem
                 x: 190
                 y: 30
@@ -548,28 +444,10 @@ Rectangle {
                 y: 30
             }
         }
-        // 配方
-        Item {
-            id: formulaPageTab
-            FormulaPage {
-                x: 190
-                y: 30
-            }
-        }
-        // 传感器
-        Item {
-            id: sensorPageTab
-            SensorPage {
-                id: sensorItem
-                x: 190
-                y: 30
-            }
-        }
         // 阀门
         Item {
             id: valvePageTab
             StrightValvePage {
-                //ValvePage {
                 id: volveItem
                 x: 190
                 y: 30
@@ -578,7 +456,6 @@ Rectangle {
         // 电机
         Item {
             id: powerPageTab
-            // PowerPage {
             StrightPowerPage {
                 id: powerItem
                 x: 190

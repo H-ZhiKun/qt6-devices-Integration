@@ -59,6 +59,9 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
     registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
+
+    registerExpectation(ExpectedFunction::RefreshElecData,
+                        std::bind(&AppFrameworkImpl::refreshElecData, this)); // 注册直线式电能表数据
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -386,7 +389,35 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
     }
     return Utils::makeResponse(ret);
 }
-
+std::string AppFrame::AppFrameworkImpl::refreshElecData()
+{
+    bool ret = true;
+    Json::Value jsElecVal;
+    jsElecVal["a_phase_voltage"] = plcDev_->readDevice("di", "0074");        // 电能表A相电压
+    jsElecVal["b_phase_voltage"] = plcDev_->readDevice("di", "0076");        // 电能表B相电压
+    jsElecVal["c_phase_voltage"] = plcDev_->readDevice("di", "0078");        // 电能表C相电压
+    jsElecVal["a_direction_current"] = plcDev_->readDevice("di", "0080");    // 电能表A相电流
+    jsElecVal["b_direction_current"] = plcDev_->readDevice("di", "0082");    // 电能表B相电流
+    jsElecVal["c_direction_current"] = plcDev_->readDevice("di", "0084");    // 电能表C相电流
+    jsElecVal["total_active_power"] = plcDev_->readDevice("di", "0086");     // 电能表总有功功率
+    jsElecVal["total_apparent_power"] = plcDev_->readDevice("di", "0088");   // 电能表总视在功率
+    jsElecVal["combinedActiveEnergy"] = plcDev_->readDevice("di", "0090");   // 电能表组合有功总电能
+    jsElecVal["positive_active_energy"] = plcDev_->readDevice("di", "0092"); // 电能表正向有功电能
+    jsElecVal["reverse_active_energy"] = plcDev_->readDevice("di", "0094");  // 电能表反向有功电能
+    jsElecVal["temperature"] = plcDev_->readDevice("di", "0096");            // 设备温度
+    jsElecVal["humidity"] = plcDev_->readDevice("di", "0098");               // 设备湿度
+    std::string result = Utils::makeResponse(ret, std::move(jsElecVal));
+    return result;
+}
+// std::string AppFrame::AppFrameworkImpl::refreshProduceData()
+// {
+//     bool ret = true;
+//     Json::Value jsProduceVal;
+//     jsProduceVal["textCountAll"] = plcDev_->readDevice("di", "40014");        // 进料数量
+//     jsProduceVal["textCountInspection"] = plcDev_->readDevice("di", "40016"); // 检测数量
+//     jsProduceVal[] = plcDev_->readDevice("di", "40018");                      // 总剔除数量
+//     jsProduceVal[] = plcDev_->readDevice("di", "40020");                      // 物流码剔除数量
+// }
 std::string AppFrame::AppFrameworkImpl::refreshMainPage()
 {
     bool ret = true;

@@ -9,6 +9,8 @@ ListView {
     objectName: "sensorListView1"
     property int baseIndex: 1  // 从第几个开始
     property string listName: "传感器"
+    property int singleWidth: 130
+    width: 130
     clip: true  // 超出view部分裁剪
     model: 5  // 每个listview包含几个item
     focus: true
@@ -31,9 +33,12 @@ ListView {
         property string setSpeedAddr: "" // 设置速度
         property string realLocateAddr: "" // 实际位置
         property string realSpeedAddr: "" // 实际速度
+        property string enableAddr: "" // 驱动使能
+        property string failureAddr: "" // 驱动故障
+        property string resetAddr: "" // 故障复位
         // 大小
         height: 70
-        width: 130
+        width: singleWidth
 
         // background: Qt.rgba(245/255,248/255,245/255,1)
 
