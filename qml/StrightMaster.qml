@@ -224,13 +224,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 5 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 3 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 5;
+                    bar.currentIndex = 3;
                     if (volveItem.openFlag) {
                         volveItem.curPage = 1;
                         volveItem.curPage = 0;
@@ -279,13 +279,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 6 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 4 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 6;
+                    bar.currentIndex = 4;
                     if (powerItem.initFlag) {
                         powerItem.curPage = 1;
                         powerItem.curPage = 0;
@@ -334,13 +334,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 7 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 5 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 7;
+                    bar.currentIndex = 5;
                 }
                 onEntered: {
                     manageRec.border.color = "lightblue";
@@ -382,13 +382,13 @@ Rectangle {
                 radius: 10
                 border.width: 2
                 border.color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-                color: bar.currentIndex === 8 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
+                color: bar.currentIndex === 6 ? "lightblue" : Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
             }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    bar.currentIndex = 8;
+                    bar.currentIndex = 6;
                 }
                 onEntered: {
                     operateRec.border.color = "lightblue";
@@ -428,7 +428,7 @@ Rectangle {
         // 生产数据
         Item {
             id: produceDataTab
-            ProduceData {
+            StrightProduceData {
                 id: produceItem
                 x: 190
                 y: 30
