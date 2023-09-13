@@ -8,7 +8,7 @@ GroupBox {
 
     property alias producePrepareState: producePrepare.state        // 准备生产状态
     property alias produceRunState: produceRun.state                // 运行生产状态
-    property alias produceEMERGENCYSTOP: produceEMERGENCYSTOP.state                  //急停生产
+    property alias produceEMERGENCYSTOP: produceEMERGENCYSTOP.state                //急停生产
     property alias producePauseState: producePause.state            // 暂停生产状态
     property alias produceStopState: produceStop.state              // 终止生产状态
     property alias timeTask: timeProduce
@@ -166,7 +166,7 @@ GroupBox {
             id: positiveActiveEnergy
             text: ""
             font.pointSize: 11
-            y: 30
+            y: 40
             x: 100
         }
 
@@ -175,7 +175,7 @@ GroupBox {
             id: reverseActiveEnergy
             text: ""
             font.pointSize: 11
-            y: 60
+            y: 100
             x: 100
         }
 
@@ -184,7 +184,7 @@ GroupBox {
             id: aPhaseVoltage
             text: ""
             font.pointSize: 11
-            y: 140
+            y: 160
             x: 70
         }
 
@@ -193,7 +193,7 @@ GroupBox {
             id: bPhaseVoltage
             text: ""
             font.pointSize: 11
-            y: 170
+            y: 205
             x: 70
         }
 
@@ -202,7 +202,7 @@ GroupBox {
             id: cPhaseVoltage
             text: ""
             font.pointSize: 11
-            y: 200
+            y: 250
             x: 70
         }
 
@@ -220,7 +220,7 @@ GroupBox {
             id: totalActivePower
             text: ""
             font.pointSize: 11
-            y: 30
+            y: 40
             x: 330
         }
 
@@ -229,14 +229,14 @@ GroupBox {
             id: totalApparentPower
             text: ""
             font.pointSize: 11
-            y: 60
+            y: 70
             x: 330
         }
 
         Text {
             // 组合有功电能，保留2位小数
             id: combinedActiveEnergy
-            text: "combined"
+            text: ""
             font.pointSize: 11
             y: 100
             x: 330
@@ -247,7 +247,7 @@ GroupBox {
             id: aDirectionCurrent
             text: ""
             font.pointSize: 11
-            y: 140
+            y: 160
             x: 310
         }
 
@@ -256,7 +256,7 @@ GroupBox {
             id: bDirectionCurrent
             text: ""
             font.pointSize: 11
-            y: 170
+            y: 205
             x: 310
         }
 
@@ -265,7 +265,7 @@ GroupBox {
             id: cDirectionCurrent
             text: ""
             font.pointSize: 11
-            y: 200
+            y: 250
             x: 310
         }
 
@@ -274,7 +274,7 @@ GroupBox {
             id: humidity
             text: ""
             font.pointSize: 11
-            y: 240
+            y: 320
             x: 280
         }
 
@@ -320,7 +320,7 @@ GroupBox {
             text: elec.degree
             font.pointSize: 11
             y: 320
-            x: 75
+            x: 115
         }
 
         // 总有功功率单位
