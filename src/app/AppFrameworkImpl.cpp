@@ -401,23 +401,21 @@ std::string AppFrame::AppFrameworkImpl::refreshElecData()
     jsElecVal["c_direction_current"] = plcDev_->readDevice("di", "0084");    // 电能表C相电流
     jsElecVal["total_active_power"] = plcDev_->readDevice("di", "0086");     // 电能表总有功功率
     jsElecVal["total_apparent_power"] = plcDev_->readDevice("di", "0088");   // 电能表总视在功率
-    jsElecVal["combinedActiveEnergy"] = plcDev_->readDevice("di", "0090");   // 电能表组合有功总电能
+    jsElecVal["combined_active_energy"] = plcDev_->readDevice("di", "0090"); // 电能表组合有功总电能
     jsElecVal["positive_active_energy"] = plcDev_->readDevice("di", "0092"); // 电能表正向有功电能
     jsElecVal["reverse_active_energy"] = plcDev_->readDevice("di", "0094");  // 电能表反向有功电能
     jsElecVal["temperature"] = plcDev_->readDevice("di", "0096");            // 设备温度
     jsElecVal["humidity"] = plcDev_->readDevice("di", "0098");               // 设备湿度
+
+    jsElecVal["textCountAll"] = plcDev_->readDevice("di", "0014");           // 进料数量
+    jsElecVal["textCountInspection"] = plcDev_->readDevice("di", "0016");    // 检测数量
+    jsElecVal["textCountEliminate"] = plcDev_->readDevice("di", "0018");     // 总剔除数量
+    jsElecVal["textCountLogisticscode"] = plcDev_->readDevice("di", "0020"); // 物流码剔除数量
+
     std::string result = Utils::makeResponse(ret, std::move(jsElecVal));
     return result;
 }
-// std::string AppFrame::AppFrameworkImpl::refreshProduceData()
-// {
-//     bool ret = true;
-//     Json::Value jsProduceVal;
-//     jsProduceVal["textCountAll"] = plcDev_->readDevice("di", "40014");        // 进料数量
-//     jsProduceVal["textCountInspection"] = plcDev_->readDevice("di", "40016"); // 检测数量
-//     jsProduceVal[] = plcDev_->readDevice("di", "40018");                      // 总剔除数量
-//     jsProduceVal[] = plcDev_->readDevice("di", "40020");                      // 物流码剔除数量
-// }
+
 std::string AppFrame::AppFrameworkImpl::refreshMainPage()
 {
     bool ret = true;

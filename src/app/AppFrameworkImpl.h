@@ -58,7 +58,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string writePLC(const std::string &);
     std::string refreshMainPage();
     std::string refreshPowerPage();
-    // std::string refreshProduceData(); // 刷新直线式生产数据
+
     std::string refreshElecData(); // 刷新直线式电能表数据
 
     // 差异调用 接口区域

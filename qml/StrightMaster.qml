@@ -15,8 +15,11 @@ Rectangle {
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     property string formulaName: "无"
     property string formulaSpeed: "0"
-    property string textCountAll: ""
-    property string textCountPass: ""
+    property string textCountAll: ""  //进料数量
+    property string textCountPass: ""  
+    property string textCountInspection: "" //检测数量
+    property string textCountEliminate: "" //总剔除数量
+    property string textCountLogisticscode: "" //物流码剔除数量
     property string textCountWaste: ""
     property string textCountLocateWaste: ""
     property string textCountCodeWaste: ""

@@ -12,6 +12,7 @@ GroupBox {
     property alias producePauseState: producePause.state            // 暂停生产状态
     property alias produceStopState: produceStop.state              // 终止生产状态
     property alias timeTask: timeProduce
+
     background: Rectangle {
         anchors.fill: parent
         border.color: "gray"
@@ -55,13 +56,6 @@ GroupBox {
         property string degree: "度"
 
         //property alias name: value
-
-        Text {
-            text: "时间："
-            font.pointSize: 11
-            y: 0
-            x: 0
-        }
 
         Text {
             text: "正向有功电能："
@@ -167,7 +161,7 @@ GroupBox {
             text: ""
             font.pointSize: 11
             y: 40
-            x: 100
+            x: 120
         }
 
         Text {
@@ -176,7 +170,7 @@ GroupBox {
             text: ""
             font.pointSize: 11
             y: 100
-            x: 100
+            x: 120
         }
 
         Text {
@@ -185,7 +179,7 @@ GroupBox {
             text: ""
             font.pointSize: 11
             y: 160
-            x: 70
+            x: 80
         }
 
         Text {
@@ -194,7 +188,7 @@ GroupBox {
             text: ""
             font.pointSize: 11
             y: 205
-            x: 70
+            x: 80
         }
 
         Text {
@@ -203,7 +197,7 @@ GroupBox {
             text: ""
             font.pointSize: 11
             y: 250
-            x: 70
+            x: 80
         }
 
         Text {
@@ -211,8 +205,8 @@ GroupBox {
             id: temperature
             text: ""
             font.pointSize: 11
-            y: 240
-            x: 40
+            y: 320
+            x: 60
         }
 
         Text {
@@ -585,7 +579,7 @@ GroupBox {
     }
 
     function refreshProduce() {
-        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.RefreshPowerPage, "");
+        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.RefreshElecData, "");
         var result = JSON.parse(jsRet);
         if (result.ok) {
             positiveActiveEnergy.text = result.details.positive_active_energy;
@@ -596,16 +590,19 @@ GroupBox {
             temperature.text = result.details.temperature;
             totalActivePower.text = result.details.total_active_power;//总有功功率
             totalApparentPower.text = result.details.total_apparent_power;//总视在功率
-            combinedActiveEnergy.text = result.details.combinedActiveEnergy;//组合有功电能
+           
+
             aDirectionCurrent.text = result.details.a_direction_current;
             bDirectionCurrent.text = result.details.b_direction_current;
             cDirectionCurrent.text = result.details.c_direction_current;
             humidity.text = result.details.humidity;
 
-//            countAll.text = result.details.textCountAll;//进料数
-//            countInspection.text = result.details.textCountInspection;//检测数量
-//            countEliminate.text = result.details.textCountEliminate;//总剔除数量
-//            countLogisticscode.text = result.details.textCountLogisticscode;//物流码剔除数量
+            textCountAll = result.details.textCountAll;//进料数
+            textCountInspection = result.details.textCountInspection;//检测数量
+            textCountEliminate = result.details.textCountEliminate;//总剔除数量
+            textCountLogisticscode = result.details.textCountLogisticscode;//物流码剔除数量
+             //combinedActiveEnergy.text = result.details.combined_active_energy;//组合有功电能
+            combinedActiveEnergy.text = result.details.combined_active_energy;
 
         }
     }
