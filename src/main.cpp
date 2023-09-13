@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("appMetaFlash", &AppMetaFlash::instance());
     engine.rootContext()->setContextProperty("appdir", qApp->applicationDirPath()); // 获取当前路径
-    engine.loadFromModule("DeviceIntegration", "MainWindow");
+    engine.loadFromModule("DeviceIntegration", "StrightMainWindow");
     app.setWindowIcon(QIcon("file:///" + qApp->applicationDirPath() + "/ico/logo.ico")); // 添加图标
     // 相机序号是从0开始的
     appFramework().storeImagePainter(DisplayWindows::LocationCamera,

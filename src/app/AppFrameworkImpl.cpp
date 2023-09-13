@@ -368,7 +368,7 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
         auto vKeys = Utils::splitString(key, "_");
         if (vKeys.size() == 3)
         {
-            ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], "0", curValue);
+            ret = plcDev_->writeDevice(vKeys[1], vKeys[2], "0", curValue);
             if (ret == false)
             {
                 LogWarn("write data faile! address: {}", value);
@@ -376,7 +376,7 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
         }
         else if (vKeys.size() == 4)
         {
-            ret = plcDev_->writeDataToDevice(vKeys[1], vKeys[2], vKeys[3], curValue);
+            ret = plcDev_->writeDevice(vKeys[1], vKeys[2], vKeys[3], curValue);
             if (ret == false)
             {
                 LogWarn("write data faile! address: {}", value);
@@ -559,15 +559,9 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
-    std::string plcType = config_["plc"]["type"].as<std::string>();
-    std::string plcIp = config_["plc"]["host"].as<std::string>();
-    uint16_t plcPort = config_["plc"]["port"].as<uint16_t>();
-    uint16_t io = config_["plc"]["io_freq"].as<uint16_t>();
-    uint16_t fifo = config_["plc"]["fifo_freq"].as<uint16_t>();
     plcDev_ = new PLCDevice;
-    plcDev_->init(plcIp, plcPort, io, fifo);
-    LogInfo("{} PLC device start success.", plcType);
-    QObject::connect(plcDev_, &PLCDevice::bottomMove, [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+    plcDev_->init(config_);
+    QObject::connect(plcDev_, &PLCDevice::bottleMove, [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -1233,21 +1227,21 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         const auto codeCheck = circleProduct_->getIndex(16);
         if (rotate && !rotate->locateResult.empty())
         {
-            plcDev_->writeDataToDevice("r", "13002", "", rotate->locateResult);
-            plcDev_->writeDataToDevice("n", "12993", "", std::to_string(rotate->numBottom));
+            plcDev_->writeDevice("r", "13002", "", rotate->locateResult);
+            plcDev_->writeDevice("n", "12993", "", std::to_string(rotate->numBottom));
             LogInfo("product process:write plc:number={},value={}.", rotate->numBottom, rotate->locateResult);
         }
         if (locateCheck)
         {
             if (locateCheck->logistics1.empty())
             {
-                plcDev_->writeDataToDevice("b", "13004", "0", "0");
+                plcDev_->writeDevice("b", "13004", "0", "0");
             }
             else
             {
                 // plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
-                plcDev_->writeDataToDevice("b", "13004", "00", "1");
-                plcDev_->writeDataToDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
+                plcDev_->writeDevice("b", "13004", "00", "1");
+                plcDev_->writeDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
                 LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
                         locateCheck->locateCheckResult);
                 invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, locateCheck->logistics1),
@@ -1265,7 +1259,7 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
         // }
         if (codeCheck)
         {
-            plcDev_->writeDataToDevice("b", "13004", "1", codeCheck->OCRResult);
+            plcDev_->writeDevice("b", "13004", "1", codeCheck->OCRResult);
 
             // 这里应该做流程结束保存数据记录的工作和清理工位。
             // 保存到数据库
