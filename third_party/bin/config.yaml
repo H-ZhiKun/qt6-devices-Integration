@@ -24,7 +24,7 @@ app:
     passwd: ''
 plc:
   # type: circle or line,cap; required current choosed device type
-  type: circle
+  type: line
   # this block define the kind of registers address and size
   # normal_address interval 500ms
   # realtime_address interval 5ms
@@ -42,7 +42,7 @@ plc:
       write_size: 316
     - name: line
       # host: plc address,192.168.1.10 by default
-      host: 192.168.123.10
+      host: 192.168.0.70
       # port: plc port, 502 by default
       port: 502
       normal_address: 40001

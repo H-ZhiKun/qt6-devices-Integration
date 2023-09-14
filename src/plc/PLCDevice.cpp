@@ -58,7 +58,6 @@ void PLCDevice::init(const YAML::Node &config)
     client_->addRealtimeCache(realtimeBeginAddress_, realtimeCacheSize_);
     client_->work();
     updateReadInfo();
-    LogInfo("{} PLC device start success.", strType);
 }
 
 std::string PLCDevice::readDevice(const std::string &type, const std::string &addr, const std::string &bit)
