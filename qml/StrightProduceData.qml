@@ -418,9 +418,6 @@ GroupBox {
             x: 166
         }
 
-
-
-
         // 检测数量
         Text {
             id: countInspection
@@ -590,20 +587,17 @@ GroupBox {
             temperature.text = result.details.temperature;
             totalActivePower.text = result.details.total_active_power;//总有功功率
             totalApparentPower.text = result.details.total_apparent_power;//总视在功率
-           
 
             aDirectionCurrent.text = result.details.a_direction_current;
             bDirectionCurrent.text = result.details.b_direction_current;
             cDirectionCurrent.text = result.details.c_direction_current;
             humidity.text = result.details.humidity;
-
             textCountAll = result.details.textCountAll;//进料数
             textCountInspection = result.details.textCountInspection;//检测数量
             textCountEliminate = result.details.textCountEliminate;//总剔除数量
             textCountLogisticscode = result.details.textCountLogisticscode;//物流码剔除数量
-             //combinedActiveEnergy.text = result.details.combined_active_energy;//组合有功电能
+            //combinedActiveEnergy.text = result.details.combined_active_energy;//组合有功电能
             combinedActiveEnergy.text = result.details.combined_active_energy;
-
         }
     }
 }
