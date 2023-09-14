@@ -209,37 +209,37 @@ GroupBox {
             console.log("阀1 no item");
         } else {
             item0.itemName = "阀1";
-            item0.handMoveAddr = "XY001_di_0100";
+            item0.handMoveAddr = "XY001_di_0070";
         }
         if (item1 === null) {
             console.log("阀2 no item");
         } else {
             item1.itemName = "阀2";
-            item1.handMoveAddr = "XY002_di_0102";
+            item1.handMoveAddr = "XY002_di_0072";
         }
         if (item2 === null) {
             console.log("阀3 no item");
         } else {
             item2.itemName = "阀3";
-            item2.handMoveAddr = "XY003_di_0104";
+            item2.handMoveAddr = "XY003_di_0074";
         }
         if (item3 === null) {
             console.log("阀4 no item");
         } else {
             item3.itemName = "阀4";
-            item3.handMoveAddr = "XY004_di_0106";
+            item3.handMoveAddr = "XY004_di_0076";
         }
         if (item4 === null) {
             console.log("阀5 no item");
         } else {
             item4.itemName = "阀5";
-            item4.handMoveAddr = "XY005_di_0108";
+            item4.handMoveAddr = "XY005_di_0078";
         }
         if (item5 === null) {
             console.log("阀6 no item");
         } else {
             item5.itemName = "阀6";
-            item5.handMoveAddr = "XY006_di_0110";
+            item5.handMoveAddr = "XY006_di_0080";
         }
     }
     Connections {

@@ -73,17 +73,12 @@ class AppFrameworkImpl final : public AppFramework
     void initFile();
     void initProduct();
 
-    void updateRealData();        // 主界面实时更新数据
-    void updateProduceRealData(); // 生产数据界面实时更新数据
-    void updateSensorRealData();  // 传感器界面实时更新数据
-    void updateValveRealData();   // 阀门界面实时更新数据
-    void updateAlertData();       // 更新报警信息
-    void updateFormulaData();     // 初始化配方界面
-    void updateVideo();           // 实时视频
-
-    void refreshLocate(const uint64_t bottomNum);
-    void refreshLocateCheck(const uint64_t bottomNum);
-    void refreshCodeCheck(const uint64_t bottomNum);
+    void updateRealData();                                            // 主界面实时更新数据
+    void updateProduceRealData();                                     // 生产数据界面实时更新数据
+    void updateSensorRealData();                                      // 传感器界面实时更新数据
+    void updateValveRealData();                                       // 阀门界面实时更新数据
+    void updateAlertData();                                           // 更新报警信息
+    void updateFormulaData();                                         // 初始化配方界面
     void updateByMinute(const int minute);                            // 每分钟更新
     void updateByDay(const int year, const int month, const int day); // 每日更新
     void updateUserData();
@@ -97,13 +92,6 @@ class AppFrameworkImpl final : public AppFramework
     void processOCR(const std::string &);
     void processTangle(const std::string &);
     void processTangleCheck(const std::string &);
-
-    void processPaddleOCR(const std::string &);  // 处理检测算法
-    void processYoloTangle(const std::string &); // 处理角度预测算法
-    void processYoloTangleTest(QJsonDocument, cv::Mat);
-    void processQrCode(const std::string value);
-    void processCode(const std::string code1, const std::string code2);
-    void doPrintCode(uint8_t bottomNum);
     void sendOneToAlgo(); // 初始化服务端的python模型
     void drawText(QImage &img, const QString &text);
 
@@ -134,8 +122,6 @@ class AppFrameworkImpl final : public AppFramework
     BaumerManager *baumerManager_ = nullptr;
     std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
     std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
-    std::unordered_map<DisplayWindows, uint16_t> mapSaveImage_;     // 图片保存数量控制
-    std::atomic<u_int> curbottomnum;
 
   public:
     // 调用qml 对象函数工具

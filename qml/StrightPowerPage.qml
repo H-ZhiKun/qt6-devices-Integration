@@ -411,56 +411,56 @@ GroupBox {
             console.log("M001 no item");
         } else {
             item0.itemName = "进料网带电机";
-            item0.handMoveAddr = "M001_n_0024";
-            item0.realSpeedAddr = "M001_di_0027";
-            item0.setSpeedAddr = "M001_di_0027";
-            item0.enableAddr = "M001_n_0029"; // 驱动已使能
-            item0.failureAddr = "M001_n_0031"; // 驱动故障
-            item0.resetAddr = "M001_n_0032"; // 故障复位
+            item0.handMoveAddr = "M001_b_0018_02";
+            item0.realSpeedAddr = "M001_di_0021";
+            item0.setSpeedAddr = "M001_di_0021";
+            item0.enableAddr = "M001_b_0023_00"; // 驱动已使能
+            item0.failureAddr = "M001_b_0023_02"; // 驱动故障
+            item0.resetAddr = "M001_b_0023_03"; // 故障复位
         }
         if (item1 === null) {
             console.log("M002 no item");
         } else {
             item1.itemName = "分距夹持网带电机1";
-            item1.handMoveAddr = "M001_n_0033";
-            item1.realSpeedAddr = "M001_di_0036";
-            item1.setSpeedAddr = "M001_di_0036";
-            item1.enableAddr = "M001_n_0038"; // 驱动已使能
-            item1.failureAddr = "M001_n_0040"; // 驱动故障
-            item1.resetAddr = "M001_n_0041"; // 故障复位
+            item1.handMoveAddr = "M002_b_0023_04";
+            item1.realSpeedAddr = "M002_di_0026";
+            item1.setSpeedAddr = "M002_di_0026";
+            item1.enableAddr = "M002_b_0028_00"; // 驱动已使能
+            item1.failureAddr = "M002_b_0028_02"; // 驱动故障
+            item1.resetAddr = "M002_b_0028_03"; // 故障复位
         }
         if (item2 === null) {
             console.log("M003 no item");
         } else {
             item2.itemName = "分距夹持网带电机2";
-            item2.handMoveAddr = "M001_n_0042";
-            item2.realSpeedAddr = "M001_di_0045";
-            item2.setSpeedAddr = "M001_di_0045";
-            item2.enableAddr = "M001_n_0047"; // 驱动已使能
-            item2.failureAddr = "M001_n_0049"; // 驱动故障
-            item2.resetAddr = "M001_n_0050"; // 故障复位
+            item2.handMoveAddr = "M003_b_0028_04";
+            item2.realSpeedAddr = "M003_di_0029";
+            item2.setSpeedAddr = "M003_di_0031";
+            item2.enableAddr = "M003_b_0033_00"; // 驱动已使能
+            item2.failureAddr = "M003_b_0033_02"; // 驱动故障
+            item2.resetAddr = "M003_b_0033_03"; // 故障复位
         }
         if (item3 === null) {
             console.log("M004 no item");
         } else {
             item3.itemName = "姿态保持夹持网带电机1";
-            item3.handMoveAddr = "M001_n_0051";
-            item3.realSpeedAddr = "M001_di_0054";
-            item3.setSpeedAddr = "M001_di_0054";
-            item3.enableAddr = "M001_n_0056"; // 驱动已使能
-            item3.failureAddr = "M001_n_0058"; // 驱动故障
-            item3.resetAddr = "M001_n_0059"; // 故障复位
+            item3.handMoveAddr = "M004_b_0033_04";
+            item3.realSpeedAddr = "M004_di_0034";
+            item3.setSpeedAddr = "M004_di_0036";
+            item3.enableAddr = "M004_b_0038_00"; // 驱动已使能
+            item3.failureAddr = "M004_b_0038_02"; // 驱动故障
+            item3.resetAddr = "M004_b_0038_03"; // 故障复位
         }
         if (item4 === null) {
             console.log("M005 no item");
         } else {
             item4.itemName = "姿态保持夹持网带电机2";
-            item4.handMoveAddr = "M001_n_0060";
-            item4.realSpeedAddr = "M001_di_0063";
-            item4.setSpeedAddr = "M001_di_0063";
-            item4.enableAddr = "M001_n_0065"; // 驱动已使能
-            item4.failureAddr = "M001_n_0067"; // 驱动故障
-            item4.resetAddr = "M001_n_0068"; // 故障复位
+            item4.handMoveAddr = "M005_b_0038_04";
+            item4.realSpeedAddr = "M005_di_0039";
+            item4.setSpeedAddr = "M005_di_0041";
+            item4.enableAddr = "M005_b_0043_00"; // 驱动已使能
+            item4.failureAddr = "M005_b_0043_02"; // 驱动故障
+            item4.resetAddr = "M005_b_0043_03"; // 故障复位
         }
     }
     Connections {
