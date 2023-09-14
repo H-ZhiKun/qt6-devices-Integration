@@ -46,11 +46,11 @@ plc:
       # port: plc port, 502 by default
       port: 502
       normal_address: 40001
-      normal_size: 110
-      realtime_address: 40112
-      realtime_size: 2
+      normal_size: 81
+      realtime_address: 40081
+      realtime_size: 1
       write_address: 40001
-      write_size: 110
+      write_size: 81
     - name: cap
       # host: plc address,192.168.1.10 by default
       host: 192.168.123.10
