@@ -4,6 +4,7 @@
 #include "CircleProduct.h"
 #include "Cognex.h"
 #include "Domino.h"
+#include "LineProduct.h"
 #include "Logger.h"
 #include "PLCDevice.h"
 #include "Permission.h"
@@ -98,6 +99,8 @@ class AppFrameworkImpl final : public AppFramework
     void processTangle(const std::string &);
     void processTangleCheck(const std::string &);
 
+    void whenLineCognex();
+
     void processPaddleOCR(const std::string &);  // 处理检测算法
     void processYoloTangle(const std::string &); // 处理角度预测算法
     void processYoloTangleTest(QJsonDocument, cv::Mat);
@@ -123,6 +126,7 @@ class AppFrameworkImpl final : public AppFramework
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
     CircleProduct *circleProduct_{nullptr};
+    LineProduct *lineProduct_{nullptr};
     // Module 组装区域
     // tcp client begin
     Domino *domino_ = nullptr;

@@ -557,9 +557,24 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
+    std::string strType = config_["plc"]["type"].as<std::string>();
     plcDev_ = new PLCDevice;
     plcDev_->init(config_);
-    QObject::connect(plcDev_, &PLCDevice::bottleMove, [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+    if (strType == "circle")
+    {
+        QObject::connect(plcDev_, &PLCDevice::bottleMove,
+                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+    }
+    else if (strType == "line")
+    {
+        QObject::connect(plcDev_, &PLCDevice::lineCognex,
+                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+        QObject::connect(plcDev_, &PLCDevice::lineCoding,
+                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+    }
+    else if (strType == "cap")
+    {
+    }
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -899,7 +914,18 @@ void AppFrame::AppFrameworkImpl::initFile()
 
 void AppFrame::AppFrameworkImpl::initProduct()
 {
-    circleProduct_ = new CircleProduct();
+    std::string strType = config_["plc"]["type"].as<std::string>();
+    if (strType == "circle")
+    {
+        circleProduct_ = new CircleProduct();
+    }
+    else if (strType == "line")
+    {
+        lineProduct_ = new LineProduct();
+    }
+    else if (strType == "cap")
+    {
+    }
 }
 
 void AppFrame::AppFrameworkImpl::memoryClean()
@@ -944,6 +970,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     {
         delete circleProduct_;
         circleProduct_ = nullptr;
+    }
+    if (lineProduct_)
+    {
+        delete lineProduct_;
+        lineProduct_ = nullptr;
     }
     if (baumerManager_ != nullptr)
     {
@@ -1398,6 +1429,14 @@ void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
     });
+}
+
+void AppFrame::AppFrameworkImpl::whenLineCognex()
+{
+    if (lineProduct_ != nullptr)
+    {
+        lineProduct_->newProduct();
+    }
 }
 
 // void AppFrame::AppFrameworkImpl::processPaddleOCR(const std::string &jsonString)
