@@ -149,7 +149,11 @@ bool ModbusClient::writeCache(uint16_t address, WriteRegisterType type, const ui
         qWriteData_.enqueue(RegisterWriteData(address, data));
         break;
     }
-
+    case WriteRegisterType::RegDInt: {
+        writeCacheInfo_.cache[cacheIndex] = data[0];
+        qWriteData_.enqueue(RegisterWriteData(address, data[0]));
+        break;
+    }
     default:
         break;
     }
