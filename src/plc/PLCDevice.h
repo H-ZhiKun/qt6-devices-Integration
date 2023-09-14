@@ -65,7 +65,8 @@ class PLCDevice : public QObject
     // circle function begin
     void updateReadInfo();
     void alertParsing(const uint16_t *alertGroup, uint16_t size);
-    void realParsing(const uint16_t *FIFOGroup, uint16_t size);
+    void circleAlertParing(const uint16_t *alertGroup, uint16_t size);
+    void realParsing(const uint16_t *realGroup, uint16_t size);
     void FIFOParsing(const uint16_t *FIFOGroup, uint16_t size);
     void lineParsing(const uint16_t *lineGroup, uint16_t size);
     void capParsing(const uint16_t *capGroup, uint16_t size);

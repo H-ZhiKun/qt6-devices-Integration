@@ -162,6 +162,22 @@ void PLCDevice::updateReadInfo()
 
 void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
 {
+    switch (devType)
+    {
+    case DeviceType::CircleDevice:
+        circleAlertParing(alertGroup, size);
+        break;
+    case DeviceType::LineDevice:
+        break;
+    case DeviceType::CapDevice:
+        break;
+    default:
+        break;
+    }
+}
+
+void PLCDevice::circleAlertParing(const uint16_t *alertGroup, uint16_t size)
+{
     std::map<std::string, std::string> mapRealAlertInfo;
     // 12289 ~ 12310
     const uint16_t baseAddress = readBeginAddress_ + 1; // 预先计算起始地址
@@ -193,18 +209,18 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
     AlertWapper::updateRealtimeAlert(mapRealAlertInfo);
 }
 
-void PLCDevice::realParsing(const uint16_t *FIFOGroup, uint16_t size)
+void PLCDevice::realParsing(const uint16_t *realGroup, uint16_t size)
 {
     switch (devType)
     {
     case DeviceType::CircleDevice:
-        FIFOParsing(FIFOGroup, size);
+        FIFOParsing(realGroup, size);
         break;
     case DeviceType::LineDevice:
-        lineParsing(FIFOGroup, size);
+        lineParsing(realGroup, size);
         break;
     case DeviceType::CapDevice:
-        capParsing(FIFOGroup, size);
+        capParsing(realGroup, size);
         break;
     default:
         break;
