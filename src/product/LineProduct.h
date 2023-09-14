@@ -96,7 +96,7 @@ class LineProduct
     uint8_t updateOCR(const cv::Mat &mat, const std::string &path)
     {
         if (lvProduct_.size() == 0)
-            return;
+            return 0;
         uint8_t num = 0;
         std::lock_guard lock(mtxProduct_);
         for (auto iter = lvProduct_.begin(); iter != lvProduct_.end(); ++iter)

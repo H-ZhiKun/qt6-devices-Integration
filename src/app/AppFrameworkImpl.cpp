@@ -360,6 +360,7 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
     // 例：key:M071_b_12288_14  count=4   value  "1"或"0"
     // 例：key:M071_r_12288  count=3   value    "0.76"
     bool ret = false;
+    LogInfo("write to plc: {}", value);
     Json::Value jsParams = Utils::stringToJson(value);
     for (const auto &key : jsParams.getMemberNames())
     {
@@ -567,10 +568,10 @@ void AppFrame::AppFrameworkImpl::initPLC()
     }
     else if (strType == "line")
     {
-        QObject::connect(plcDev_, &PLCDevice::lineCognex,
-                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
-        QObject::connect(plcDev_, &PLCDevice::lineCoding,
-                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+        // QObject::connect(plcDev_, &PLCDevice::lineCognex,
+        //                  [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+        // QObject::connect(plcDev_, &PLCDevice::lineCoding,
+        //                  [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
     }
     else if (strType == "cap")
     {
