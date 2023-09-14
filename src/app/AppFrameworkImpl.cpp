@@ -393,24 +393,24 @@ std::string AppFrame::AppFrameworkImpl::refreshElecData()
 {
     bool ret = true;
     Json::Value jsElecVal;
-    jsElecVal["a_phase_voltage"] = plcDev_->readDevice("di", "0044");        // 电能表A相电压
-    jsElecVal["b_phase_voltage"] = plcDev_->readDevice("di", "0046");        // 电能表B相电压
-    jsElecVal["c_phase_voltage"] = plcDev_->readDevice("di", "0048");        // 电能表C相电压
-    jsElecVal["a_direction_current"] = plcDev_->readDevice("di", "0050");    // 电能表A相电流
-    jsElecVal["b_direction_current"] = plcDev_->readDevice("di", "0052");    // 电能表B相电流
-    jsElecVal["c_direction_current"] = plcDev_->readDevice("di", "0054");    // 电能表C相电流
-    jsElecVal["total_active_power"] = plcDev_->readDevice("di", "0056");     // 电能表总有功功率
-    jsElecVal["total_apparent_power"] = plcDev_->readDevice("di", "0058");   // 电能表总视在功率
-    jsElecVal["combined_active_energy"] = plcDev_->readDevice("di", "0060"); // 电能表组合有功总电能
-    jsElecVal["positive_active_energy"] = plcDev_->readDevice("di", "0062"); // 电能表正向有功电能
-    jsElecVal["reverse_active_energy"] = plcDev_->readDevice("di", "0064");  // 电能表反向有功电能
-    jsElecVal["temperature"] = plcDev_->readDevice("di", "0066");            // 设备温度
-    jsElecVal["humidity"] = plcDev_->readDevice("di", "0068");               // 设备湿度
+    jsElecVal["a_phase_voltage"] = plcDev_->readDevice("di", "0043");        // 电能表A相电压
+    jsElecVal["b_phase_voltage"] = plcDev_->readDevice("di", "0045");        // 电能表B相电压
+    jsElecVal["c_phase_voltage"] = plcDev_->readDevice("di", "0047");        // 电能表C相电压
+    jsElecVal["a_direction_current"] = plcDev_->readDevice("di", "0049");    // 电能表A相电流
+    jsElecVal["b_direction_current"] = plcDev_->readDevice("di", "0051");    // 电能表B相电流
+    jsElecVal["c_direction_current"] = plcDev_->readDevice("di", "0053");    // 电能表C相电流
+    jsElecVal["total_active_power"] = plcDev_->readDevice("di", "0055");     // 电能表总有功功率
+    jsElecVal["total_apparent_power"] = plcDev_->readDevice("di", "0057");   // 电能表总视在功率
+    jsElecVal["combined_active_energy"] = plcDev_->readDevice("di", "0059"); // 电能表组合有功总电能
+    jsElecVal["positive_active_energy"] = plcDev_->readDevice("di", "0061"); // 电能表正向有功电能
+    jsElecVal["reverse_active_energy"] = plcDev_->readDevice("di", "0063");  // 电能表反向有功电能
+    jsElecVal["temperature"] = plcDev_->readDevice("di", "0065");            // 设备温度
+    jsElecVal["humidity"] = plcDev_->readDevice("di", "0067");               // 设备湿度
 
-    jsElecVal["textCountAll"] = plcDev_->readDevice("di", "0010");           // 进料数量
-    jsElecVal["textCountInspection"] = plcDev_->readDevice("di", "0012");    // 检测数量
-    jsElecVal["textCountEliminate"] = plcDev_->readDevice("di", "0014");     // 总剔除数量
-    jsElecVal["textCountLogisticscode"] = plcDev_->readDevice("di", "0016"); // 物流码剔除数量
+    jsElecVal["textCountAll"] = plcDev_->readDevice("di", "0009");           // 进料数量
+    jsElecVal["textCountInspection"] = plcDev_->readDevice("di", "0011");    // 检测数量
+    jsElecVal["textCountEliminate"] = plcDev_->readDevice("di", "0013");     // 总剔除数量
+    jsElecVal["textCountLogisticscode"] = plcDev_->readDevice("di", "0015"); // 物流码剔除数量
 
     std::string result = Utils::makeResponse(ret, std::move(jsElecVal));
     return result;
