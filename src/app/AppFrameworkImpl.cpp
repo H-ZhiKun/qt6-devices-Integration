@@ -557,9 +557,24 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
+    std::string strType = config_["plc"]["type"].as<std::string>();
     plcDev_ = new PLCDevice;
     plcDev_->init(config_);
-    QObject::connect(plcDev_, &PLCDevice::bottleMove, [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+    if (strType == "circle")
+    {
+        QObject::connect(plcDev_, &PLCDevice::bottleMove,
+                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+    }
+    else if (strType == "line")
+    {
+        QObject::connect(plcDev_, &PLCDevice::lineCognex,
+                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+        QObject::connect(plcDev_, &PLCDevice::lineCoding,
+                         [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+    }
+    else if (strType == "cap")
+    {
+    }
 }
 
 void AppFrame::AppFrameworkImpl::updateRealData()
@@ -726,7 +741,18 @@ void AppFrame::AppFrameworkImpl::initFile()
 
 void AppFrame::AppFrameworkImpl::initProduct()
 {
-    circleProduct_ = new CircleProduct();
+    std::string strType = config_["plc"]["type"].as<std::string>();
+    if (strType == "circle")
+    {
+        circleProduct_ = new CircleProduct();
+    }
+    else if (strType == "line")
+    {
+        lineProduct_ = new LineProduct();
+    }
+    else if (strType == "cap")
+    {
+    }
 }
 
 void AppFrame::AppFrameworkImpl::memoryClean()
@@ -771,6 +797,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     {
         delete circleProduct_;
         circleProduct_ = nullptr;
+    }
+    if (lineProduct_)
+    {
+        delete lineProduct_;
+        lineProduct_ = nullptr;
     }
     if (baumerManager_ != nullptr)
     {
@@ -1041,3 +1072,129 @@ void AppFrame::AppFrameworkImpl::processTangleCheck(const std::string &jsonData)
         const auto ptrBottom = circleProduct_->getNumber(bottomNum);
     });
 }
+
+void AppFrame::AppFrameworkImpl::whenLineCognex()
+{
+    if (lineProduct_ != nullptr)
+    {
+        lineProduct_->newProduct();
+    }
+}
+
+// void AppFrame::AppFrameworkImpl::processPaddleOCR(const std::string &jsonString)
+// {
+//     // 找出图像
+//     LogInfo("recieve paddleOCR algorithm return, in {}", Utils::getCurrentTime(true));
+//     QString qString = QString::fromStdString(jsonString);
+//     QJsonDocument jsonDocu = QJsonDocument::fromJson(qString.toUtf8());
+//     Product *product_;
+//     for (auto &tempPro : productList_)
+//     {
+//         if (!tempPro->logisticsPredict.empty())
+//         {
+//             continue;
+//         }
+//         if (tempPro->logistics1.empty() || tempPro->logisticsFalseFlag == true)
+//         {
+//             continue;
+//         }
+//         product_ = tempPro;
+//     }
+//     if (product_ = nullptr)
+//     {
+//         LogWarn("no match product of ocr");
+//         return;
+//     }
+//     // 转换为QJsonObject
+//     QJsonObject jsonObject = jsonDocu.object();
+//     // qDebug() << jsonObject["imageName"];
+//     // 检查是否含有键box
+//     if (jsonObject.contains("box"))
+//     {
+//         // 定义颜色列表
+//         static std::vector<cv::Scalar> colorList = {
+//             cv::Scalar(0, 0, 255),   // 红色
+//             cv::Scalar(0, 255, 0),   // 绿色
+//             cv::Scalar(0, 255, 255), // 黄色
+//             cv::Scalar(255, 0, 255), // 紫色
+//             cv::Scalar(255, 255, 0), // 青色
+//             cv::Scalar(0, 165, 255), // 橙色
+//         };
+//         int colorIndex = 0;  // 颜色Index
+//         int dataLocate = 30; // 数据统一显示位置
+//         // boxstring不是json格式
+//         QString boxJsonString = jsonObject["box"].toString();
+//         QJsonArray boxJsonArray = QJsonDocument::fromJson(boxJsonString.toUtf8()).array();
+
+//         // 遍历json array
+//         foreach (const QJsonValue &boxValue, boxJsonArray)
+//         {
+//             QJsonObject boxObject = boxValue.toObject();
+//             QString result = boxObject["result"].toString().toUtf8();
+//             // todo 物流码是否正确
+//             if ((product_->logistics1 + product_->logistics2) == result.toStdString())
+//             {
+//                 plcDev_->writeDataToDevice("b", "13004", "01", "1");
+//                 // 添加生产数据
+//             }
+//             else
+//             {
+//                 plcDev_->writeDataToDevice("b", "13004", "01", "0");
+//                 // 添加生产数据
+//             }
+//             LogInfo("result str", result.toStdString());
+//             QString confidence = boxObject["confidence"].toString();
+//             float num = confidence.toFloat();
+//             confidence = QString::number(num, 'f', 2);
+
+//             QString lefttop = boxObject["lefttop"].toString();
+//             QString righttop = boxObject["righttop"].toString();
+//             QString rightbottom = boxObject["rightbottom"].toString();
+//             QString leftbottom = boxObject["leftbottom"].toString();
+
+//             QJsonArray lefttopArray = QJsonDocument::fromJson(lefttop.toUtf8()).array();
+//             QJsonArray righttopArray = QJsonDocument::fromJson(righttop.toUtf8()).array();
+//             QJsonArray rightbottomArray = QJsonDocument::fromJson(rightbottom.toUtf8()).array();
+//             QJsonArray leftbottomArray = QJsonDocument::fromJson(leftbottom.toUtf8()).array();
+
+//             QString resstr = result + "; " + confidence + ";";
+//             cv::putText(product_->codeCheckImage, resstr.toStdString(), cv::Point(5, dataLocate),
+//                         cv::FONT_HERSHEY_SIMPLEX, 1, colorList[colorIndex], 2, 8); // 输出文字
+//             dataLocate += 35;                                                      // 文字换行
+//             cv::line(product_->codeCheckImage, cv::Point(lefttopArray[0].toInt(), lefttopArray[1].toInt()),
+//                      cv::Point(righttopArray[0].toInt(), righttopArray[1].toInt()), colorList[colorIndex],
+//                      2);
+//             cv::line(product_->codeCheckImage, cv::Point(righttopArray[0].toInt(), righttopArray[1].toInt()),
+//                      cv::Point(rightbottomArray[0].toInt(), rightbottomArray[1].toInt()),
+//                      colorList[colorIndex], 2);
+//             cv::line(product_->codeCheckImage, cv::Point(rightbottomArray[0].toInt(),
+//             rightbottomArray[1].toInt()),
+//                      cv::Point(leftbottomArray[0].toInt(), leftbottomArray[1].toInt()),
+//                      colorList[colorIndex], 2);
+//             cv::line(product_->codeCheckImage, cv::Point(leftbottomArray[0].toInt(),
+//             leftbottomArray[1].toInt()),
+//                      cv::Point(lefttopArray[0].toInt(), lefttopArray[1].toInt()), colorList[colorIndex], 2);
+
+//             colorIndex = (colorIndex + 1) % 6; // 颜色轮转
+//         }
+
+//         // 1 图像操作：显示在界面、保存
+//         // QImage saveImage = Utils::matToQImage(product_->codeCheckImage);
+//         // Utils::saveImageToFile(saveImage, 2);
+//         invokeCpp(mapStorePainter_[DisplayWindows::CodeCheckCamera], "updateImage",
+//                   Q_ARG(QImage, Utils::matToQImage(product_->codeCheckImage)));
+//     }
+//     else
+//     {
+//         // 2 算法没有识别到的逻辑
+//         plcDev_->writeDataToDevice("b", "13004", "01", "0");
+//         // 添加生产数据
+//     }
+//     while (productList_.front() != product_)
+//     {
+//         // todo 循环清理ng数据
+//         productList_.pop_front();
+//     }
+//     // 清理当前数据
+//     productList_.pop_front();
+// }

@@ -253,16 +253,17 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 
 void PLCDevice::lineParsing(const uint16_t *lineGroup, uint16_t size)
 {
-    if (lineGroup[0] != lineInfo_.sigCoding)
+    std::bitset<16> bit = std::bitset<16>(lineGroup[0]);
+    if (bit[8] != lineInfo_.sigCoding)
     {
         emit lineCoding();
     }
-    if (lineGroup[1] != lineInfo_.sigCognex)
+    if (bit[9] != lineInfo_.sigCognex)
     {
         emit lineCognex();
     }
-    lineInfo_.sigCoding = lineGroup[0];
-    lineInfo_.sigCognex = lineGroup[1];
+    lineInfo_.sigCoding = bit[8];
+    lineInfo_.sigCognex = bit[9];
 }
 
 void PLCDevice::capParsing(const uint16_t *capGroup, uint16_t size)

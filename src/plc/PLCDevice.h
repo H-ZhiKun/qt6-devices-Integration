@@ -28,13 +28,13 @@ struct FIFOInfo
 
 struct LineInfo
 {
-    uint16_t sigCoding; // 40112 打码信号
-    uint16_t sigCognex; // 40113 读码信号
+    bool sigCoding; // 40081.8 打码信号
+    bool sigCognex; // 40081.9 读码信号
 };
 
 struct CapInfo
 {
-    uint16_t sigCognex; // 40113 读码信号
+    bool sigCognex; // 40081.8 读码信号
 };
 
 class PLCDevice : public QObject
