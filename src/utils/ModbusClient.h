@@ -52,7 +52,8 @@ enum class WriteRegisterType
 {
     RegBool,
     RegInt,
-    RegReal
+    RegReal,
+    RegDInt
 };
 
 /**
