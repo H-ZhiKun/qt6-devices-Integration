@@ -20,11 +20,23 @@ PLCDevice::~PLCDevice()
 
 void PLCDevice::init(const YAML::Node &config)
 {
-    std::string deviceType = config["plc"]["type"].as<std::string>();
+    std::string strType = config["plc"]["type"].as<std::string>();
+    if (strType == "circle")
+    {
+        devType = DeviceType::CircleDevice;
+    }
+    else if (strType == "line")
+    {
+        devType = DeviceType::LineDevice;
+    }
+    else if (strType == "cap")
+    {
+        devType = DeviceType::CapDevice;
+    }
     ModbusInitArguments args;
     for (const auto &item : config["plc"]["details"])
     {
-        if (item["name"].as<std::string>() == deviceType)
+        if (item["name"].as<std::string>() == strType)
         {
             args.ip = item["host"].as<std::string>();
             args.port = item["port"].as<uint16_t>();
@@ -45,19 +57,8 @@ void PLCDevice::init(const YAML::Node &config)
     client_->addNormalCache(readBeginAddress_, readCacheSize_);
     client_->addRealtimeCache(realtimeBeginAddress_, realtimeCacheSize_);
     client_->work();
-    if (deviceType == "circle")
-    {
-        updateCircle();
-    }
-    else if (deviceType == "line")
-    {
-        updateLine();
-    }
-    else if (deviceType == "cap")
-    {
-        updateCap();
-    }
-    LogInfo("{} PLC device start success.", deviceType);
+    updateReadInfo();
+    LogInfo("{} PLC device start success.", strType);
 }
 
 std::string PLCDevice::readDevice(const std::string &type, const std::string &addr, const std::string &bit)
@@ -130,29 +131,28 @@ const FIFOInfo &PLCDevice::getFIFOInfo()
     return fifoInfo_;
 }
 
-void PLCDevice::updateCircle()
+void PLCDevice::updateReadInfo()
 {
     thUpdate_ = std::thread([this] {
-        const uint16_t readSize = 22;
-        std::vector<uint16_t> readCache(readSize);
+        std::vector<uint16_t> readCache(readCacheSize_);
         AlertWapper::modifyAllStatus();
         while (updateHolder_.load(std::memory_order_acquire))
         {
             if (client_ != nullptr && client_->getConnection())
             {
-                if (client_->readCache(readBeginAddress_, readSize, readCache))
+                if (client_->readCache(readBeginAddress_, readCacheSize_, readCache))
                 {
-                    alertParsing(readCache.data(), readSize);
+                    alertParsing(readCache.data(), readCacheSize_);
                 }
-                int8_t fifoCount = 500;
-                while (fifoCount)
+                int8_t readCount = 500;
+                while (readCount)
                 {
-                    auto FIFO = client_->readRealtimeInfo();
-                    if (FIFO.cache.size() > 0)
+                    auto realInfo = client_->readRealtimeInfo();
+                    if (realInfo.cache.size() > 0)
                     {
-                        FIFOParsing(FIFO.cache.data(), FIFO.cache.size());
+                        realParsing(realInfo.cache.data(), realInfo.cache.size());
                     }
-                    fifoCount--;
+                    readCount--;
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
             }
@@ -166,7 +166,7 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
     // 12289 ~ 12310
     const uint16_t baseAddress = readBeginAddress_ + 1; // 预先计算起始地址
 
-    for (uint16_t i = 0; i < size; i++)
+    for (uint16_t i = 0; i < 22; i++)
     {
         if (alertGroup[i] > 0)
         {
@@ -193,6 +193,24 @@ void PLCDevice::alertParsing(const uint16_t *alertGroup, uint16_t size)
     AlertWapper::updateRealtimeAlert(mapRealAlertInfo);
 }
 
+void PLCDevice::realParsing(const uint16_t *FIFOGroup, uint16_t size)
+{
+    switch (devType)
+    {
+    case DeviceType::CircleDevice:
+        FIFOParsing(FIFOGroup, size);
+        break;
+    case DeviceType::LineDevice:
+        lineParsing(FIFOGroup, size);
+        break;
+    case DeviceType::CapDevice:
+        capParsing(FIFOGroup, size);
+        break;
+    default:
+        break;
+    }
+}
+
 void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 {
     fifoInfo_.numPosition = FIFOGroup[2];
@@ -207,36 +225,7 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     }
 }
 
-void PLCDevice::updateLine()
-{
-    thUpdate_ = std::thread([this] {
-        const uint16_t readSize = 2;
-        std::vector<uint16_t> readCache(readSize);
-        while (updateHolder_.load(std::memory_order_acquire))
-        {
-            if (client_ != nullptr && client_->getConnection())
-            {
-                if (client_->readCache(readBeginAddress_, readSize, readCache))
-                {
-                    alertParsing(readCache.data(), readSize);
-                }
-                int8_t readCount = 500;
-                while (readCount)
-                {
-                    auto lineInfo = client_->readRealtimeInfo();
-                    if (lineInfo.cache.size() > 0)
-                    {
-                        lineInfoParsing(lineInfo.cache.data(), lineInfo.cache.size());
-                    }
-                    readCount--;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-            }
-        }
-    });
-}
-
-void PLCDevice::lineInfoParsing(const uint16_t *lineGroup, uint16_t size)
+void PLCDevice::lineParsing(const uint16_t *lineGroup, uint16_t size)
 {
     if (lineGroup[0] != lineInfo_.sigCoding)
     {
@@ -250,11 +239,7 @@ void PLCDevice::lineInfoParsing(const uint16_t *lineGroup, uint16_t size)
     lineInfo_.sigCognex = lineGroup[1];
 }
 
-void PLCDevice::updateCap()
-{
-}
-
-void PLCDevice::capInfoParsing(const uint16_t *capGroup, uint16_t size)
+void PLCDevice::capParsing(const uint16_t *capGroup, uint16_t size)
 {
     if (capGroup[0] != lineInfo_.sigCognex)
     {

@@ -8,6 +8,13 @@
 #include <unordered_map>
 #include <vector>
 #include <yaml-cpp/yaml.h>
+enum class DeviceType
+{
+    CircleDevice,
+    LineDevice,
+    CapDevice
+};
+
 struct FIFOInfo
 {
     uint16_t numQRCode;          // 412643 二维码读取工位小瓶编号
@@ -56,18 +63,12 @@ class PLCDevice : public QObject
     PLCDevice(PLCDevice &&) noexcept(true) = default;
     PLCDevice &operator=(PLCDevice &&) noexcept(true) = default;
     // circle function begin
-    void updateCircle();
+    void updateReadInfo();
     void alertParsing(const uint16_t *alertGroup, uint16_t size);
+    void realParsing(const uint16_t *FIFOGroup, uint16_t size);
     void FIFOParsing(const uint16_t *FIFOGroup, uint16_t size);
-    // circle function end
-    // line function begin
-    void updateLine();
-    void lineInfoParsing(const uint16_t *lineGroup, uint16_t size);
-    // line function end
-    // cap function begin
-    void updateCap();
-    void capInfoParsing(const uint16_t *capGroup, uint16_t size);
-    // cap function end
+    void lineParsing(const uint16_t *lineGroup, uint16_t size);
+    void capParsing(const uint16_t *capGroup, uint16_t size);
 
   private:
     RegistersWapper regWapper_;
@@ -83,4 +84,5 @@ class PLCDevice : public QObject
     FIFOInfo fifoInfo_;
     LineInfo lineInfo_;
     CapInfo capInfo_;
+    DeviceType devType;
 };
