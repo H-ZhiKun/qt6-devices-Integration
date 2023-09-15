@@ -496,7 +496,7 @@ GroupBox {
     }
 
     Text {
-        text: qsTr("启动        运行         急停          终止            暂停      ")
+        text: qsTr("待启动         运行         急停          终止            暂停      ")
         font.pointSize: 11
         y: 520
         width: 316
