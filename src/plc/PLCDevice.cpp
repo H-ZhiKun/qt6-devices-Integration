@@ -85,7 +85,8 @@ std::string PLCDevice::readDevice(const std::string &type, const std::string &ad
             }
             else if (type == "di")
             {
-                ret = std::to_string(data[0]);
+                uint32_t combinedValue = static_cast<uint32_t>(data[1]) | (static_cast<uint32_t>(data[0]) << 16);
+                ret = std::to_string(combinedValue);
             }
         }
     }
@@ -124,8 +125,9 @@ bool PLCDevice::writeDevice(const std::string &type, const std::string &addr, co
         else if (type == "di")
         {
             plcAddr = Utils::anyFromString<uint16_t>(addr);
-            data[0] = Utils::anyFromString<uint16_t>(value);
-
+            uint32_t uint32Val = Utils::anyFromString<uint32_t>(value);
+            data[0] = (uint16_t)(uint32Val >> 16);
+            data[1] = (uint16_t)uint32Val;
             regType = WriteRegisterType::RegDInt;
         }
 
@@ -154,7 +156,7 @@ void PLCDevice::updateReadInfo()
                 {
                     alertParsing(readCache.data(), readCacheSize_);
                 }
-                int8_t readCount = 500;
+                int8_t readCount = 100;
                 while (readCount)
                 {
                     auto realInfo = client_->readRealtimeInfo();

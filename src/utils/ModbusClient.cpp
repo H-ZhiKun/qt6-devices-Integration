@@ -52,7 +52,7 @@ void ModbusClient::work()
                     }
                 }
                 // 读缓存
-                if (offsetCount >= 500)
+                if (offsetCount >= 100)
                 {
                     if (readRegisters(normalCacheInfo_.address, normalCacheInfo_.size, cacheBuffer))
                     {
@@ -152,7 +152,8 @@ bool ModbusClient::writeCache(uint16_t address, WriteRegisterType type, const ui
     }
     case WriteRegisterType::RegDInt: {
         writeCacheInfo_.cache[cacheIndex] = data[0];
-        qWriteData_.enqueue(RegisterWriteData(address, data[0]));
+        writeCacheInfo_.cache[cacheIndex + 1] = data[1];
+        qWriteData_.enqueue(RegisterWriteData(address, data));
         break;
     }
     default:

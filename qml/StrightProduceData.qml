@@ -564,7 +564,7 @@ GroupBox {
 
     Timer {
         id: timeProduce
-        interval: 2000//设置定时器定时时间为500ms,默认1000ms
+        interval: 100//设置定时器定时时间为500ms,默认1000ms
         repeat: true //是否重复定时,默认为false
         running: false //是否开启定时，默认是false，当为true的时候，进入此界面就开始定时
         triggeredOnStart: false // 是否开启定时就触发onTriggered，一些特殊用户可以用来设置初始值。
