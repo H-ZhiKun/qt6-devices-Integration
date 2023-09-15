@@ -36,6 +36,7 @@ ListView {
         property string enableAddr: "" // 驱动使能
         property string failureAddr: "" // 驱动故障
         property string resetAddr: "" // 故障复位
+        property string realspeed: "" //
         // 大小
         height: 70
         width: singleWidth
@@ -76,6 +77,21 @@ ListView {
                     singalComponent.title = "当前选中： " + itemName;
                     singalComponent.curentSensor = (modelData + baseIndex);
                     singalComponent.curItem = singleItem;
+                    if (singleItem.enableAddr != "") {
+                        // 直线式电机
+                        var json = {
+                            [singleItem.realSpeedAddr]: "0"
+                        };
+                        var strSend = JSON.stringify(json);
+                        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ReadPLC, strSend);
+                        var result = JSON.parse(jsRet);
+                        if (result.ok === true) {
+                            actruePowerParam.actureSpeed = result.details[singleItem.realSpeedAddr];
+                        } else {
+                            setInfo.text = "读取失败！";
+                            setInfo.color = "red";
+                        }
+                    }
                     if (singleItem.startAddr === "") {
                         // 传感器
                         return;

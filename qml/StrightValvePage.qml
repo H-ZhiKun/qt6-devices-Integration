@@ -66,10 +66,11 @@ GroupBox {
                 y: 126
                 anchors.horizontalCenterOffset: 0
                 focusPolicy: Qt.NoFocus
+                enabled: autoPointMode == 1 ? true : false
                 onClicked: {
                     var handMoveAddr = singalComponent.curItem.handMoveAddr;
                     var json = {
-                        [handMoveAddr]: switchModel.checked ? "0" : "1"
+                        [handMoveAddr]: switchModel.checked ? "1" : "0"
                     };
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
                     var result = JSON.parse(jsRet);
@@ -84,14 +85,14 @@ GroupBox {
             }
 
             Text {
-                text: qsTr("自动")
+                text: qsTr("关闭")
                 font.pointSize: 11
                 x: switchModel.x - 50
                 y: switchModel.y
             }
 
             Text {
-                text: qsTr("点动")
+                text: qsTr("开启")
                 font.pointSize: 11
                 x: switchModel.x + 83
                 y: switchModel.y

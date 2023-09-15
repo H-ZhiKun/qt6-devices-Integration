@@ -16,7 +16,7 @@ Rectangle {
     property string formulaName: "无"
     property string formulaSpeed: "0"
     property string textCountAll: ""  //进料数量
-    property string textCountPass: ""  
+    property string textCountPass: ""
     property string textCountInspection: "" //检测数量
     property string textCountEliminate: "" //总剔除数量
     property string textCountLogisticscode: "" //物流码剔除数量
@@ -25,7 +25,8 @@ Rectangle {
     property string textCountCodeWaste: ""
     property string textCountPauseWaste: ""
     property string textEquipmentSteps: "未启动"
-    property int textProduceState: 0
+    property string textProduceState: "1"
+    property int autoPointMode: 2
     property int openFlag: 0
     property bool handMoveState: false // false-->自动    true-->手动
 

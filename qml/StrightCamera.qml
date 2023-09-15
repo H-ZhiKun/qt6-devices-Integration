@@ -319,9 +319,11 @@ GroupBox {
             var json = {};
             if (pointMode) {
                 json["point_di_0001"] = "1";
+                autoPointMode = 1;
                 text = "点动中";
             } else {
                 json["point_di_0001"] = "2";
+                autoPointMode = 2;
                 text = "点动模式";
             }
             var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));

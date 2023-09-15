@@ -289,6 +289,7 @@ GroupBox {
             text: qsTr("保存设置")
             icon.source: "file:///" + appdir + "/ico/baocun.png"
             font.pointSize: 12
+            enabled: autoPointMode == 1 ? true : false
             onClicked: {
                 var handMoveAddr = singalComponent.curItem.handMoveAddr;
                 if (Number(setSpeedParam.text) <= 3000 && Number(setSpeedParam.text) >= 0) {

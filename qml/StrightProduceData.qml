@@ -496,7 +496,7 @@ GroupBox {
     }
 
     Text {
-        text: qsTr("启动        运行         急停          终止            暂停      ")
+        text: qsTr("待启动         运行         急停          终止            暂停      ")
         font.pointSize: 11
         y: 520
         width: 316
@@ -512,7 +512,7 @@ GroupBox {
         x: 240
         property int state: 0
         mipmap: true
-        source: textProduceState === 0 ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
+        source: textProduceState === "1" ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
         fillMode: Image.PreserveAspectFit
     }
 
@@ -524,7 +524,7 @@ GroupBox {
         x: 310
         property int state: 0
         mipmap: true
-        source: textProduceState === 1 ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
+        source: textProduceState === "2" ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
         fillMode: Image.PreserveAspectFit
     }
     Image {
@@ -535,7 +535,7 @@ GroupBox {
         x: 380
         property int state: 0
         mipmap: true
-        source: textProduceState === 2 ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
+        source: textProduceState === "3" ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
         fillMode: Image.PreserveAspectFit
     }
     Image {
@@ -546,7 +546,7 @@ GroupBox {
         x: 450
         property int state: 0
         mipmap: true
-        source: textProduceState === 2 ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
+        source: textProduceState === "5" ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
         fillMode: Image.PreserveAspectFit
     }
 
@@ -558,7 +558,7 @@ GroupBox {
         x: 540
         property int state: 0
         mipmap: true
-        source: textProduceState === 3 ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
+        source: textProduceState === "4" ? "file:///" + appdir + "/ico/green.png" : "file:///" + appdir + "/ico/gray.png"
         fillMode: Image.PreserveAspectFit
     }
 
@@ -598,6 +598,7 @@ GroupBox {
             textCountLogisticscode = result.details.textCountLogisticscode;//物流码剔除数量
             //combinedActiveEnergy.text = result.details.combined_active_energy;//组合有功电能
             combinedActiveEnergy.text = result.details.combined_active_energy;
+            textProduceState = result.details.text_produce_state;
         }
     }
 }
