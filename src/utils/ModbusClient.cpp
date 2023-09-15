@@ -123,7 +123,8 @@ CacheInfo ModbusClient::readRealtimeInfo()
 bool ModbusClient::writeCache(uint16_t address, WriteRegisterType type, const uint16_t *data)
 {
     bool ret = true;
-    uint16_t cacheIndex = address - 1 - writeCacheInfo_.address;
+    address -= 1;
+    uint16_t cacheIndex = address - writeCacheInfo_.address;
     if (cacheIndex < 0)
     {
         return false;
