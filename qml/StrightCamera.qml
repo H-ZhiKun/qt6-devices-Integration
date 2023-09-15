@@ -47,13 +47,13 @@ GroupBox {
             anchors.bottomMargin: 0
         }
 
-//        ImagePainter {
-//            id: codeCheckCamera
-//            objectName: "codeCheckCamera"
-//            anchors.fill: parent
-//            anchors.margins: 8
-//            //anchors.topMargin: 35
-//        }
+        //        ImagePainter {
+        //            id: codeCheckCamera
+        //            objectName: "codeCheckCamera"
+        //            anchors.fill: parent
+        //            anchors.margins: 8
+        //            //anchors.topMargin: 35
+        //        }
 
         Text {
             x: 40
@@ -318,10 +318,10 @@ GroupBox {
             pointMode = !pointMode;
             var json = {};
             if (pointMode) {
-                json["point_b_12992_00"] = "1";
+                json["point_di_0001"] = "1";
                 text = "点动中";
             } else {
-                json["point_b_12992_00"] = "0";
+                json["point_di_0001"] = "2";
                 text = "点动模式";
             }
             var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
@@ -375,7 +375,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Image {
@@ -385,7 +385,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Image {
@@ -395,7 +395,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Image {
@@ -405,7 +405,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Timer {
