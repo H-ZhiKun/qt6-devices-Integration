@@ -568,8 +568,8 @@ void AppFrame::AppFrameworkImpl::initPLC()
     }
     else if (strType == "line")
     {
-        QObject::connect(plcDev_, &PLCDevice::lineCognex, [this](const uint64_t bottomNum) { whenLineCognex(); });
-        QObject::connect(plcDev_, &PLCDevice::lineCoding, [this](const uint64_t bottomNum) { whenLineCoding(); });
+        QObject::connect(plcDev_, &PLCDevice::lineCognex, [this]() { whenLineCognex(); });
+        QObject::connect(plcDev_, &PLCDevice::lineCoding, [this]() { whenLineCoding(); });
     }
     else if (strType == "cap")
     {
