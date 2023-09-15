@@ -25,6 +25,7 @@ Rectangle {
     property string textCountCodeWaste: ""
     property string textCountPauseWaste: ""
     property string textEquipmentSteps: "未启动"
+    property int autoPointMode: 2
     property int textProduceState: 0
     property int openFlag: 0
     property bool handMoveState: false // false-->自动    true-->手动
