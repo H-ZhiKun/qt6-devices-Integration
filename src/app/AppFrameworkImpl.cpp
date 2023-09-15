@@ -412,6 +412,7 @@ std::string AppFrame::AppFrameworkImpl::refreshElecData()
     jsElecVal["textCountInspection"] = plcDev_->readDevice("di", "0011");    // 检测数量
     jsElecVal["textCountEliminate"] = plcDev_->readDevice("di", "0013");     // 总剔除数量
     jsElecVal["textCountLogisticscode"] = plcDev_->readDevice("di", "0015"); // 物流码剔除数量
+    jsElecVal["text_produce_state"] = plcDev_->readDevice("di", "0006");     // 下位机状态信息
 
     std::string result = Utils::makeResponse(ret, std::move(jsElecVal));
     return result;
