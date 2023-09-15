@@ -568,10 +568,8 @@ void AppFrame::AppFrameworkImpl::initPLC()
     }
     else if (strType == "line")
     {
-        // QObject::connect(plcDev_, &PLCDevice::lineCognex,
-        //                  [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
-        // QObject::connect(plcDev_, &PLCDevice::lineCoding,
-        //                  [this](const uint64_t bottomNum) { whenBottomMove(bottomNum); });
+        QObject::connect(plcDev_, &PLCDevice::lineCognex, [this](const uint64_t bottomNum) { whenLineCognex(); });
+        QObject::connect(plcDev_, &PLCDevice::lineCoding, [this](const uint64_t bottomNum) { whenLineCoding(); });
     }
     else if (strType == "cap")
     {
@@ -1079,5 +1077,18 @@ void AppFrame::AppFrameworkImpl::whenLineCognex()
     if (lineProduct_ != nullptr)
     {
         lineProduct_->newProduct();
+    }
+}
+
+void AppFrame::AppFrameworkImpl::whenLineCoding()
+{
+    if (lineProduct_ != nullptr)
+    {
+        std::string code1, code2;
+        lineProduct_->updateCodingSigTime(code1, code2);
+        if (!code1.empty() && !code2.empty())
+        {
+            invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, code1), Q_ARG(std::string, code2));
+        }
     }
 }
