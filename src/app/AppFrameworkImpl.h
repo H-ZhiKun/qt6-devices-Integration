@@ -95,6 +95,7 @@ class AppFrameworkImpl final : public AppFramework
     void processTangleCheck(const std::string &);
 
     void whenLineCognex();
+    void whenLineCoding();
     void sendOneToAlgo(); // 初始化服务端的python模型
     void drawText(QImage &img, const QString &text);
 

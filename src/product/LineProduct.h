@@ -79,16 +79,17 @@ class LineProduct
             }
         }
     }
-    void updateCodingSigTime()
+    void updateCodingSigTime(std::string &code1, std::string code2)
     {
-        if (lvProduct_.size() == 0)
-            return;
+
         std::lock_guard lock(mtxProduct_);
-        for (auto iter = lvProduct_.begin(); iter != lvProduct_.end(); ++iter)
+        for (auto iter = lvProduct_.rbegin(); iter != lvProduct_.rend(); ++iter)
         {
             if ((*iter)->CodingSigTime.empty())
             {
                 (*iter)->CodingSigTime = Utils::getCurrentTime(true);
+                code1 = (*iter)->logistics1;
+                code2 = (*iter)->logistics2;
                 break;
             }
         }
