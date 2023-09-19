@@ -41,7 +41,7 @@ void Domino::dealing(std::vector<unsigned char> buffer)
 
 void Domino::pingBehavior()
 {
-    dominoCheck();
+    // dominoCheck();
 }
 
 void Domino::dominoCheck()
