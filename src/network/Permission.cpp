@@ -31,7 +31,7 @@ void Permission::dealing(std::vector<unsigned char> buffer)
     }
     else
     {
-        LogError("permission code error.");
+        LogError("permission code error: {}", result);
     }
     emit codeRight(curNumber, describtion, code1, code2);
 }
