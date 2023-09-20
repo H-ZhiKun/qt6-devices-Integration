@@ -913,12 +913,6 @@ void AppFrame::AppFrameworkImpl::whenBottomMove(const uint64_t number)
                 // plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
                 plcDev_->writeDevice("b", "13004", "00", "1");
                 plcDev_->writeDevice("n", "12994", "", std::to_string(locateCheck->numBottom));
-                // LogInfo("product process:locateCheck:number={},value={}.", locateCheck->numBottom,
-                //         locateCheck->locateCheckResult);
-                // invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, locateCheck->logistics1),
-                //           Q_ARG(std::string, locateCheck->logistics2));
-                // LogInfo("product process:print:number={},code1={},code2={}.", locateCheck->numBottom,
-                //         locateCheck->logistics1, locateCheck->logistics2);
             }
         }
         if (printer && !printer->logistics1.empty() && printer->locateCheckResult == "1")
