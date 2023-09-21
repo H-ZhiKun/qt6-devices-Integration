@@ -188,7 +188,7 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
     bool ret = false;
     auto params = Utils::stringToJson(value);
     std::string winName = params["display_window"].asString();
-    Json::Value jsVal = baumerManager_->getCamera(winName);
+    Json::Value jsVal = baumerManager_->getCamera(mapWindId2Index_[winName]);
     std::string des;
     if (jsVal.isNull())
     {
@@ -208,7 +208,8 @@ std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
     std::string des;
     if (!jsParams.isNull())
     {
-        ret = baumerManager_->setCamera(jsParams, des);
+        std::string winName = jsParams["display_window"].asString();
+        ret = baumerManager_->setCamera(mapWindId2Index_[winName], jsParams, des);
     }
     return Utils::makeResponse(ret, {}, std::move(des));
 }
