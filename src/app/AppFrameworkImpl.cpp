@@ -577,31 +577,6 @@ void AppFrame::AppFrameworkImpl::initPLC()
     }
 }
 
-void AppFrame::AppFrameworkImpl::updateRealData()
-{
-
-    Json::Value jsMainVal;
-    jsMainVal["count_all"] = 4;             // 进瓶数
-    jsMainVal["count_pass"] = 22590;        // 合格品数
-    jsMainVal["count_waste"] = 7;           // 废品总数
-    jsMainVal["count_locate_waste"] = 3;    // 定位废品数
-    jsMainVal["count_code_waste"] = 4;      // 喷码废品数
-    jsMainVal["count_pause_waste"] = 0;     // 暂停、终止废品数
-    jsMainVal["equipmentSteps"] = "未启动"; // 设备步骤
-    jsMainVal["produceState"] = 3;          // 生产状态
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageMain), Q_ARG(QString, Utils::jsonToString(jsMainVal).c_str()));
-}
-
-void AppFrame::AppFrameworkImpl::updateProduceRealData()
-{
-    Json::Value jsProduceVal;
-    /*生产数据界面实时更新数据*/
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
-}
-
 void AppFrame::AppFrameworkImpl::updateAlertData()
 {
     Json::Value jsAlertVal = AlertWapper::selectAlertDataPaged(7, 1);
