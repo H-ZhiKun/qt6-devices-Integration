@@ -187,8 +187,8 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
 {
     bool ret = false;
     auto params = Utils::stringToJson(value);
-    uint8_t winId = params["display_window"].asInt();
-    Json::Value jsVal = baumerManager_->getCamera(winId);
+    std::string winName = params["display_window"].asString();
+    Json::Value jsVal = baumerManager_->getCamera(winName);
     std::string des;
     if (jsVal.isNull())
     {
@@ -571,30 +571,6 @@ void AppFrame::AppFrameworkImpl::initPLC()
     QObject::connect(plcDev_, &PLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
     QObject::connect(plcDev_, &PLCDevice::signalCoding, [this]() { whenSignalCoding(); });
     QObject::connect(plcDev_, &PLCDevice::signalOCR, [this]() { whenSignalCoding(); });
-}
-
-void AppFrame::AppFrameworkImpl::updateRealData()
-{
-    Json::Value jsMainVal;
-    jsMainVal["count_all"] = 4;             // 进瓶数
-    jsMainVal["count_pass"] = 22590;        // 合格品数
-    jsMainVal["count_waste"] = 7;           // 废品总数
-    jsMainVal["count_locate_waste"] = 3;    // 定位废品数
-    jsMainVal["count_code_waste"] = 4;      // 喷码废品数
-    jsMainVal["count_pause_waste"] = 0;     // 暂停、终止废品数
-    jsMainVal["equipmentSteps"] = "未启动"; // 设备步骤
-    jsMainVal["produceState"] = 3;          // 生产状态
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageMain), Q_ARG(QString, Utils::jsonToString(jsMainVal).c_str()));
-}
-
-void AppFrame::AppFrameworkImpl::updateProduceRealData()
-{
-    Json::Value jsProduceVal;
-    /*生产数据界面实时更新数据*/
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageProduce), Q_ARG(QString, Utils::jsonToString(jsProduceVal).c_str()));
 }
 
 void AppFrame::AppFrameworkImpl::updateAlertData()

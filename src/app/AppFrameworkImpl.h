@@ -74,10 +74,6 @@ class AppFrameworkImpl final : public AppFramework
     void initFile();
     void initProduct();
 
-    void updateRealData();                                            // 主界面实时更新数据
-    void updateProduceRealData();                                     // 生产数据界面实时更新数据
-    void updateSensorRealData();                                      // 传感器界面实时更新数据
-    void updateValveRealData();                                       // 阀门界面实时更新数据
     void updateAlertData();                                           // 更新报警信息
     void updateFormulaData();                                         // 初始化配方界面
     void updateByMinute(const int minute);                            // 每分钟更新

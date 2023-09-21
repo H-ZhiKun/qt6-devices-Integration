@@ -118,3 +118,110 @@ CREATE TABLE IF NOT EXISTS plc_register_rw (
   created_time timestamp DEFAULT CURRENT_TIMESTAMP,
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Table structure for line_product_data
+CREATE TABLE IF NOT EXISTS line_product_data (
+  id serial PRIMARY KEY,
+  qr_code varchar(24),           --二维码读取结果
+  logistucs_code varchar(24),    --物流码获取结果
+  code_check_image varchar(128), --oce图片保存路径
+  code_check_res smallint,       --ocr返回的结果
+  ng_result smallint,                     --是否ng
+  created_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table structure for line_product_time
+CREATE TABLE IF NOT EXISTS line_product_time (
+  id serial PRIMARY KEY,
+  enter_time varchar(24),            --入队/读码时间
+  require_qrcode_time varchar(24),   --二维码获取时间
+  require_logistics_time varchar(24), --物流码获取时间  
+  paint_time varchar(24),            --打码时间
+  ocr_photo_time varchar(24),        --ocr拍照时间
+  ocr_send_time varchar(24),         --ocr图片发送时间
+  ocr_reslut_time varchar(24),       --ocr结果获取时间
+  out_time varchar(24),              --剔除时间
+  created_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table structure for line_product_data
+CREATE TABLE IF NOT EXISTS circle_product_data (
+  id serial PRIMARY KEY,
+  qr_code varchar(24),             --二维码读取结果
+  logistics_code varchar(24),      --物流码获取结果
+  locate_image varchar(128),       --定位图片路径
+  locate_res smallint,             --定位结果
+  locate_check_image varchar(128), --定位复合图片路径
+  locate_check_res smallint,       --定位复合结果
+  code_check_image varchar(128),   --oce图片保存路径
+  code_check_res smallint,         --ocr返回的结果
+  created_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table structure for line_product_time
+CREATE TABLE IF NOT EXISTS circle_product_time (
+  id serial PRIMARY KEY,
+  enter_time varchar(24),               --入队时间
+  require_qrcode_time varchar(24),      --二维码获取时间
+  require_logistics_time varchar(24),   --物流码获取时间 
+  locate_photo_time varchar(24),        --定位拍照时间
+  locate_send_time varchar(24),         --定位图片发送时间
+  locate_reslut_time varchar(24),       --定位结果获取时间
+  locate_check_photo_time varchar(24),  --定位复合拍照时间
+  locate_check_send_time varchar(24),   --定位复合图片发送时间
+  locate_check_reslut_time varchar(24), --定位复合结果获取时间
+  paint_singnal_time varchar(24),       --打码信号获取时间
+  paint_time varchar(24),               --打码时间
+  ocr_photo_time varchar(24),           --ocr拍照时间
+  ocr_send_time varchar(24),            --ocr图片发送时间
+  ocr_reslut_time varchar(24),          --ocr结果获取时间
+  out_time varchar(24),                 --剔除时间
+  created_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table structure for time_point_data
+CREATE TABLE IF NOT EXISTS time_point_data(
+   id serial NOT NULL,
+   typePd_ VARCHAR(64),
+   bottle_num VARCHAR(64),
+   batch_num VARCHAR(64),
+   formula_name VARCHAR(64),
+   is_complete BOOLEAN,
+   qrcode_signal_time timestamp,
+   qrcode_time timestamp,
+   logistics_ret_time timestamp,
+   location_signal_time timestamp,
+   location_image_time timestamp,
+   location_result_time timestamp,
+   check_signal_time timestamp,
+   check_image_time timestamp,
+   check_result_time timestamp,
+   coding_signal_time timestamp,
+   ocr_signal_time timestamp,
+   ocr_image_time timestamp,
+   ocr_result_time timestamp,
+   complete_signal_time timestamp,
+   created_time timestamp DEFAULT CURRENT_TIMESTAMP
+)PARTITION BY RANGE (EXTRACT(YEAR_MONTH FROM created_time));
+CREATE INDEX idx_created_time ON time_point_data (created_time);
+
+-- Table structure for time_point_data
+CREATE TABLE IF NOT EXISTS detect_data(
+   id serial NOT NULL,
+   typePd_ VARCHAR(64),
+   bottle_num VARCHAR(64),
+   batch_num VARCHAR(64),
+   formula_name VARCHAR(64),
+   is_complete BOOLEAN,
+   qrcode_result VARCHAR(256),
+   logistics_true_value_1 VARCHAR(256),
+   logistics_true_value_2 VARCHAR(256),
+   location_image_path VARCHAR(256),
+   check_image_path VARCHAR(256),
+   ocr_image_path VARCHAR(256),
+   location_result VARCHAR(64),
+   check_result VARCHAR(64),
+   ocr_result VARCHAR(256),
+   created_time timestamp DEFAULT CURRENT_TIMESTAMP
+)PARTITION BY RANGE (EXTRACT(YEAR_MONTH FROM created_time));
+CREATE INDEX idx_created_time ON time_point_data (created_time);

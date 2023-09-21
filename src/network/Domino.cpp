@@ -10,12 +10,20 @@ Domino::~Domino()
 
 void Domino::dealing(std::vector<unsigned char> buffer)
 {
+    if(buffer.empty()){
+        LogInfo("Receive painter info is empty");
+        return;
+    }
     if (buffer.size() != 5)
+        std::string str(byteVector.begin(), byteVector.end());
+        LogInfo("Receive painter info faile: {}", str);
         return;
     if (buffer[0] != 0x02 || buffer[1] != 0x05 || buffer[4] != 0x03)
+        std::string str(byteVector.begin(), byteVector.end());
+        LogInfo("Receive painter info faile: {}", str);
         return;
     if (buffer[2] == 0x02)
-        LogError("CodeError");
+        LogError("Receive painter info faile: CodeError");
     if (buffer[2] == 0x01)
     {
         ResponseCode code = static_cast<ResponseCode>(buffer[3]);
@@ -41,7 +49,7 @@ void Domino::dealing(std::vector<unsigned char> buffer)
 
 void Domino::pingBehavior()
 {
-    dominoCheck();
+    // dominoCheck();
 }
 
 void Domino::dominoCheck()
