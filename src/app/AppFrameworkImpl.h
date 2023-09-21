@@ -74,10 +74,8 @@ class AppFrameworkImpl final : public AppFramework
     void initFile();
     void initProduct();
 
-    void updateAlertData();                                           // 更新报警信息
-    void updateFormulaData();                                         // 初始化配方界面
-    void updateByMinute(const int minute);                            // 每分钟更新
-    void updateByDay(const int year, const int month, const int day); // 每日更新
+    void updateAlertData();   // 更新报警信息
+    void updateFormulaData(); // 初始化配方界面
     void updateUserData();
     void timerTask(); // 定时任务
 
