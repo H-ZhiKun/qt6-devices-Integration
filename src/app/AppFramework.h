@@ -1,16 +1,11 @@
 #pragma once
 #include "NonCopyable.h"
+#include <QQmlApplicationEngine>
 #include <functional>
 #include <string>
 
 namespace AppFrame
 {
-enum class DisplayWindows
-{
-    LocationCamera = 0,
-    CodeCheckCamera = 1,
-    LocateCheckCamera = 2
-};
 
 enum class ExpectedFunction
 {
@@ -44,11 +39,10 @@ class AppFramework : public NonCopyable
      * @return 返回AppFramework类型的引用，表示应用程序框架的唯一实例。
      */
     static AppFramework &instance();
-    virtual int run() = 0;
+    virtual int run(QQmlApplicationEngine *) = 0;
     virtual std::string expected(const ExpectedFunction &expectedType, const std::string &jsValue) = 0;
     virtual bool registerExpectation(const ExpectedFunction &expectedType,
                                      std::function<std::string(const std::string &)> &&api) = 0;
-    virtual void storeImagePainter(const DisplayWindows &painterId, void *obj) = 0;
 };
 inline AppFramework &appFramework()
 {
