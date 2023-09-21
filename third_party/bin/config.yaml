@@ -79,7 +79,7 @@ permission:
 baumer:
   # interface: The MAC address of the NIC example: CC-82-7F-3C-04-DF
   interface: [CC-82-7F-3C-04-E1, CC-82-7F-3C-04-DF]
-  # display_window: LocationCamera = 0;CodeCheckCamera = 1;LocateCheckCamera = 2.
+  # display_window: Location;LocateCheck;OCR; only this value
   # trigger_mode: software = 0;hardware=1;
   # expose: expose time unit millisecond
   # gain: range 0 ~ 100
@@ -87,7 +87,7 @@ baumer:
   # height: capture image height px700009842711
   paramters:
     - sn_number: 700009842711
-      display_window: 0
+      display_window: Location
       trigger_mode: 1
       expose: 0.8
       gain: 1
@@ -96,7 +96,7 @@ baumer:
       offset_x: 592
       offset_y: 490
     - sn_number: 700009842699
-      display_window: 1
+      display_window: OCR
       trigger_mode: 1
       expose: 0.8
       gain: 2
@@ -105,7 +105,7 @@ baumer:
       offset_x: 960
       offset_y: 632
     - sn_number: 700009429371
-      display_window: 2
+      display_window: LocateCheck
       trigger_mode: 1
       expose: 0.8
       gain: 2
