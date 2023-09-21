@@ -259,7 +259,7 @@ bool BaumerManager::addCamera(const std::string &snNumber, BGAPI2::Device *dev)
     if (ret)
     {
         std::string des;
-        setCamera(lvParams_[index], des);
+        setCamera(index, lvParams_[index], des);
     }
     return ret;
 }
@@ -309,15 +309,14 @@ std::vector<uint8_t> BaumerManager::cameraState()
     return res;
 }
 
-bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
+bool BaumerManager::setCamera(uint8_t number, const Json::Value &param, std::string &des)
 {
     bool ret = true;
-    uint8_t index = param["display_window"].asInt();
     Camera *pCamera = nullptr;
-    if (index < lvCameras_.size())
+    if (number < lvCameras_.size())
     {
         std::lock_guard lock(mtxCamera_);
-        pCamera = lvCameras_[index];
+        pCamera = lvCameras_[number];
     }
     if (pCamera == nullptr)
     {
@@ -333,13 +332,13 @@ bool BaumerManager::setCamera(const Json::Value &param, std::string &des)
         if (key == "expose")
         {
             double temp = Utils::anyFromString<double>(strValue);
-            lvParams_[index][key] = temp;
+            lvParams_[number][key] = temp;
             value = temp * 1000.0;
         }
         else
         {
             value = Utils::anyFromString<uint64_t>(strValue);
-            lvParams_[index][key] = value;
+            lvParams_[number][key] = value;
         }
         if (!pCamera->setParams(key, value))
         {

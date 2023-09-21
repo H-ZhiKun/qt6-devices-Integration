@@ -20,7 +20,7 @@ class BaumerManager
     virtual ~BaumerManager();
     void start(const YAML::Node &launchConfig);
     void searchCamera(); // 搜索相机
-    bool setCamera(const Json::Value &param, std::string &des);
+    bool setCamera(uint8_t number, const Json::Value &param, std::string &des);
     Json::Value getCamera(uint8_t number); // 根据配置窗口号获取对应相机的参数列表
     cv::Mat getCamaeraMat(uint8_t number); // 根据sn号获取对应相机的图片
     void removeCamera(const std::string &snNumber);
