@@ -30,6 +30,8 @@ struct LineInfo
 {
     bool sigCoding; // 40081.8 打码信号
     bool sigCognex; // 40081.9 读码信号
+    bool sigOCR;    // 40081.10 OCR信号
+    bool sigRemove; // 40081.11 剔除信号
 };
 
 struct CapInfo

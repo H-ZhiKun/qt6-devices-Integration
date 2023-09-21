@@ -264,8 +264,18 @@ void PLCDevice::lineParsing(const uint16_t *lineGroup, uint16_t size)
     {
         emit signalQR(0);
     }
+    if (bit[10] != lineInfo_.sigOCR)
+    {
+        emit signalOCR();
+    }
+    if (bit[11] != lineInfo_.sigRemove)
+    {
+        emit signalRemove();
+    }
     lineInfo_.sigCoding = bit[8];
     lineInfo_.sigCognex = bit[9];
+    lineInfo_.sigOCR = bit[10];
+    lineInfo_.sigRemove = bit[11];
 }
 
 void PLCDevice::capParsing(const uint16_t *capGroup, uint16_t size)
