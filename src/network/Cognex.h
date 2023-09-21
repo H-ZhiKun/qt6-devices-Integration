@@ -4,8 +4,6 @@
 #include <QTimer>
 #include <string>
 
-const QString IPADDR = "192.168.101.111";
-const quint16 PORT = 23;
 class Cognex : public TCPClient
 {
     Q_OBJECT
