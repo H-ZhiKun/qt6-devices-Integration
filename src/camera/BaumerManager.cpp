@@ -48,9 +48,9 @@ void BaumerManager::start(const YAML::Node &launchConfig)
     lvParams_.resize(launchConfig["baumer"]["paramters"].size());
     lvSNNumber_.resize(launchConfig["baumer"]["paramters"].size());
     lvCameras_.resize(launchConfig["baumer"]["paramters"].size());
+    uint8_t windId = 0;
     for (const auto &item : launchConfig["baumer"]["paramters"])
     {
-        uint8_t winNumber = item["display_window"].as<uint8_t>();
         Json::Value jsVal;
         jsVal["trigger_mode"] = item["trigger_mode"].as<uint16_t>();
         jsVal["expose"] = item["expose"].as<double>();
@@ -59,8 +59,9 @@ void BaumerManager::start(const YAML::Node &launchConfig)
         jsVal["height"] = item["height"].as<uint16_t>();
         jsVal["offset_x"] = item["offset_x"].as<uint16_t>();
         jsVal["offset_y"] = item["offset_y"].as<uint16_t>();
-        lvParams_[winNumber] = std::move(jsVal);
-        lvSNNumber_[winNumber] = std::move(item["sn_number"].as<std::string>());
+        lvParams_[windId] = std::move(jsVal);
+        lvSNNumber_[windId] = std::move(item["sn_number"].as<std::string>());
+        ++windId;
     }
     initializeBGAPI();
     searchCamera();
