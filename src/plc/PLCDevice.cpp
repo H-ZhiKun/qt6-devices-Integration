@@ -249,7 +249,7 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
     if (FIFOGroup[1] != fifoInfo_.numQRCode)
     {
         fifoInfo_.numQRCode = FIFOGroup[1];
-        emit bottleMove(fifoInfo_.numQRCode);
+        emit signalQR(fifoInfo_.numQRCode);
     }
 }
 
@@ -258,11 +258,11 @@ void PLCDevice::lineParsing(const uint16_t *lineGroup, uint16_t size)
     std::bitset<16> bit = std::bitset<16>(lineGroup[0]);
     if (bit[8] != lineInfo_.sigCoding)
     {
-        emit lineCoding();
+        emit signalCoding();
     }
     if (bit[9] != lineInfo_.sigCognex)
     {
-        emit lineCognex();
+        emit signalQR(0);
     }
     lineInfo_.sigCoding = bit[8];
     lineInfo_.sigCognex = bit[9];
@@ -272,7 +272,7 @@ void PLCDevice::capParsing(const uint16_t *capGroup, uint16_t size)
 {
     if (capGroup[0] != lineInfo_.sigCognex)
     {
-        emit capCognex();
+        emit signalQR(0);
     }
     capInfo_.sigCognex = capGroup[0];
 }
