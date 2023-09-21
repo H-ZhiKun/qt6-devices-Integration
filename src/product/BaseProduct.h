@@ -77,4 +77,5 @@ class BaseProduct : public AppFrame::NonCopyable
     virtual std::shared_ptr<ProductItem> updateCheckResult(const uint32_t number, const std::string &value) = 0;
     virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path) = 0;
     virtual std::shared_ptr<ProductItem> updateOCRResult(const uint32_t number, const std::string &value) = 0;
+    virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index) = 0;
 };

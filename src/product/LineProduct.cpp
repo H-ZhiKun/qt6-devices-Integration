@@ -149,3 +149,8 @@ std::shared_ptr<ProductItem> LineProduct::updateOCRResult(const uint32_t number,
     }
     return nullptr;
 }
+
+std::shared_ptr<ProductItem> LineProduct::getIndexObject(uint32_t index)
+{
+    return std::shared_ptr<ProductItem>();
+}

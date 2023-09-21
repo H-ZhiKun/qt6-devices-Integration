@@ -154,3 +154,73 @@
 //     }
 //     return lvProduct_[index];
 // }
+
+void CircleProduct::signalQR(uint32_t pdNum)
+{
+    auto ptr = std::make_shared<ProductItem>(pdNum, pdType_, "", "");
+    qProduct_.push_front(ptr);
+}
+
+void CircleProduct::signalLocation()
+{
+}
+
+void CircleProduct::signalCheck()
+{
+}
+
+std::shared_ptr<ProductItem> CircleProduct::signalCoding()
+{
+    return std::shared_ptr<ProductItem>();
+}
+
+void CircleProduct::signalOCR()
+{
+}
+
+void CircleProduct::signalComplete()
+{
+}
+
+void CircleProduct::updateQRCode(const std::string &code)
+{
+}
+
+void CircleProduct::updateLogistics(const std::string &code1, const std::string &code2)
+{
+}
+
+uint32_t CircleProduct::updateLocation(const cv::Mat &mat, const std::string &path)
+{
+    return 0;
+}
+
+std::shared_ptr<ProductItem> CircleProduct::updateLocationResult(const uint32_t number, const std::string &value)
+{
+    return std::shared_ptr<ProductItem>();
+}
+
+uint32_t CircleProduct::updateCheck(const cv::Mat &mat, const std::string &path)
+{
+    return 0;
+}
+
+std::shared_ptr<ProductItem> CircleProduct::updateCheckResult(const uint32_t number, const std::string &value)
+{
+    return std::shared_ptr<ProductItem>();
+}
+
+uint32_t CircleProduct::updateOCR(const cv::Mat &mat, const std::string &path)
+{
+    return 0;
+}
+
+std::shared_ptr<ProductItem> CircleProduct::updateOCRResult(const uint32_t number, const std::string &value)
+{
+    return std::shared_ptr<ProductItem>();
+}
+
+std::shared_ptr<ProductItem> CircleProduct::getIndexObject(uint32_t index)
+{
+    return std::shared_ptr<ProductItem>();
+}
