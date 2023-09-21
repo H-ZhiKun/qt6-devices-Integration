@@ -154,3 +154,11 @@ std::shared_ptr<ProductItem> LineProduct::getIndexObject(uint32_t index)
 {
     return std::shared_ptr<ProductItem>();
 }
+
+void LineProduct::complete()
+{
+    // todo 插入数据库
+    // example:
+    // ProductTimeWapper::insert(std::shared_ptr<ProductItem> ptr);
+    // ProductDataWapper::insert(std::shared_ptr<ProductItem> ptr);
+}

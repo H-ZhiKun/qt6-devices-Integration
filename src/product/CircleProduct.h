@@ -26,6 +26,7 @@ class CircleProduct : public BaseProduct
     virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path) override;
     virtual std::shared_ptr<ProductItem> updateOCRResult(const uint32_t number, const std::string &value) override;
     virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index) override;
+    virtual void complete() override;
 
   private:
     std::deque<std::shared_ptr<ProductItem>> qProduct_;
