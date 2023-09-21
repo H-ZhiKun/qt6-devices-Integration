@@ -792,6 +792,7 @@ void AppFrame::AppFrameworkImpl::whenSignalCoding()
 
 void AppFrame::AppFrameworkImpl::whenSignaOCR()
 {
+    Utils::asyncTask([this] { product_->signalOCR(); });
 }
 
 void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
