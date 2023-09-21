@@ -666,7 +666,7 @@ void AppFrame::AppFrameworkImpl::initProduct()
     std::string strType = config_["plc"]["type"].as<std::string>();
     if (strType == "circle")
     {
-        // product_ = new CircleProduct();
+        product_ = new CircleProduct();
     }
     else if (strType == "line")
     {
@@ -739,9 +739,17 @@ void AppFrame::AppFrameworkImpl::timerTask()
                 if (!mat.empty())
                 {
                     uint8_t typeALGO = 0;
-                    if (key == "OCR")
+                    if (key == "Location")
+                    {
+                        typeALGO = 0;
+                    }
+                    else if (key == "OCR")
                     {
                         typeALGO = 1;
+                    }
+                    else if (key == "LocateCheck")
+                    {
+                        typeALGO = 2;
                     }
                     afterCaputureImage(typeALGO, mat);
                     LogInfo("product process:image locate get.");

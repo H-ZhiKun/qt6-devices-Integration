@@ -72,8 +72,8 @@ class AppFrameworkImpl final : public AppFramework
     void memoryClean();
     void initBaumerManager();
     void initFile();
-    void initProduct();
 
+    void initProduct();
     void updateAlertData();   // 更新报警信息
     void updateFormulaData(); // 初始化配方界面
     void updateUserData();
