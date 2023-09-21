@@ -629,22 +629,6 @@ void AppFrame::AppFrameworkImpl::updateByDay(const int year, const int month, co
     }
 }
 
-void AppFrame::AppFrameworkImpl::updateSensorRealData()
-{
-    Json::Value jsSensorVal;
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageSensor), Q_ARG(QString, Utils::jsonToString(jsSensorVal).c_str()));
-}
-
-void AppFrame::AppFrameworkImpl::updateValveRealData()
-{
-    Json::Value jsValveVal;
-
-    invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-              Q_ARG(PageIndex, PageIndex::PageValve), Q_ARG(QString, Utils::jsonToString(jsValveVal).c_str()));
-}
-
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
     baumerManager_ = new BaumerManager();
