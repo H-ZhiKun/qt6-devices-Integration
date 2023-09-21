@@ -180,8 +180,8 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
 {
     bool ret = false;
     auto params = Utils::stringToJson(value);
-    uint8_t winId = params["display_window"].asInt();
-    Json::Value jsVal = baumerManager_->getCamera(winId);
+    std::string winName = params["display_window"].asString();
+    Json::Value jsVal = baumerManager_->getCamera(winName);
     std::string des;
     if (jsVal.isNull())
     {
