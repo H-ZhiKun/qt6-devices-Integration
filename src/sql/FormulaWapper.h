@@ -35,10 +35,10 @@ class FormulaWapper
             "INSERT INTO {} \ ('name', 'code_x_position', 'code_y_position', 'impurity_locate', 'speed_produce', 
             'acceleration_produce',
             'deceleration_produce') \ VALUES({}, {}, {}, {}, {}, {}, {});",
-            jsonValue["name"].asCString(), jsonValue["code_x_position"].asCString(), jsonValue["code_y_position"].asCString(),
+            'formula_data', jsonValue["name"].asCString(), jsonValue["code_x_position"].asCString(), jsonValue["code_y_position"].asCString(),
             jsonValue["impurity_locate"].asCString(), jsonValue["speed_produce"].asCString(), jsonValue["acceleration_produce"].asCString(),
             jsonValue["deceleration_produce"].asCString());
-        bool res = PgsqlHelper::getSqlHelper().insertData("formula_data", std::move(sql));
+        bool res = PgsqlHelper::getSqlHelper().insertData(std::move(sql));
         return res;
     }
 

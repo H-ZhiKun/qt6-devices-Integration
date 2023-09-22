@@ -886,14 +886,16 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         }
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
         cv::Mat mat = ptrOcr->OCRImage;
-        if(mat.empty()){
+        if (mat.empty())
+        {
             LogWarn("ocrImage is null");
             return;
         }
         QImage ocrImage = Utils::matToQImage(mat);
         QPainter painter(&ocrImage); // this为绘图设备，即表明在该部件上进行绘制
-        for(const auto &item : ocrRes){
-            painter.drawLine(QPaint(0, 0), QPaint(100, 100));
+        for (const auto &item : ocrRes)
+        {
+            // painter.drawLine(QPaint(0, 0), QPaint(100, 100));
         }
     });
 }

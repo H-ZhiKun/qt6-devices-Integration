@@ -27,8 +27,8 @@ class AlertWapper
         {
             std::string sql =
                 fmt::format("INSERT INTO {} \ ('register_address', 'content', 'state') \ VALUES ({}, {}, {});",
-                            key.c_str(), value.c_str(), 1);
-            PgsqlHelper::getSqlHelper().insertData(TABLE_ALARM_DATA, sql);
+                            'alarm_data', key.c_str(), value.c_str(), 1);
+            PgsqlHelper::getSqlHelper().insertData(sql);
         }
     }
     static void modifyAlert(std::map<std::string, std::string> &mapModify)
