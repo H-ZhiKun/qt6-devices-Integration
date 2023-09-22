@@ -21,14 +21,16 @@ class UserWapper
         insertData["password"] = password;
 
         std::string sql = fmt::format(
-            "INSERT INTO {} \ ('name', 'password', 'camera_permission', 'data_permission', 'alarm_permission', 
-            'formula_permission',
-            'sensor_permission', 'valve_permission', 'power_permission', 'log_permission',
-            'user_manage_permission') \ VALUES({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
-            'users', jsonValue["name"].asCString(), jsonValue["password"].asCString(), jsonValue["camera_permission"].asBool(),
-            jsonValue["data_permission"].asBool(), jsonValue["alarm_permission"].asBool(), jsonValue["formula_permission"].asBool(),
-            jsonValue["sensor_permission"].asBool(), jsonValue["valve_permission"].asBool(), jsonValue["power_permission"].asBool(), 
-            jsonValue["log_permission"].asBool(), jsonValue["user_manage_permission"].asBool());
+            "INSERT INTO {} ('name', 'password', 'camera_permission', 'data_permission', 'alarm_permission', \
+            'formula_permission',\
+            'sensor_permission', 'valve_permission', 'power_permission', 'log_permission', \
+            'user_manage_permission') VALUES({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
+            "users", insertData["name"].asCString(), insertData["password"].asCString(),
+            insertData["camera_permission"].asBool(), insertData["data_permission"].asBool(),
+            insertData["alarm_permission"].asBool(), insertData["formula_permission"].asBool(),
+            insertData["sensor_permission"].asBool(), insertData["valve_permission"].asBool(),
+            insertData["power_permission"].asBool(), insertData["log_permission"].asBool(),
+            insertData["user_manage_permission"].asBool());
         bool res = PgsqlHelper::getSqlHelper().insertData(std::move(sql));
         if (!res)
         {
