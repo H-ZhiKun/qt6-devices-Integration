@@ -1,7 +1,7 @@
 #pragma once
 #include "AppFramework.h"
+#include "BaseProduct.h"
 #include "BaumerManager.h"
-#include "CircleProduct.h"
 #include "Cognex.h"
 #include "Domino.h"
 #include "LineProduct.h"
@@ -33,11 +33,10 @@ class AppFrameworkImpl final : public AppFramework
         static AppFrameworkImpl instance;
         return instance;
     }
-    virtual int run() override;
+    virtual int run(QQmlApplicationEngine *engine) override;
     virtual std::string expected(const ExpectedFunction &expectedType, const std::string &jsValue) override;
     virtual bool registerExpectation(const ExpectedFunction &expectedType,
                                      std::function<std::string(const std::string &)> &&api) override;
-    virtual void storeImagePainter(const DisplayWindows &painterId, void *obj) override;
 
   protected:
     // 统一调用 接口区域
@@ -63,6 +62,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string refreshElecData(); // 刷新直线式电能表数据
 
     // 差异调用 接口区域
+    void storeImagePainter(QQmlApplicationEngine *engine);
     void loadConfig();
     void saveConfig();
     void initLogger();
@@ -72,30 +72,25 @@ class AppFrameworkImpl final : public AppFramework
     void memoryClean();
     void initBaumerManager();
     void initFile();
-    void initProduct();
 
-    void updateRealData();                                            // 主界面实时更新数据
-    void updateProduceRealData();                                     // 生产数据界面实时更新数据
-    void updateSensorRealData();                                      // 传感器界面实时更新数据
-    void updateValveRealData();                                       // 阀门界面实时更新数据
-    void updateAlertData();                                           // 更新报警信息
-    void updateFormulaData();                                         // 初始化配方界面
-    void updateByMinute(const int minute);                            // 每分钟更新
-    void updateByDay(const int year, const int month, const int day); // 每日更新
+    void initProduct();
+    void updateAlertData();   // 更新报警信息
+    void updateFormulaData(); // 初始化配方界面
     void updateUserData();
     void timerTask(); // 定时任务
 
-    void whenBottomMove(const uint64_t number);
-    void whenCognexRecv(const std::string &code);
-    void whenPermissionRecv(const uint16_t number, const std::string &describtion, const std::string &code1,
-                            const std::string &code2);
-    void afterCaputureImage(const uint8_t windId, const cv::Mat &mat);
+    void whenSiganlQR(const uint64_t number);
+    void whenSignalCoding();
+    void whenSignaOCR();
+
+    void afterCognexRecv(const std::string &code);
+    void afterPermissionRecv(const std::string &code1, const std::string &code2);
+    void afterCaputureImage(const uint8_t &windId, const cv::Mat &mat);
+
     void processOCR(const std::string &);
     void processTangle(const std::string &);
-    void processTangleCheck(const std::string &);
+    void processCheck(const std::string &);
 
-    void whenLineCognex();
-    void whenLineCoding();
     void sendOneToAlgo(); // 初始化服务端的python模型
     void drawText(QImage &img, const QString &text);
 
@@ -108,14 +103,14 @@ class AppFrameworkImpl final : public AppFramework
     std::string strOcrPath_;
     std::string strTangleResultPath_;
     std::string strTangleCheckResultPath_;
+    std::string strOcrResultPath_;
     // 程序路径 end
     YAML::Node config_;
     std::list<std::thread> lvFulltimeThread_;
     std::atomic_bool bThreadHolder{true};
     std::atomic_bool saveImageFlag;
     std::unordered_map<ExpectedFunction, std::function<std::string(const std::string &)>> mapExpectedFunction_;
-    CircleProduct *circleProduct_{nullptr};
-    LineProduct *lineProduct_{nullptr};
+    BaseProduct *product_{nullptr};
     // Module 组装区域
     // tcp client begin
     Domino *domino_ = nullptr;
@@ -125,9 +120,8 @@ class AppFrameworkImpl final : public AppFramework
     // tcp client end
     PLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
-    std::unordered_map<DisplayWindows, QObject *> mapStorePainter_; // 初始化存放所有qml中的painter对象
-    std::shared_mutex mtxSNPainter_;                                // 绑定SN码的patinter id的互斥锁
-
+    std::unordered_map<uint8_t, QObject *> mapStorePainter_;   // 初始化存放所有qml中的painter对象
+    std::unordered_map<std::string, uint8_t> mapWindId2Index_; // 存放窗口名到窗口对象序号的映射
   public:
     // 调用qml 对象函数工具
 

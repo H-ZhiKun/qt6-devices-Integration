@@ -23,9 +23,9 @@ void WebManager::init(const YAML::Node &config)
                      [this](const std::string &data) { emit tangleCheckRecv(data); });
 }
 
-void WebManager::sendToALGO(const uint8_t windId, const std::string &jsonData, const QByteArray &imageBinaryData)
+void WebManager::sendToALGO(const uint8_t typeALGO, const std::string &jsonData, const QByteArray &imageBinaryData)
 {
-    switch (windId)
+    switch (typeALGO)
     {
     case 0: {
         if (tangleClient_)

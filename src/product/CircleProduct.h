@@ -1,63 +1,34 @@
 #pragma once
+#include "BaseProduct.h"
 #include "Logger.h"
 #include "Utils.h"
 #include <memory>
 #include <mutex>
 #include <vector>
-
-struct ProductItem
-{
-    ProductItem(uint32_t number = 0) : numBottom(number)
-    {
-    }
-    std::string batchNum;    // 批号
-    std::string formulaName; // 配方名
-
-    uint32_t numBottom = 0;
-    std::string QRCode;       // 二维码读码结果
-    std::string logisticsDes; // 物流码描述
-    std::string logistics1;   // 物流码真实值1
-    std::string logistics2;   // 物流码真实值2
-
-    std::string locateImagePath;      // 定位图像路径
-    std::string locateCheckImagePath; // 定位复核图像路径
-    std::string codeCheckImagePath;   // 打码复核图像路径
-    cv::Mat locateImage;              // 定位图像
-    cv::Mat locateCheckImage;         // 定位复核图像
-    cv::Mat codeCheckImage;           // 打码复核图像
-    std::string locateResult;
-    std::string locateCheckResult;
-    std::string OCRResult; // 物流码预测值
-    bool isComplete = false;
-};
-
-class CircleProduct
+class CircleProduct : public BaseProduct
 {
   public:
-    explicit CircleProduct();
-    ~CircleProduct();
-    void newProduct(uint32_t number);
-    void completeProduct();
-    uint16_t updateQRCode(const std::string &code);
-    uint16_t updateCodeNum();
-    void updateLogistics(const uint32_t number, const std::string &logisticsDes, const std::string &code1,
-                         const std::string &code2);
-    void updateLocate(const cv::Mat &mat, const std::string &path);
-    void updateLocateResult(const uint32_t number, const std::string &value);
-    void updateLocateCheck(const cv::Mat &mat, const std::string &path);
-    void updateLocateCheckResult(const uint32_t number, const std::string &value);
-    void updateOCR(const cv::Mat &mat, const std::string &path);
-    void updateOCRResult(const uint32_t number, const std::string &value);
-    std::shared_ptr<ProductItem> getNumber(const uint32_t number);
-    std::shared_ptr<ProductItem> getIndex(const uint32_t index);
+    explicit CircleProduct() = default;
+    virtual ~CircleProduct() = default;
+    virtual void signalQR(uint32_t pdNum = 0) override;
+    virtual void signalLocation() override;
+    virtual void signalCheck() override;
+    virtual std::shared_ptr<ProductItem> signalCoding() override;
+    virtual void signalOCR() override;
+    virtual void signalComplete() override;
+
+    virtual void updateQRCode(const std::string &code) override;
+    virtual void updateLogistics(const std::string &code1, const std::string &code2) override;
+    virtual uint32_t updateLocation(const cv::Mat &mat, const std::string &path) override;
+    virtual std::shared_ptr<ProductItem> updateLocationResult(const uint32_t number, const std::string &value) override;
+    virtual uint32_t updateCheck(const cv::Mat &mat, const std::string &path) override;
+    virtual std::shared_ptr<ProductItem> updateCheckResult(const uint32_t number, const std::string &value) override;
+    virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path) override;
+    virtual std::shared_ptr<ProductItem> updateOCRResult(const uint32_t number, const std::string &value) override;
+    virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index) override;
+    virtual void complete() override;
 
   private:
-    std::mutex mtxProduct_;
-    std::deque<std::shared_ptr<ProductItem>> lvProduct_;
-    uint16_t OffsetQRCode = 0;
-    uint16_t OffsetLocate = 3;
-    uint16_t OffsetLocateCheck = 6;
-    uint16_t offsetPrintBottom = 8;
-    uint16_t OffsetPrintCode = 9;
-    uint16_t OffsetOCR = 14;
+    std::deque<std::shared_ptr<ProductItem>> qProduct_;
+    TypeProduct pdType_{TypeProduct::TypeCircle};
 };
