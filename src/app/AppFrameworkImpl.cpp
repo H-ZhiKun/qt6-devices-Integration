@@ -76,6 +76,7 @@ int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
     loadConfig();
     initLogger();
     initFile();
+    storeImagePainter(engine);
     initSqlHelper();
     initProduct();
     initNetworkClient();
@@ -477,11 +478,9 @@ void AppFrame::AppFrameworkImpl::loadConfig()
     {
         std::string filePath = qApp->applicationDirPath().toStdString() + "/config.yaml";
         config_ = std::move(YAML::LoadFile(filePath));
-        LogInfo("load config yaml success.");
     }
     catch (const YAML::Exception &e)
     {
-        LogError("Error parsing YAML: {}", e.what());
         Utils::appExit(-1);
     }
 }

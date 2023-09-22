@@ -17,26 +17,26 @@ enum class DeviceType
 
 struct FIFOInfo
 {
-    uint16_t numQRCode;          // 412643 二维码读取工位小瓶编号
-    uint16_t numPosition;        // 412644 定位拍照工位小瓶编号
-    uint16_t numVerifyPos;       // 412645 定位确认拍照工位小瓶编号
-    uint16_t numCoding;          // 412646 喷码工位小瓶编号
-    uint16_t numVerifyCoding;    // 412647 喷码复核工位小瓶编号
-    uint16_t signalMove;         // 412654 工位信号
-    uint16_t signalSearchCoding; // 412655 喷码数据查找信号
+    uint16_t numQRCode = 0;          // 412643 二维码读取工位小瓶编号
+    uint16_t numPosition = 0;        // 412644 定位拍照工位小瓶编号
+    uint16_t numVerifyPos = 0;       // 412645 定位确认拍照工位小瓶编号
+    uint16_t numCoding = 0;          // 412646 喷码工位小瓶编号
+    uint16_t numVerifyCoding = 0;    // 412647 喷码复核工位小瓶编号
+    uint16_t signalMove = 0;         // 412654 工位信号
+    uint16_t signalSearchCoding = 0; // 412655 喷码数据查找信号
 };
 
 struct LineInfo
 {
-    bool sigCoding; // 40081.8 打码信号
-    bool sigCognex; // 40081.9 读码信号
-    bool sigOCR;    // 40081.10 OCR信号
-    bool sigRemove; // 40081.11 剔除信号
+    bool sigCoding = false; // 40081.8 打码信号
+    bool sigCognex = false; // 40081.9 读码信号
+    bool sigOCR = false;    // 40081.10 OCR信号
+    bool sigRemove = false; // 40081.11 剔除信号
 };
 
 struct CapInfo
 {
-    bool sigCognex; // 40081.8 读码信号
+    bool sigCognex = false; // 40081.8 读码信号
 };
 
 class PLCDevice : public QObject
