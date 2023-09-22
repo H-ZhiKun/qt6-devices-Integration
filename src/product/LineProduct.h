@@ -1,6 +1,8 @@
 #pragma once
 #include "BaseProduct.h"
 #include "Logger.h"
+#include "ProductDataWapper.h"
+#include "ProductTimeWapper.h"
 #include "Utils.h"
 
 class LineProduct : public BaseProduct

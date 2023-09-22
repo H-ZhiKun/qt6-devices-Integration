@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS plc_register_rw (
 
 -- Table structure for product_time
 CREATE TABLE IF NOT EXISTS product_time(
-   id serial NOT NULL,
+   id serial,
    typePd_ VARCHAR(64),
    bottle_num VARCHAR(64),
    batch_num VARCHAR(64),
@@ -202,13 +202,14 @@ CREATE TABLE IF NOT EXISTS product_time(
    ocr_result_time timestamp,
    complete_signal_time timestamp,
    created_time timestamp DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE
+   created_date date DEFAULT CURRENT_DATE,
+   PRIMARY KEY (id, created_date)
 )PARTITION BY RANGE (created_date);
 CREATE INDEX idx_product_time ON product_time (created_time);
 
 -- Table structure for product_data
 CREATE TABLE IF NOT EXISTS product_data(
-   id serial NOT NULL,
+   id serial,
    typePd_ VARCHAR(64),
    bottle_num VARCHAR(64),
    batch_num VARCHAR(64),
@@ -224,10 +225,16 @@ CREATE TABLE IF NOT EXISTS product_data(
    check_result VARCHAR(64),
    ocr_result VARCHAR(256),
    created_time timestamp DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE
+   created_date date DEFAULT CURRENT_DATE,
+   PRIMARY KEY (id, created_date)
 )PARTITION BY RANGE (created_date);
 CREATE INDEX idx_product_data ON product_data (created_time);
 
+
+CREATE TABLE product_time_2023_09 PARTITION OF product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE product_data_2023_09 PARTITION OF product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE product_time_2023_10 PARTITION OF product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE product_data_2023_10 PARTITION OF product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 
 -- 创建分区表的函数
 -- CREATE OR REPLACE FUNCTION create_partition_table()
