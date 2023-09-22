@@ -12,7 +12,7 @@ class WebManager : public QObject
     virtual ~WebManager() noexcept;
     void init(const YAML::Node &config);
   public slots:
-    void sendToALGO(const uint8_t windId, const std::string &jsonData, const QByteArray &imageBinaryData);
+    void sendToALGO(const uint8_t typeALGO, const std::string &jsonData, const QByteArray &imageBinaryData);
   signals:
     void ocrRecv(const std::string &);
     void tangleRecv(const std::string &);

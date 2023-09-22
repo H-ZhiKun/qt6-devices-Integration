@@ -30,6 +30,8 @@ struct LineInfo
 {
     bool sigCoding; // 40081.8 打码信号
     bool sigCognex; // 40081.9 读码信号
+    bool sigOCR;    // 40081.10 OCR信号
+    bool sigRemove; // 40081.11 剔除信号
 };
 
 struct CapInfo
@@ -50,13 +52,12 @@ class PLCDevice : public QObject
     const FIFOInfo &getFIFOInfo();
     bool getConnect();
   signals:
-    // 回转式信号
-    void bottleMove(const uint64_t); // 瓶位移动信号
-    // 直线打码信号
-    void lineCognex(); // 直线扫码信号
-    void lineCoding(); // 直线打码信号
-    // 瓶盖信号
-    void capCognex(); // 瓶盖扫码信号
+
+    void signalQR(const uint64_t); // 扫码信号 针对回转式而言 此信号相当于原bottlemove信号
+    void signalCoding();           // 打码信号
+    void signalOCR();              // OCR信号
+    void signalRemove();           // 踢出信号
+
   protected:
     PLCDevice(const PLCDevice &) = delete;
     PLCDevice &operator=(const PLCDevice &) = delete;

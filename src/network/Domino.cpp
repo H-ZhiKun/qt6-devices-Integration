@@ -10,38 +10,53 @@ Domino::~Domino()
 
 void Domino::dealing(std::vector<unsigned char> buffer)
 {
-    if (buffer.size() != 5)
-        return;
-    if (buffer[0] != 0x02 || buffer[1] != 0x05 || buffer[4] != 0x03)
-        return;
-    if (buffer[2] == 0x02)
-        LogError("CodeError");
-    if (buffer[2] == 0x01)
-    {
-        ResponseCode code = static_cast<ResponseCode>(buffer[3]);
-        switch (code)
-        {
-        case ResponseCode::CodeNomal: {
-            LogInfo("CodeNomal");
-            break;
-        }
-        case ResponseCode::CodeDisconnect: {
-            LogInfo("CodeDisconnect");
-            break;
-        }
-        case ResponseCode::CodePrinting: {
-            LogInfo("CodePrinting");
-            break;
-        }
-        default:
-            break;
-        }
-    }
+    std::string str(buffer.begin(), buffer.end());
+    LogInfo("Receive painter info: {}", str);
+    // if (buffer.empty())
+    // {
+    //     LogInfo("Receive painter info is empty");
+    //     return;
+    // }
+    // if (buffer.size() != 5)
+    // {
+    //     std::string str(byteVector.begin(), byteVector.end());
+    //     LogInfo("Receive painter info faile: {}", str);
+    //     return;
+    // }
+    // if (buffer[0] != 0x02 || buffer[1] != 0x05 || buffer[4] != 0x03)
+    // {
+    //     std::string str(byteVector.begin(), byteVector.end());
+    //     LogInfo("Receive painter info faile: {}", str);
+    //     return;
+    // }
+    // if (buffer[2] == 0x02)
+    //     LogError("Receive painter info faile: CodeError");
+    // if (buffer[2] == 0x01)
+    // {
+    //     ResponseCode code = static_cast<ResponseCode>(buffer[3]);
+    //     switch (code)
+    //     {
+    //     case ResponseCode::CodeNomal: {
+    //         LogInfo("CodeNomal");
+    //         break;
+    //     }
+    //     case ResponseCode::CodeDisconnect: {
+    //         LogInfo("CodeDisconnect");
+    //         break;
+    //     }
+    //     case ResponseCode::CodePrinting: {
+    //         LogInfo("CodePrinting");
+    //         break;
+    //     }
+    //     default:
+    //         break;
+    //     }
+    // }
 }
 
 void Domino::pingBehavior()
 {
-    dominoCheck();
+    // dominoCheck();
 }
 
 void Domino::dominoCheck()

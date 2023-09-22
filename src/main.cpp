@@ -47,13 +47,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("appdir", qApp->applicationDirPath()); // 获取当前路径
     engine.loadFromModule("DeviceIntegration", "StrightMainWindow");
     app.setWindowIcon(QIcon("file:///" + qApp->applicationDirPath() + "/ico/logo.ico")); // 添加图标
-    // 相机序号是从0开始的
-    appFramework().storeImagePainter(DisplayWindows::LocationCamera,
-                                     engine.rootObjects().first()->findChild<QObject *>("locationCamera"));
-    appFramework().storeImagePainter(DisplayWindows::CodeCheckCamera,
-                                     engine.rootObjects().first()->findChild<QObject *>("codeCheckCamera"));
-    appFramework().storeImagePainter(DisplayWindows::LocateCheckCamera,
-                                     engine.rootObjects().first()->findChild<QObject *>("locateCheckCamera"));
-    appFramework().run();
+
+    appFramework().run(&engine);
     return app.exec();
 }
