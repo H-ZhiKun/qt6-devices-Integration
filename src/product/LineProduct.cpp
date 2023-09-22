@@ -162,8 +162,7 @@ void LineProduct::complete()
     auto ptr = lvOCR_.front();
     lvOCR_.pop_front();
     lock.unlock();
-    // todo 插入数据库
-    // example:
-    // ProductTimeWapper::insert(std::shared_ptr<ProductItem> ptr);
-    // ProductDataWapper::insert(std::shared_ptr<ProductItem> ptr);
+    // 插入数据库
+    ProductTimeWapper::insert(ptr);
+    ProductDataWapper::insert(ptr);
 }
