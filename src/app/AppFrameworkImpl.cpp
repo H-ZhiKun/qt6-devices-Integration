@@ -877,13 +877,25 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         jsValue = Utils::stringToJson(jsValue["box"].asString());
         std::string result;
+        std::vector<OcrRes> ocrRes;
         for (const auto &item : jsValue)
         {
             result += item["result"].asString();
+            OcrRes resItem(item["result"].asString(), item["lefttop"].asInt(), item["leftbottom"].asInt(),
+                           item["righttop"].asInt(), item["rightbottom"].asInt());
+            ocrRes.push_back(std::move(resItem));
         }
-
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
         cv::Mat mat = ptrOcr->OCRImage;
+        if(mat.empty()){
+            LogWarn("ocrImage is null");
+            return;
+        }
+        QImage ocrImage = Utils::matToQImage(mat);
+        QPainter painter(&ocrImage); // this为绘图设备，即表明在该部件上进行绘制
+        for(const auto &item : ocrRes){
+            painter.drawLine(QPaint(0, 0), QPaint(100, 100));
+        }
     });
 }
 

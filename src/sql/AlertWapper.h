@@ -25,13 +25,11 @@ class AlertWapper
         Json::Value json;
         for (auto &[key, value] : mapAlert)
         {
-            Json::Value item;
-            item["register_address"] = key.c_str();
-            item["content"] = value.c_str();
-            item["state"] = 1;
-            json.append(item);
+            std::string sql =
+                fmt::format("INSERT INTO {} \ ('register_address', 'content', 'state') \ VALUES ({}, {}, {});",
+                            key.c_str(), value.c_str(), 1);
+            PgsqlHelper::getSqlHelper().insertData(TABLE_ALARM_DATA, sql);
         }
-        PgsqlHelper::getSqlHelper().insertData(TABLE_ALARM_DATA, std::move(json));
     }
     static void modifyAlert(std::map<std::string, std::string> &mapModify)
     {

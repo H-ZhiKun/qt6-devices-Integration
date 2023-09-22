@@ -12,6 +12,7 @@
 #include "WebManager.h"
 #include <QBrush>
 #include <QDir>
+#include <QPaint>
 #include <QPainter>
 #include <QPen>
 #include <QQmlApplicationEngine>

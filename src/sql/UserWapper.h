@@ -20,7 +20,16 @@ class UserWapper
 
         insertData["password"] = password;
 
-        bool res = PgsqlHelper::getSqlHelper().insertData(TABLE_USER_NAME, std::move(insertData));
+        std::string sql = fmt::format(
+            "INSERT INTO {} \ ('name', 'password', 'camera_permission', 'data_permission', 'alarm_permission', 
+            'formula_permission',
+            'sensor_permission', 'valve_permission', 'power_permission', 'log_permission',
+            'user_manage_permission') \ VALUES({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
+            jsonValue["name"].asCString(), jsonValue["password"].asCString(), jsonValue["camera_permission"].asBool(),
+            jsonValue["data_permission"].asBool(), jsonValue["alarm_permission"].asBool(), jsonValue["formula_permission"].asBool(),
+            jsonValue["sensor_permission"].asBool(), jsonValue["valve_permission"].asBool(), jsonValue["power_permission"].asBool(), 
+            jsonValue["log_permission"].asBool(), jsonValue["user_manage_permission"].asBool());
+        bool res = PgsqlHelper::getSqlHelper().insertData(TABLE_USER_NAME, std::move(sql));
         if (!res)
         {
             LogError("Failed to insert user data");
