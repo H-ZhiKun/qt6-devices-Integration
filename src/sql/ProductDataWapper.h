@@ -50,7 +50,7 @@ class ProductDataWapper
         // jsonValue["location_result"] = ptr->LocationResult;
         // jsonValue["check_result"] = ptr->CheckResult;
         // jsonValue["ocr_result"] = ptr->OCRResult;
-        bool res = PgsqlHelper::getSqlHelper().insertData(TABLE_PRODUCT_DATA, std::move(sql));
+        bool res = PgsqlHelper::getSqlHelper().insertData(std::move(sql));
         return res;
     }
 };

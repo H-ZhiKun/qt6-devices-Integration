@@ -60,7 +60,7 @@ class ProductTimeWapper
         // jsonValue["ocr_result_time"] = ptr->OCRResultTime;
         // jsonValue["complete_signal_time"] = ptr->completeSigTime;
         // Json::Value jsonValue = Utils::stringToJson(jsonString.toStdString());
-        bool res = PgsqlHelper::getSqlHelper().insertData(TABLE_PRODUCT_TIME, std::move(sql));
+        bool res = PgsqlHelper::getSqlHelper().insertData(std::move(sql));
         return res;
     }
 };
