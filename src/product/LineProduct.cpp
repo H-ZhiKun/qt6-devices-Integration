@@ -63,10 +63,13 @@ void LineProduct::signalOCR()
 
 void LineProduct::signalComplete()
 {
-    std::unique_lock lock(mtxOCR_);
-    auto ptr = lvOCR_.front();
-    lvOCR_.pop_front();
-    lock.unlock();
+    std::shared_ptr<ProductItem> ptr = nullptr;
+    if (lvOCR_.size() > 0)
+    {
+        std::lock_guard lock(mtxOCR_);
+        auto ptr = lvOCR_.front();
+        lvOCR_.pop_front();
+    }
     // 插入数据库
     ptr->completeSigTime = Utils::getCurrentTime(true);
     ProductTimeWapper::insert(ptr);
