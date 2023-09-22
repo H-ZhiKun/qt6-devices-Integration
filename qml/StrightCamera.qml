@@ -1,4 +1,4 @@
-//import AppFrame 1.0
+import AppFrame 1.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import Qt5Compat.GraphicalEffects
@@ -47,13 +47,13 @@ GroupBox {
             anchors.bottomMargin: 0
         }
 
-        //        ImagePainter {
-        //            id: codeCheckCamera
-        //            objectName: "codeCheckCamera"
-        //            anchors.fill: parent
-        //            anchors.margins: 8
-        //            //anchors.topMargin: 35
-        //        }
+        ImagePainter {
+            id: locationCamera
+            objectName: "locationCamera"
+            anchors.fill: parent
+            anchors.margins: 8
+            //anchors.topMargin: 35
+        }
 
         Text {
             x: 40
@@ -63,7 +63,7 @@ GroupBox {
         }
 
         Image {
-            id: imageCodeCheck
+            id: imageLocate
             x: 10
             y: -25
             width: 28

@@ -49,8 +49,8 @@ void LineProduct::signalOCR()
     std::shared_ptr<ProductItem> item = nullptr;
     if (lvCoding_.size() > 0)
     {
-        std::lock_guard lock(mtxCoding_);
         item = lvCoding_.front();
+        std::lock_guard lock(mtxCoding_);
         lvCoding_.pop_front();
     }
     if (item)
@@ -63,14 +63,15 @@ void LineProduct::signalOCR()
 
 void LineProduct::signalComplete()
 {
-    std::unique_lock lock(mtxOCR_);
+    if (lvOCR_.size() == 0)
+        return;
     auto ptr = lvOCR_.front();
-    lvOCR_.pop_front();
-    lock.unlock();
     // 插入数据库
     ptr->completeSigTime = Utils::getCurrentTime(true);
     ProductTimeWapper::insert(ptr);
     ProductDataWapper::insert(ptr);
+    std::lock_guard lock(mtxOCR_);
+    lvOCR_.pop_front();
 }
 
 void LineProduct::updateQRCode(const std::string &code)

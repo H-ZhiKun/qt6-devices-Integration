@@ -256,19 +256,19 @@ void PLCDevice::FIFOParsing(const uint16_t *FIFOGroup, uint16_t size)
 void PLCDevice::lineParsing(const uint16_t *lineGroup, uint16_t size)
 {
     std::bitset<16> bit = std::bitset<16>(lineGroup[0]);
-    if (bit[8] != lineInfo_.sigCoding)
+    if (bit[8] == true && bit[8] != lineInfo_.sigCoding)
     {
         emit signalCoding();
     }
-    if (bit[9] != lineInfo_.sigCognex)
+    if (bit[9] == true && bit[9] != lineInfo_.sigCognex)
     {
         emit signalQR(0);
     }
-    if (bit[10] != lineInfo_.sigOCR)
+    if (bit[10] == true && bit[10] != lineInfo_.sigOCR)
     {
         emit signalOCR();
     }
-    if (bit[11] != lineInfo_.sigRemove)
+    if (bit[11] == true && bit[11] != lineInfo_.sigRemove)
     {
         emit signalRemove();
     }
@@ -280,11 +280,12 @@ void PLCDevice::lineParsing(const uint16_t *lineGroup, uint16_t size)
 
 void PLCDevice::capParsing(const uint16_t *capGroup, uint16_t size)
 {
-    if (capGroup[0] != lineInfo_.sigCognex)
+    std::bitset<16> bit = std::bitset<16>(capGroup[0]);
+    if (bit[8] == true && bit[8] != capInfo_.sigCognex)
     {
-        emit signalQR(0);
+        emit signalOCR();
     }
-    capInfo_.sigCognex = capGroup[0];
+    capInfo_.sigCognex = bit[8];
 }
 
 bool PLCDevice::getConnect()
