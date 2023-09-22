@@ -1,0 +1,115 @@
+# This is a YAML format configuration file
+app:
+  log:
+    # path "exe path" by default, not modifiable
+    # log_file_name: the log file save name
+    log_file_name: applog.html
+    log_file_count: 5
+    # log_file_size: size default MB
+    log_file_size: 10M
+    # log_level: trace=0, debug = 1,info = 2, warn = 3, error = 4
+    log_level: 1
+  database:
+    # rdbms: Server type, postgresql,mysql or sqlite3, "postgresql" by default
+    rdbms: postgresql
+    # host: Server address,localhost by default
+    host: localhost
+    # port: Server port, 5432 by default
+    port: 5132
+    # dbname: Database name
+    dbname: integration
+    # user: 'postgres' by default
+    user: 'postgres'
+    # passwd: release '' by default,password security considerations
+    passwd: ''
+plc:
+  # type: circle or line,cap; required current choosed device type
+  type: circle
+  # this block define the kind of registers address and size
+  # normal_address interval 500ms
+  # realtime_address interval 5ms
+  details:
+    - name: circle
+      # host: plc address,192.168.1.10 by default
+      host: 192.168.123.10
+      # port: plc port, 502 by default
+      port: 502
+      normal_address: 412289
+      normal_size: 400
+      realtime_address: 412642
+      realtime_size: 14
+      write_address: 412689
+      write_size: 316
+    - name: line
+      # host: plc address,192.168.1.10 by default
+      host: 192.168.0.70
+      # port: plc port, 502 by default
+      port: 502
+      normal_address: 40001
+      normal_size: 81
+      realtime_address: 40081
+      realtime_size: 1
+      write_address: 40001
+      write_size: 81
+    - name: cap
+      # host: plc address,192.168.1.10 by default
+      host: 192.168.123.10
+      # port: plc port, 502 by default
+      port: 502
+      normal_address: 40001
+      normal_size: 116
+      realtime_address: 40117
+      realtime_size: 1
+      write_address: 0
+      write_size: 0
+algorithm:
+  url_ocr: 'http://192.168.101.8:5001/paddleOCR'
+  url_predict: 'http://127.0.0.1:5000/predict_tangle'
+  ws_tangle: 'ws://localhost:5000/'
+  ws_tangleCheck: 'ws://localhost:5002/'
+domino:
+  host: 127.0.0.1
+  port: 20001
+cognex:
+  host: 192.168.60.121
+  port: 23
+permission:
+  host: 192.168.123.100
+  port: 2000
+baumer:
+  # interface: The MAC address of the NIC example: CC-82-7F-3C-04-DF
+  interface: [CC-82-7F-3C-04-E1, CC-82-7F-3C-04-DF]
+  # display_window: LocationCamera = 0;CodeCheckCamera = 1;LocateCheckCamera = 2.
+  # trigger_mode: software = 0;hardware=1;
+  # expose: expose time unit millisecond
+  # gain: range 0 ~ 100
+  # width: capture image width px
+  # height: capture image height px700009842711
+  paramters:
+    - sn_number: 700009842711
+      display_window: 0
+      trigger_mode: 1
+      expose: 0.8
+      gain: 1
+      width: 1024
+      height: 1024
+      offset_x: 592
+      offset_y: 490
+    - sn_number: 700009842699
+      display_window: 1
+      trigger_mode: 1
+      expose: 0.8
+      gain: 2
+      width: 800
+      height: 800
+      offset_x: 960
+      offset_y: 632
+    - sn_number: 700009429371
+      display_window: 2
+      trigger_mode: 1
+      expose: 0.8
+      gain: 2
+      width: 800
+      height: 800
+      offset_x: 592
+      offset_y: 784
