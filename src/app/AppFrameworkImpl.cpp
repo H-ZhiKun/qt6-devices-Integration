@@ -188,7 +188,7 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
     bool ret = false;
     auto params = Utils::stringToJson(value);
     std::string winName = params["display_window"].asString();
-    Json::Value jsVal = baumerManager_->getCamera(winName);
+    Json::Value jsVal = baumerManager_->getCamera(mapWindId2Index_[winName]);
     std::string des;
     if (jsVal.isNull())
     {
@@ -208,7 +208,8 @@ std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
     std::string des;
     if (!jsParams.isNull())
     {
-        ret = baumerManager_->setCamera(jsParams, des);
+        std::string winName = jsParams["display_window"].asString();
+        ret = baumerManager_->setCamera(mapWindId2Index_[winName], jsParams, des);
     }
     return Utils::makeResponse(ret, {}, std::move(des));
 }
@@ -594,41 +595,6 @@ void AppFrame::AppFrameworkImpl::updateFormulaData()
     }
 }
 
-void AppFrame::AppFrameworkImpl::updateByMinute(const int minute)
-{
-    // todo:电能信息写入数据库、上报
-}
-
-void AppFrame::AppFrameworkImpl::updateByDay(const int year, const int month, const int day)
-{
-    // 每日创建当月份数据表和下月份数据表做冗余
-    // 动态创建月份数据库表
-    std::string monthSingleBoottleTB = year + month + "single_bottle";
-    std::list<std::string> fields{"id SERIAL PRIMARY KEY",
-                                  "qr_code_result varchar(256)",
-                                  "logistics_code_gt char(24)",
-                                  "locate_camera_image varchar(256)",
-                                  "locate_res real",
-                                  "locate_check_camera_image varchar(256)",
-                                  "locate_check_res boolean",
-                                  "code_check_camera_image varchar(256)",
-                                  "logistics_code char(24)",
-                                  "logistics_code_res boolean",
-                                  "batch_num varchar(256)",
-                                  "formula_name varchar(128)",
-                                  "created_time timestamp DEFAULT CURRENT_TIMESTAMP",
-                                  "UNIQUE (id)"};
-
-    if (PgsqlHelper::getSqlHelper().createTable(monthSingleBoottleTB, std::move(fields)))
-    {
-        LogInfo("This month table created successfully");
-    }
-    else
-    {
-        LogInfo("Failed to create this month table");
-    }
-}
-
 void AppFrame::AppFrameworkImpl::initBaumerManager()
 {
     baumerManager_ = new BaumerManager();
@@ -700,7 +666,7 @@ void AppFrame::AppFrameworkImpl::initProduct()
     std::string strType = config_["plc"]["type"].as<std::string>();
     if (strType == "circle")
     {
-        // product_ = new CircleProduct();
+        product_ = new CircleProduct();
     }
     else if (strType == "line")
     {
@@ -773,9 +739,17 @@ void AppFrame::AppFrameworkImpl::timerTask()
                 if (!mat.empty())
                 {
                     uint8_t typeALGO = 0;
-                    if (key == "OCR")
+                    if (key == "Location")
+                    {
+                        typeALGO = 0;
+                    }
+                    else if (key == "OCR")
                     {
                         typeALGO = 1;
+                    }
+                    else if (key == "LocateCheck")
+                    {
+                        typeALGO = 2;
                     }
                     afterCaputureImage(typeALGO, mat);
                     LogInfo("product process:image locate get.");
@@ -826,6 +800,7 @@ void AppFrame::AppFrameworkImpl::whenSignalCoding()
 
 void AppFrame::AppFrameworkImpl::whenSignaOCR()
 {
+    Utils::asyncTask([this] { product_->signalOCR(); });
 }
 
 void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)

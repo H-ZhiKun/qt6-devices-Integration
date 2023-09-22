@@ -20,7 +20,7 @@ class BaumerManager
     virtual ~BaumerManager();
     void start(const YAML::Node &launchConfig);
     void searchCamera(); // 搜索相机
-    bool setCamera(const Json::Value &param, std::string &des);
+    bool setCamera(uint8_t number, const Json::Value &param, std::string &des);
     Json::Value getCamera(uint8_t number); // 根据配置窗口号获取对应相机的参数列表
     cv::Mat getCamaeraMat(uint8_t number); // 根据sn号获取对应相机的图片
     void removeCamera(const std::string &snNumber);
@@ -36,9 +36,10 @@ class BaumerManager
   private:
     // 以下是sdk中的指针树结构，我尝试过很多次保存指针来管理对象的方式，均以异常结果。
     // 故只能沿用其sdk中对于对象指针的管理和索引方式。无法重构其数据结构。
+    std::thread thSearch_;
+    std::atomic_bool bSearch_{true};
     std::mutex mtxCamera_;
     std::vector<Json::Value> lvParams_;
-    std::vector<std::string> lvSNNumber_;
     std::vector<Camera *> lvCameras_;
     BGAPI2::System *pSystem_ = nullptr;
     std::list<std::string> MACAddress;

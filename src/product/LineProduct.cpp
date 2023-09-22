@@ -149,3 +149,20 @@ std::shared_ptr<ProductItem> LineProduct::updateOCRResult(const uint32_t number,
     }
     return nullptr;
 }
+
+std::shared_ptr<ProductItem> LineProduct::getIndexObject(uint32_t index)
+{
+    return std::shared_ptr<ProductItem>();
+}
+
+void LineProduct::complete()
+{
+    std::unique_lock lock(mtxOCR_);
+    auto ptr = lvOCR_.front();
+    lvOCR_.pop_front();
+    lock.unlock();
+    // todo 插入数据库
+    // example:
+    // ProductTimeWapper::insert(std::shared_ptr<ProductItem> ptr);
+    // ProductDataWapper::insert(std::shared_ptr<ProductItem> ptr);
+}
