@@ -63,7 +63,14 @@ void LineProduct::signalOCR()
 
 void LineProduct::signalComplete()
 {
-    complete();
+    std::unique_lock lock(mtxOCR_);
+    auto ptr = lvOCR_.front();
+    lvOCR_.pop_front();
+    lock.unlock();
+    // 插入数据库
+    ptr->completeSigTime = Utils::getCurrentTime(true);
+    ProductTimeWapper::insert(ptr);
+    ProductDataWapper::insert(ptr);
 }
 
 void LineProduct::updateQRCode(const std::string &code)
@@ -154,15 +161,4 @@ std::shared_ptr<ProductItem> LineProduct::updateOCRResult(const uint32_t number,
 std::shared_ptr<ProductItem> LineProduct::getIndexObject(uint32_t index)
 {
     return std::shared_ptr<ProductItem>();
-}
-
-void LineProduct::complete()
-{
-    std::unique_lock lock(mtxOCR_);
-    auto ptr = lvOCR_.front();
-    lvOCR_.pop_front();
-    lock.unlock();
-    // 插入数据库
-    ProductTimeWapper::insert(ptr);
-    ProductDataWapper::insert(ptr);
 }

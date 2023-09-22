@@ -75,7 +75,6 @@ class BaseProduct : public AppFrame::NonCopyable
   public:
     explicit BaseProduct() = default;
     virtual ~BaseProduct() = default;
-    virtual void complete() = 0;
     virtual void signalQR(uint32_t pdNum = 0) = 0;
     virtual void signalLocation() = 0;
     virtual void signalCheck() = 0;

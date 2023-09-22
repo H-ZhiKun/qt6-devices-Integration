@@ -224,7 +224,3 @@ std::shared_ptr<ProductItem> CircleProduct::getIndexObject(uint32_t index)
 {
     return std::shared_ptr<ProductItem>();
 }
-
-void CircleProduct::complete()
-{
-}
