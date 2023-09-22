@@ -894,7 +894,15 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
     Utils::asyncTask([this, jsonData] {
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
-        product_->updateOCRResult(bottomNum, "0");
+        jsValue = Utils::stringToJson(jsValue["box"].asString());
+        std::string result;
+        for (const auto &item : jsValue)
+        {
+            result += item["result"].asString();
+        }
+
+        auto ptrOcr = product_->updateOCRResult(bottomNum, result);
+        cv::Mat mat = ptrOcr->OCRImage;
     });
 }
 

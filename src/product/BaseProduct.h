@@ -14,6 +14,19 @@ enum class TypeProduct
     TypeCap
 };
 
+struct OcrRes
+{
+    OcrRes(std::string result, uint16_t lefttop, uint16_t leftbottom, uint16_t righttop, uint16_t rightbottom)
+        : result(result), lefttop(lefttop), leftbottom(leftbottom), righttop(righttop), rightbottom(rightbottom)
+    {
+    }
+    std::string result;
+    uint16_t lefttop;
+    uint16_t righttop;
+    uint16_t rightbottom;
+    uint16_t leftbottom;
+};
+
 struct ProductItem
 {
     ProductItem(uint32_t num, TypeProduct type, std::string batchNum, std::string formulaName)
