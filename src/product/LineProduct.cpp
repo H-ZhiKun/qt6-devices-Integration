@@ -63,6 +63,7 @@ void LineProduct::signalOCR()
 
 void LineProduct::signalComplete()
 {
+    complete();
 }
 
 void LineProduct::updateQRCode(const std::string &code)

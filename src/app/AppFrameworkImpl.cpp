@@ -571,7 +571,8 @@ void AppFrame::AppFrameworkImpl::initPLC()
     plcDev_->init(config_);
     QObject::connect(plcDev_, &PLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
     QObject::connect(plcDev_, &PLCDevice::signalCoding, [this]() { whenSignalCoding(); });
-    QObject::connect(plcDev_, &PLCDevice::signalOCR, [this]() { whenSignalCoding(); });
+    QObject::connect(plcDev_, &PLCDevice::signalOCR, [this]() { whenSignaOCR(); });
+    QObject::connect(plcDev_, &PLCDevice::signalRemove, [this]() { whenSignaRemove(); });
 }
 
 void AppFrame::AppFrameworkImpl::updateAlertData()
@@ -801,6 +802,11 @@ void AppFrame::AppFrameworkImpl::whenSignalCoding()
 void AppFrame::AppFrameworkImpl::whenSignaOCR()
 {
     Utils::asyncTask([this] { product_->signalOCR(); });
+}
+
+void AppFrame::AppFrameworkImpl::whenSignaRemove()
+{
+    Utils::asyncTask([this] { product_->signalComplete(); });
 }
 
 void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)

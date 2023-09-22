@@ -82,6 +82,7 @@ class AppFrameworkImpl final : public AppFramework
     void whenSiganlQR(const uint64_t number);
     void whenSignalCoding();
     void whenSignaOCR();
+    void whenSignaRemove();
 
     void afterCognexRecv(const std::string &code);
     void afterPermissionRecv(const std::string &code1, const std::string &code2);
