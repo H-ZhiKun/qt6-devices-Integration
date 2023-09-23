@@ -28,9 +28,6 @@ class LineProduct : public BaseProduct
     virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index) override;
 
   private:
-    std::mutex mtxQR_;
-    std::mutex mtxCoding_;
-    std::mutex mtxOCR_;
     std::list<std::shared_ptr<ProductItem>> lvQR_;
     std::list<std::shared_ptr<ProductItem>> lvCoding_;
     std::list<std::shared_ptr<ProductItem>> lvOCR_;

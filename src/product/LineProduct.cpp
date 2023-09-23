@@ -14,7 +14,6 @@ void LineProduct::signalQR(uint32_t pdNum)
     ++curBottleNum_;
     auto pd = std::make_shared<ProductItem>(curBottleNum_, pdType_, "", "");
     pd->QRSigTime = Utils::getCurrentTime(true);
-    std::lock_guard lock(mtxQR_);
     lvQR_.push_back(pd);
 }
 
@@ -28,37 +27,25 @@ void LineProduct::signalCheck()
 
 std::shared_ptr<ProductItem> LineProduct::signalCoding()
 {
-    std::shared_ptr<ProductItem> item = nullptr;
-    if (lvQR_.size() > 0)
-    {
-        std::lock_guard lock(mtxQR_);
-        item = lvQR_.front();
-        lvQR_.pop_front();
-    }
-    if (item)
-    {
-        item->codingSigTime = Utils::getCurrentTime(true);
-        std::lock_guard lock(mtxCoding_);
-        lvCoding_.push_back(item);
-    }
+    if (lvQR_.size() == 0)
+        return nullptr;
+
+    auto item = lvQR_.front();
+    item->codingSigTime = Utils::getCurrentTime(true);
+    lvCoding_.push_back(item);
+    lvQR_.pop_front();
     return item;
 }
 
 void LineProduct::signalOCR()
 {
-    std::shared_ptr<ProductItem> item = nullptr;
-    if (lvCoding_.size() > 0)
-    {
-        item = lvCoding_.front();
-        std::lock_guard lock(mtxCoding_);
-        lvCoding_.pop_front();
-    }
-    if (item)
-    {
-        item->OCRSigTime = Utils::getCurrentTime(true);
-        std::lock_guard lock(mtxOCR_);
-        lvOCR_.push_back(item);
-    }
+    if (lvCoding_.size() == 0)
+        return;
+
+    auto item = lvCoding_.front();
+    item->OCRSigTime = Utils::getCurrentTime(true);
+    lvOCR_.push_back(item);
+    lvCoding_.pop_front();
 }
 
 void LineProduct::signalComplete()
@@ -70,27 +57,21 @@ void LineProduct::signalComplete()
     ptr->completeSigTime = Utils::getCurrentTime(true);
     ProductTimeWapper::insert(ptr);
     ProductDataWapper::insert(ptr);
-    std::lock_guard lock(mtxOCR_);
     lvOCR_.pop_front();
 }
 
 void LineProduct::updateQRCode(const std::string &code)
 {
-    std::lock_guard lock(mtxQR_);
-    for (auto ptr : lvQR_)
-    {
-        if (ptr->QRCodeTime.empty())
-        {
-            ptr->QRCode = code;
-            ptr->QRCodeTime = Utils::getCurrentTime(true);
-            return;
-        }
-    }
+    if (lvQR_.size() == 0)
+        return;
+
+    auto ptr = lvQR_.back();
+    ptr->QRCode = code;
+    ptr->QRCodeTime = Utils::getCurrentTime(true);
 }
 
 void LineProduct::updateLogistics(const std::string &code1, const std::string &code2)
 {
-    std::lock_guard lock(mtxQR_);
     for (auto ptr : lvQR_)
     {
         if (ptr->logisticsTime.empty())
@@ -125,23 +106,17 @@ std::shared_ptr<ProductItem> LineProduct::updateCheckResult(const uint32_t numbe
 
 uint32_t LineProduct::updateOCR(const cv::Mat &mat, const std::string &path)
 {
-    std::lock_guard lock(mtxOCR_);
-    for (auto ptr : lvOCR_)
-    {
-        if (ptr->OCRImageTime.empty())
-        {
-            ptr->OCRImage = mat;
-            ptr->OCRPath = path;
-            ptr->OCRImageTime = Utils::getCurrentTime(true);
-            return ptr->bottleNum_;
-        }
-    }
-    return 0;
+    if (lvOCR_.size() == 0)
+        return 0;
+    auto ptr = lvOCR_.back();
+    ptr->OCRImage = mat;
+    ptr->OCRPath = path;
+    ptr->OCRImageTime = Utils::getCurrentTime(true);
+    return ptr->bottleNum_;
 }
 
 std::shared_ptr<ProductItem> LineProduct::updateOCRResult(const uint32_t number, const std::string &value)
 {
-    std::lock_guard lock(mtxOCR_);
     for (auto ptr : lvOCR_)
     {
         if (ptr->bottleNum_ == number)
