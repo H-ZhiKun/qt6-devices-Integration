@@ -461,7 +461,37 @@ std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage()
     jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
     jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
     jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
-    jsMainVal["textEquipmentSteps"] = plcDev_->readDevice("di", "0006");
+    std::string textEquipmentSteps = plcDev_->readDevice("di", "0006");
+    switch (std::atoi(textEquipmentSteps.c_str()))
+    {
+    case 0:
+        jsMainVal["textEquipmentSteps"] = "未开启";
+        break;
+
+    case 1:
+        jsMainVal["textEquipmentSteps"] = "待启动";
+        break;
+
+    case 2:
+        jsMainVal["textEquipmentSteps"] = "运行中";
+        break;
+
+    case 3:
+        jsMainVal["textEquipmentSteps"] = "急停中";
+        break;
+
+    case 4:
+        jsMainVal["textEquipmentSteps"] = "终止";
+        break;
+
+    case 5:
+        jsMainVal["textEquipmentSteps"] = "暂停";
+        break;
+
+    default:
+        jsMainVal["textEquipmentSteps"] = "未获取到信息";
+        break;
+    }
     std::vector<uint8_t> cameraState = baumerManager_->cameraState();
     for (uint8_t i = 0; i < cameraState.size(); i++)
     {
@@ -907,13 +937,9 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         for (const auto &item : jsValue)
         {
             result += item["result"].asString();
-            std::string lefttop = item["lefttop"].asString();
-
-            std::string righttop = item["righttop"].asString();
-            std::string rightbottom = item["rightbottom"].asString();
-            std::string leftbottom = item["leftbottom"].asString();
-            OcrRes resItem(item["result"].asString(), item["lefttop"].asInt(), item["leftbottom"].asInt(),
-                           item["righttop"].asInt(), item["rightbottom"].asInt());
+            OcrRes resItem(item["result"].asString(), item["lefttop"][0].asInt(), item["lefttop"][1].asInt(),
+                           item["leftbottom"][0].asInt(), item["leftbottom"][1].asInt(), item["righttop"][0].asInt(),
+                           item["righttop"][1].asInt(), item["rightbottom"][0].asInt(), item["rightbottom"][1].asInt());
             ocrRes.push_back(std::move(resItem));
         }
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
