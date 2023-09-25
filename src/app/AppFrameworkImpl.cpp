@@ -905,13 +905,16 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
     Utils::asyncTask([this, jsonData] {
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
-        std::string result = "0";
+        float result;
         jsValue = Utils::stringToJson(jsValue["box"].asString());
         for (const auto &item : jsValue)
         {
-            result = item["result"].asString();
+            result = item["result"].asFloat();
         }
-        int tangleResult = std::atoi(result.c_str());
+        // 接收python 传入保留小数点后两位的角度值  四舍五入为整型
+        int tangleResult = std::round(result);
+
+        // int tangleResult = std::atoi(result.c_str());
         tangleResult = (tangleResult + 98) % 360;
         auto ptrBottle = product_->updateLocationResult(bottomNum, std::to_string(tangleResult));
         if (ptrBottle == nullptr)
