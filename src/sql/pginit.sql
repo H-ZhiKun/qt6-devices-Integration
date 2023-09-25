@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS plc_register_rw (
 -- Table structure for product_time
 CREATE TABLE IF NOT EXISTS product_time(
    id serial,
-   typePd_ VARCHAR(64),
+   type_pd VARCHAR(64),
    bottle_num VARCHAR(64),
    batch_num VARCHAR(64),
    formula_name VARCHAR(64),
@@ -210,7 +210,7 @@ CREATE INDEX idx_product_time ON product_time (created_time);
 -- Table structure for product_data
 CREATE TABLE IF NOT EXISTS product_data(
    id serial,
-   typePd_ VARCHAR(64),
+   type_pd VARCHAR(64),
    bottle_num VARCHAR(64),
    batch_num VARCHAR(64),
    formula_name VARCHAR(64),

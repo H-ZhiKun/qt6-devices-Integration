@@ -31,15 +31,15 @@ class FormulaWapper
     static bool insertFormula(const QString &jsonString)
     {
         Json::Value jsonValue = Utils::stringToJson(jsonString.toStdString());
-        std::string sql = fmt::format(
-            "INSERT INTO {} ('name', 'code_x_position', 'code_y_position', 'impurity_locate', 'speed_produce', \
-            'acceleration_produce', \
-            'deceleration_produce') VALUES('{}', '{}', '{}', '{}', '{}', '{}', '{}');",
-            "formula_data", jsonValue["name"].asCString(), jsonValue["code_x_position"].asCString(),
-            jsonValue["code_y_position"].asCString(), jsonValue["impurity_locate"].asCString(),
-            jsonValue["speed_produce"].asCString(), jsonValue["acceleration_produce"].asCString(),
-            jsonValue["deceleration_produce"].asCString());
-        bool res = PgsqlHelper::getSqlHelper().insertData(std::move(sql));
+        QVariantMap mapData;
+        mapData.insert("name", jsonValue["name"].asCString());
+        mapData.insert("code_x_position", jsonValue["code_x_position"].asCString());
+        mapData.insert("code_y_position", jsonValue["code_y_position"].asCString());
+        mapData.insert("impurity_locate", jsonValue["impurity_locate"].asCString());
+        mapData.insert("speed_produce", jsonValue["speed_produce"].asCString());
+        mapData.insert("acceleration_produce", jsonValue["acceleration_produce"].asCString());
+        mapData.insert("deceleration_produce", jsonValue["deceleration_produce"].asCString());
+        bool res = PgsqlHelper::getSqlHelper().insertData("formula_data", mapData);
         return res;
     }
 

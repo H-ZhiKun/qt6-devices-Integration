@@ -16,41 +16,22 @@ class ProductDataWapper
     ~ProductDataWapper() = default;
     static bool insert(std::shared_ptr<ProductItem> ptr)
     {
-
-        std::string sql =
-            fmt::format("INSERT INTO product_time (typePd_, bottle_num, batch_num, formula_name, is_complete,\
-        qrcode_result, logistics_true_value_1, \
-        logistics_true_value_2, location_image_path, \
-         check_image_path, ocr_image_path, \
-         location_result, check_result,\
-         ocr_result) VALUES (\
-           {}, '{}', '{}', '{}', {}, \
-           '{}', '{}', \
-           '{}', '{}', \
-           '{}', '{}', \
-           '{}', '{}', \
-           '{}';",
-                        static_cast<uint8_t>(ptr->typePd_), ptr->bottleNum_, ptr->batchNum_, ptr->formulaName_,
-                        ptr->isComplete_, ptr->QRCode, ptr->logistics1, ptr->logistics2, ptr->LocationPath,
-                        ptr->CheckPath, ptr->OCRPath, ptr->LocationResult, ptr->CheckResult, ptr->OCRResult);
-
-        // Json::Value jsonValue;
-        // TypeProduct type = ptr->typePd_;
-        // jsonValue["typePd_"] = static_cast<uint8_t>(type);
-        // jsonValue["bottle_num"] = ptr->bottleNum_;
-        // jsonValue["batch_num"] = ptr->batchNum_;
-        // jsonValue["formula_name"] = ptr->formulaName_;
-        // jsonValue["is_complete"] = ptr->isComplete_;
-        // jsonValue["qrcode_result"] = ptr->QRCode;
-        // jsonValue["logistics_true_value_1"] = ptr->logistics1;
-        // jsonValue["logistics_true_value_2"] = ptr->logistics2;
-        // jsonValue["location_image_path"] = ptr->LocationPath;
-        // jsonValue["check_image_path"] = ptr->CheckPath;
-        // jsonValue["ocr_image_path"] = ptr->OCRPath;
-        // jsonValue["location_result"] = ptr->LocationResult;
-        // jsonValue["check_result"] = ptr->CheckResult;
-        // jsonValue["ocr_result"] = ptr->OCRResult;
-        bool res = PgsqlHelper::getSqlHelper().insertData(std::move(sql));
+        QVariantMap mapData;
+        mapData["type_pd"] = static_cast<uint8_t>(ptr->typePd_);
+        mapData["bottle_num"] = ptr->bottleNum_;
+        mapData["batch_num"] = ptr->batchNum_.c_str();
+        mapData["formula_name"] = ptr->formulaName_.c_str();
+        mapData["is_complete"] = ptr->isComplete_;
+        mapData["qrcode_result"] = ptr->QRCode.c_str();
+        mapData["logistics_true_value_1"] = ptr->logistics1.c_str();
+        mapData["logistics_true_value_2"] = ptr->logistics2.c_str();
+        mapData["location_image_path"] = ptr->LocationPath.c_str();
+        mapData["check_image_path"] = ptr->CheckPath.c_str();
+        mapData["ocr_image_path"] = ptr->OCRPath.c_str();
+        mapData["location_result"] = ptr->LocationResult.c_str();
+        mapData["check_result"] = ptr->CheckResult.c_str();
+        mapData["ocr_result"] = ptr->OCRResult.c_str();
+        bool res = PgsqlHelper::getSqlHelper().insertData("product_data", mapData);
         return res;
     }
 };

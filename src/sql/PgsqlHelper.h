@@ -60,7 +60,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         return ret;
     }
 
-    bool insertData(const std::string &&sqlData)
+    bool insertData(const std::string &tableName, const QVariantMap &data)
     {
         bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
@@ -68,9 +68,89 @@ class PgsqlHelper : public AppFrame::NonCopyable
         {
             return false;
         }
+
         QSqlQuery query(*connect);
-        query.prepare(sqlData.c_str());
+
+        QString sqlQuery = "INSERT INTO " + QString::fromStdString(tableName) + " (";
+        QString placeholders;
+        QStringList keys;
+
+        for (const QString &key : data.keys())
+        {
+            keys << key;
+            placeholders += "?,";
+        }
+
+        sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ")";
+        query.prepare(sqlQuery);
+
+        for (const QString &key : data.keys())
+        {
+            query.bindValue(key, data[key]);
+        }
+
         if (!query.exec())
+        {
+            LogError("Failed to insert data: {}", query.lastError().text().toStdString());
+            ret = false;
+        }
+
+        pool_->releaseConnection(connect);
+        return ret;
+    }
+
+    bool insertMultipleData(const std::string &tableName, const QList<QVariantMap> &dataList)
+    {
+        bool ret = true;
+        QSqlDatabase *connect = pool_->getConnection();
+        if (connect == nullptr)
+        {
+            return false;
+        }
+
+        QSqlQuery query(*connect);
+        QString sqlQuery = "INSERT INTO " + QString::fromStdString(tableName) + " (";
+        QString placeholders;
+        QStringList keys;
+
+        if (dataList.isEmpty())
+        {
+            // No data to insert, return true as a special case
+            pool_->releaseConnection(connect);
+            return true;
+        }
+
+        // Use the first QVariantMap in dataList to extract keys
+        const QVariantMap &firstData = dataList.first();
+        for (const QString &key : firstData.keys())
+        {
+            keys << key;
+            placeholders += "?,";
+        }
+
+        sqlQuery += keys.join(", ") + ") VALUES ";
+
+        // Add placeholders for each row
+        for (int i = 0; i < dataList.size(); ++i)
+        {
+            placeholders += "(" + placeholders.left(placeholders.length() - 1) + "),";
+        }
+
+        sqlQuery += placeholders.left(placeholders.length() - 1); // Remove the trailing comma
+
+        query.prepare(sqlQuery);
+
+        // Bind values for each row
+        int index = 0;
+        for (const QVariantMap &data : dataList)
+        {
+            for (const QString &key : keys)
+            {
+                query.bindValue(index++, data[key]);
+            }
+        }
+
+        if (!query.execBatch())
         {
             LogError("Failed to insert data: {}", query.lastError().text().toStdString());
             ret = false;

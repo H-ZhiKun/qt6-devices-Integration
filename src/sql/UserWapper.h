@@ -17,21 +17,19 @@ class UserWapper
         std::string password = insertData["password"].asString();
         password = Utils::encrytByAES(password);
         //  将加密后的密码转换为 QString，并更新 QVariantMap 对象
-
-        insertData["password"] = password;
-
-        std::string sql = fmt::format(
-            "INSERT INTO {} ('name', 'password', 'camera_permission', 'data_permission', 'alarm_permission', \
-            'formula_permission',\
-            'sensor_permission', 'valve_permission', 'power_permission', 'log_permission', \
-            'user_manage_permission') VALUES('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');",
-            "users", insertData["name"].asCString(), insertData["password"].asCString(),
-            insertData["camera_permission"].asBool(), insertData["data_permission"].asBool(),
-            insertData["alarm_permission"].asBool(), insertData["formula_permission"].asBool(),
-            insertData["sensor_permission"].asBool(), insertData["valve_permission"].asBool(),
-            insertData["power_permission"].asBool(), insertData["log_permission"].asBool(),
-            insertData["user_manage_permission"].asBool());
-        bool res = PgsqlHelper::getSqlHelper().insertData(std::move(sql));
+        QVariantMap mapData;
+        mapData.insert("name", insertData["name"].asCString());
+        mapData.insert("password", password.c_str());
+        mapData.insert("camera_permission", insertData["camera_permission"].asBool());
+        mapData.insert("data_permission", insertData["data_permission"].asBool());
+        mapData.insert("alarm_permission", insertData["alarm_permission"].asBool());
+        mapData.insert("formula_permission", insertData["formula_permission"].asBool());
+        mapData.insert("sensor_permission", insertData["sensor_permission"].asBool());
+        mapData.insert("valve_permission", insertData["valve_permission"].asBool());
+        mapData.insert("power_permission", insertData["power_permission"].asBool());
+        mapData.insert("log_permission", insertData["log_permission"].asBool());
+        mapData.insert("user_manage_permission", insertData["user_manage_permission"].asBool());
+        bool res = PgsqlHelper::getSqlHelper().insertData("users", mapData);
         if (!res)
         {
             LogError("Failed to insert user data");
