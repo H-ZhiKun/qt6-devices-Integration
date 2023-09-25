@@ -81,12 +81,11 @@ class PgsqlHelper : public AppFrame::NonCopyable
             placeholders += "?,";
         }
 
-        sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ")";
+        sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ");";
         query.prepare(sqlQuery);
-
         for (const QString &key : data.keys())
         {
-            query.bindValue(key, data[key]);
+            query.addBindValue(data[key]);
         }
 
         if (!query.exec())
@@ -94,7 +93,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
             LogError("Failed to insert data: {}", query.lastError().text().toStdString());
             ret = false;
         }
-
         pool_->releaseConnection(connect);
         return ret;
     }
