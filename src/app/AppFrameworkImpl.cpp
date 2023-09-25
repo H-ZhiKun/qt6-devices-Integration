@@ -940,6 +940,7 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
             OcrRes resItem(item["result"].asString(), item["lefttop"][0].asInt(), item["lefttop"][1].asInt(),
                            item["leftbottom"][0].asInt(), item["leftbottom"][1].asInt(), item["righttop"][0].asInt(),
                            item["righttop"][1].asInt(), item["rightbottom"][0].asInt(), item["rightbottom"][1].asInt());
+            qDebug() << "recive data of ocr: " << item["lefttop"][0].asInt() << item["lefttop"][1].asInt();
             ocrRes.push_back(std::move(resItem));
         }
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
