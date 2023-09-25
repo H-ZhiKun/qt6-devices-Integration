@@ -26,7 +26,7 @@ class AlertWapper
         for (auto &[key, value] : mapAlert)
         {
             std::string sql =
-                fmt::format("INSERT INTO {} ('register_address', 'content', 'state') VALUES ({}, {}, {});",
+                fmt::format("INSERT INTO {} ('register_address', 'content', 'state') VALUES ('{}', '{}', '{}');",
                             "alarm_data", key.c_str(), value.c_str(), 1);
             PgsqlHelper::getSqlHelper().insertData(std::move(sql));
         }

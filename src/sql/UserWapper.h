@@ -24,7 +24,7 @@ class UserWapper
             "INSERT INTO {} ('name', 'password', 'camera_permission', 'data_permission', 'alarm_permission', \
             'formula_permission',\
             'sensor_permission', 'valve_permission', 'power_permission', 'log_permission', \
-            'user_manage_permission') VALUES({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});",
+            'user_manage_permission') VALUES('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');",
             "users", insertData["name"].asCString(), insertData["password"].asCString(),
             insertData["camera_permission"].asBool(), insertData["data_permission"].asBool(),
             insertData["alarm_permission"].asBool(), insertData["formula_permission"].asBool(),
