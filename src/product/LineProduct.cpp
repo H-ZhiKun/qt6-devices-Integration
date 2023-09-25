@@ -52,6 +52,7 @@ void LineProduct::signalComplete()
 {
     if (lvOCR_.size() == 0)
         return;
+    LogInfo("LineProduct signalComplete");
     auto ptr = lvOCR_.front();
     // 插入数据库
     ptr->completeSigTime = Utils::getCurrentTime(true);
