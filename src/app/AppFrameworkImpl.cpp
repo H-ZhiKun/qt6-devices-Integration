@@ -839,9 +839,8 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const c
             cv::Mat newMat;
             cv::resize(image, newMat, {800, 800});
             modelName = "tangle";
-            bottomNum = plcDev_->getFIFOInfo().numPosition;
             filePath = strTanglePath_ + currentDateTimeStr.toStdString() + ".jpg";
-            product_->updateLocation(image, filePath);
+            bottomNum = product_->updateLocation(image, filePath);
             break;
         }
         case 1: {
@@ -852,20 +851,22 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const c
         }
         case 2: {
             modelName = "tangleCheck";
-            bottomNum = plcDev_->getFIFOInfo().numVerifyPos;
             filePath = strTangleCheckPath_ + currentDateTimeStr.toStdString() + ".jpg";
-            product_->updateCheck(image, filePath);
+            bottomNum = product_->updateCheck(image, filePath);
             break;
         }
         default:
             break;
         }
-        std::string sendJson;
-        QByteArray sendBytes;
-        LogInfo("product process:send to algo:number={},model={},bytes={}.", bottomNum, type, sendBytes.size());
-        Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
-        invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, type), Q_ARG(std::string, sendJson),
-                  Q_ARG(QByteArray, sendBytes));
+        LogInfo("product process:send to algo:number={},model={}.", bottomNum, type);
+        if (bottomNum > 0)
+        {
+            std::string sendJson;
+            QByteArray sendBytes;
+            Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
+            invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, type), Q_ARG(std::string, sendJson),
+                      Q_ARG(QByteArray, sendBytes));
+        }
     });
 }
 
