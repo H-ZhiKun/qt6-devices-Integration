@@ -16,15 +16,21 @@ enum class TypeProduct
 
 struct OcrRes
 {
-    OcrRes(std::string result, uint16_t lefttop, uint16_t leftbottom, uint16_t righttop, uint16_t rightbottom)
-        : result(result), lefttop(lefttop), leftbottom(leftbottom), righttop(righttop), rightbottom(rightbottom)
+    OcrRes(std::string result, uint16_t lefttopx, uint16_t lefttopy, uint16_t leftbottomx, uint16_t leftbottomy,
+           uint16_t righttopx, uint16_t righttopy, uint16_t rightbottomx, uint16_t rightbottomy)
+        : result(result), lefttopx(lefttopx), lefttopy(lefttopy), leftbottomx(leftbottomx), leftbottomy(leftbottomy),
+          righttopx(righttopx), righttopy(righttopy), rightbottomx(rightbottomx), rightbottomy(rightbottomy)
     {
     }
     std::string result;
-    uint16_t lefttop;
-    uint16_t righttop;
-    uint16_t rightbottom;
-    uint16_t leftbottom;
+    uint16_t lefttopx;
+    uint16_t lefttopy;
+    uint16_t leftbottomx;
+    uint16_t leftbottomy;
+    uint16_t righttopx;
+    uint16_t righttopy;
+    uint16_t rightbottomx;
+    uint16_t rightbottomy;
 };
 
 struct ProductItem
