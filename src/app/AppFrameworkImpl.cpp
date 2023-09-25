@@ -18,6 +18,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QThread>
+#include <algorithm>
 using namespace AppFrame;
 
 AppFramework &AppFramework::instance()
@@ -818,6 +819,12 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
             return;
         }
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
+
+        // 测试代码！！！测试完成删除
+        std::string currentTime = Utils::getCurrentTime(false).substr(11, 8);
+        currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
+        currentTime += "abcabc";
+        product_->updateLogistics("123abcabc123", currentTime);
     });
 }
 
