@@ -155,9 +155,14 @@
 //     return lvProduct_[index];
 // }
 
+CircleProduct::CircleProduct()
+{
+    pdType_ = TypeProduct::TypeCircle;
+}
+
 void CircleProduct::signalQR(uint32_t pdNum)
 {
-    auto ptr = std::make_shared<ProductItem>(pdNum, pdType_, "", "");
+    auto ptr = std::make_shared<ProductItem>(pdNum, TypeProduct::TypeCircle, "", "");
     qProduct_.push_front(ptr);
 }
 
@@ -180,10 +185,23 @@ void CircleProduct::signalOCR()
 
 void CircleProduct::signalComplete()
 {
+    if (qProduct_.size() == 0)
+        return;
+    auto ptr = qProduct_.back();
+    if (ptr->bottleNum_ > 0 && ptr->isComplete_)
+    {
+        LogInfo("product process:complete:number={},complete={}.", ptr->bottleNum_, ptr->isComplete_);
+    }
+    qProduct_.pop_back();
 }
 
 void CircleProduct::updateQRCode(const std::string &code)
 {
+    auto ptr = qProduct_[OffsetQRCode];
+    if (ptr->bottleNum_ == 0)
+        return;
+    ptr->QRCode = code;
+    LogInfo("product process:update QRCode:code={}.", code);
 }
 
 void CircleProduct::updateLogistics(const std::string &code1, const std::string &code2)
@@ -222,5 +240,9 @@ std::shared_ptr<ProductItem> CircleProduct::updateOCRResult(const uint32_t numbe
 
 std::shared_ptr<ProductItem> CircleProduct::getIndexObject(uint32_t index)
 {
-    return std::shared_ptr<ProductItem>();
+    if (index >= qProduct_.size())
+    {
+        return nullptr;
+    }
+    return qProduct_[index];
 }
