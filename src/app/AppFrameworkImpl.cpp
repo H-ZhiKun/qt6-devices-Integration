@@ -18,6 +18,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QThread>
+#include <algorithm>
 using namespace AppFrame;
 
 AppFramework &AppFramework::instance()
@@ -61,9 +62,10 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
     registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
-
     registerExpectation(ExpectedFunction::RefreshElecData,
                         std::bind(&AppFrameworkImpl::refreshElecData, this)); // 注册直线式电能表数据
+    registerExpectation(ExpectedFunction::RefreshStrightMainPage,
+                        std::bind(&AppFrameworkImpl::refreshStrightMainPage, this));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -84,6 +86,7 @@ int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
     initPLC();
     // runtime task
     timerTask();
+
     return 0;
 }
 
@@ -450,6 +453,55 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     return result;
 }
 
+std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage()
+{
+    bool ret = true;
+    Json::Value jsMainVal;
+    jsMainVal["image0"] = "0";
+    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
+    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
+    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
+    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    std::string textEquipmentSteps = plcDev_->readDevice("di", "0006");
+    switch (std::atoi(textEquipmentSteps.c_str()))
+    {
+    case 0:
+        jsMainVal["textEquipmentSteps"] = "未开启";
+        break;
+
+    case 1:
+        jsMainVal["textEquipmentSteps"] = "待启动";
+        break;
+
+    case 2:
+        jsMainVal["textEquipmentSteps"] = "运行中";
+        break;
+
+    case 3:
+        jsMainVal["textEquipmentSteps"] = "急停中";
+        break;
+
+    case 4:
+        jsMainVal["textEquipmentSteps"] = "终止";
+        break;
+
+    case 5:
+        jsMainVal["textEquipmentSteps"] = "暂停";
+        break;
+
+    default:
+        jsMainVal["textEquipmentSteps"] = "未获取到信息";
+        break;
+    }
+    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
+    for (uint8_t i = 0; i < cameraState.size(); i++)
+    {
+        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
+    }
+    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
+    return result;
+}
+
 std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
 {
     Json::Value jsPowerVal;
@@ -781,6 +833,25 @@ void AppFrame::AppFrameworkImpl::drawText(QImage &img, const QString &text)
     pp.drawText(QPointF(20, 50), text);
 }
 
+void AppFrame::AppFrameworkImpl::drawOcrRes(QImage &img, OcrRes &ocr)
+{
+    QPainter pp(&img);
+    QFont font = pp.font();
+    font.setPixelSize(50); // 改变字体大小
+    font.setFamily("Microsoft YaHei");
+    pp.setFont(font);
+    pp.setPen(QPen(Qt::red, 5));
+    pp.setBrush(QBrush(Qt::red));
+    pp.drawText(QPointF(20, 50), QString::fromStdString(ocr.result));
+    QPointF lefttop(ocr.lefttopx, ocr.lefttopy);
+    QPointF leftbottom(ocr.leftbottomx, ocr.leftbottomy);
+    QPointF righttop(ocr.righttopx, ocr.righttopy);
+    QPointF rightbottom(ocr.rightbottomx, ocr.rightbottomy);
+    QVector<QPointF> points;
+    points << lefttop << righttop << rightbottom << leftbottom;
+    pp.drawPolygon(points);
+}
+
 void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
 {
     Utils::asyncTask([this, number] { product_->signalQR(number); });
@@ -818,6 +889,12 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
             return;
         }
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
+
+        // 测试代码！！！测试完成删除
+        std::string currentTime = Utils::getCurrentTime(false).substr(11, 8);
+        currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
+        currentTime += "abcabc";
+        product_->updateLogistics("123abcabc123", currentTime);
     });
 }
 
@@ -876,13 +953,27 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         jsValue = Utils::stringToJson(jsValue["box"].asString());
+        if (jsValue.empty())
+        {
+            return;
+        }
         std::string result;
         std::vector<OcrRes> ocrRes;
         for (const auto &item : jsValue)
         {
             result += item["result"].asString();
-            OcrRes resItem(item["result"].asString(), item["lefttop"].asInt(), item["leftbottom"].asInt(),
-                           item["righttop"].asInt(), item["rightbottom"].asInt());
+            std::string lefttop = item["lefttop"].asString();
+            std::string righttop = item["righttop"].asString();
+            std::string rightbottom = item["rightbottom"].asString();
+            std::string leftbottom = item["leftbottom"].asString();
+            // 解析字符串中的整数
+            int lefttopX, lefttopY, righttopX, righttopY, rightbottomX, rightbottomY, leftbottomX, leftbottomY;
+            sscanf(lefttop.c_str(), "[%d, %d]", &lefttopX, &lefttopY);
+            sscanf(righttop.c_str(), "[%d, %d]", &righttopX, &righttopY);
+            sscanf(rightbottom.c_str(), "[%d, %d]", &rightbottomX, &rightbottomY);
+            sscanf(leftbottom.c_str(), "[%d, %d]", &leftbottomX, &leftbottomY);
+            OcrRes resItem(item["result"].asString(), lefttopX, lefttopY, leftbottomX, leftbottomY, righttopX,
+                           righttopY, leftbottomX, leftbottomY);
             ocrRes.push_back(std::move(resItem));
         }
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
@@ -893,11 +984,18 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
             return;
         }
         QImage ocrImage = Utils::matToQImage(mat);
-        QPainter painter(&ocrImage); // this为绘图设备，即表明在该部件上进行绘制
-        for (const auto &item : ocrRes)
+        QPainter painter(&ocrImage);
+        for (auto &resItem : ocrRes)
         {
-            // painter.drawLine(QPaint(0, 0), QPaint(100, 100));
+            drawOcrRes(ocrImage, resItem);
         }
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        ocrImage.save(&buffer, "jpg");
+        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        // invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, ocrImage));
     });
 }
 
@@ -934,7 +1032,7 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
         QBuffer buffer(&byteArray);
         buffer.open(QIODevice::WriteOnly);
         Image.save(&buffer, "jpg");
-        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        Utils::saveImageToFile(byteArray, strOcrResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
         invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, Image));
     });
 }

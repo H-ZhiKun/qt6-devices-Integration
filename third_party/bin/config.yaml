@@ -66,10 +66,11 @@ algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
   url_predict: 'http://127.0.0.1:5000/predict_tangle'
   ws_tangle: 'ws://localhost:5000/'
-  ws_tangleCheck: 'ws://localhost:5002/'
-domino:
+  ws_tangleCheck: 'ws://localhost:5001/'
+  ws_ocr: 'ws://localhost:5002/'
+domino:                                                 
   host: 127.0.0.1
-  port: 20001
+  port: 20001                     
 cognex:
   host: 192.168.80.121
   port: 23

@@ -57,6 +57,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string readPLC(const std::string &);
     std::string writePLC(const std::string &);
     std::string refreshMainPage();
+    std::string refreshStrightMainPage();
     std::string refreshPowerPage();
 
     std::string refreshElecData(); // 刷新直线式电能表数据
@@ -94,6 +95,7 @@ class AppFrameworkImpl final : public AppFramework
 
     void sendOneToAlgo(); // 初始化服务端的python模型
     void drawText(QImage &img, const QString &text);
+    void drawOcrRes(QImage &img, OcrRes &ocr);
 
   private:
     // 私有变量区域
