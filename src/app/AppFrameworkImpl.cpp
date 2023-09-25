@@ -450,6 +450,25 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     return result;
 }
 
+std::string AppFrame::AppFrameworkImpl::refreshStraightMainPage()
+{
+    bool ret = true;
+    Json::Value jsMainVal;
+    jsMainVal["image0"] = "0";
+    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
+    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
+    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
+    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    jsMainVal["textEquipmentSteps"] = plcDev_->readDevice("di", "0006");
+    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
+    for (uint8_t i = 0; i < cameraState.size(); i++)
+    {
+        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
+    }
+    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
+    return result;
+}
+
 std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
 {
     Json::Value jsPowerVal;
@@ -880,6 +899,11 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         for (const auto &item : jsValue)
         {
             result += item["result"].asString();
+            std::string lefttop = item["lefttop"].asString();
+
+            std::string righttop = item["righttop"].asString();
+            std::string rightbottom = item["rightbottom"].asString();
+            std::string leftbottom = item["leftbottom"].asString();
             OcrRes resItem(item["result"].asString(), item["lefttop"].asInt(), item["leftbottom"].asInt(),
                            item["righttop"].asInt(), item["rightbottom"].asInt());
             ocrRes.push_back(std::move(resItem));
@@ -892,7 +916,7 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
             return;
         }
         QImage ocrImage = Utils::matToQImage(mat);
-        QPainter painter(&ocrImage); // this为绘图设备，即表明在该部件上进行绘制
+        QPainter painter(&ocrImage);
         for (const auto &item : ocrRes)
         {
             // painter.drawLine(QPaint(0, 0), QPaint(100, 100));
