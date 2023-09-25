@@ -95,6 +95,7 @@ class AppFrameworkImpl final : public AppFramework
 
     void sendOneToAlgo(); // 初始化服务端的python模型
     void drawText(QImage &img, const QString &text);
+    void drawOcrRes(QImage &img, OcrRes &ocr);
 
   private:
     // 私有变量区域

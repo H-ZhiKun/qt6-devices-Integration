@@ -86,6 +86,7 @@ int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
     initPLC();
     // runtime task
     timerTask();
+
     return 0;
 }
 
@@ -832,6 +833,25 @@ void AppFrame::AppFrameworkImpl::drawText(QImage &img, const QString &text)
     pp.drawText(QPointF(20, 50), text);
 }
 
+void AppFrame::AppFrameworkImpl::drawOcrRes(QImage &img, OcrRes &ocr)
+{
+    QPainter pp(&img);
+    QFont font = pp.font();
+    font.setPixelSize(50); // 改变字体大小
+    font.setFamily("Microsoft YaHei");
+    pp.setFont(font);
+    pp.setPen(QPen(Qt::red, 5));
+    pp.setBrush(QBrush(Qt::red));
+    pp.drawText(QPointF(20, 50), QString::fromStdString(ocr.result));
+    QPointF lefttop(ocr.lefttopx, ocr.lefttopy);
+    QPointF leftbottom(ocr.leftbottomx, ocr.leftbottomy);
+    QPointF righttop(ocr.righttopx, ocr.righttopy);
+    QPointF rightbottom(ocr.rightbottomx, ocr.rightbottomy);
+    QVector<QPointF> points;
+    points << lefttop << righttop << rightbottom << leftbottom;
+    pp.drawPolygon(points);
+}
+
 void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
 {
     Utils::asyncTask([this, number] { product_->signalQR(number); });
@@ -932,15 +952,27 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         jsValue = Utils::stringToJson(jsValue["box"].asString());
+        if (jsValue.empty())
+        {
+            return;
+        }
         std::string result;
         std::vector<OcrRes> ocrRes;
         for (const auto &item : jsValue)
         {
             result += item["result"].asString();
-            OcrRes resItem(item["result"].asString(), item["lefttop"][0].asInt(), item["lefttop"][1].asInt(),
-                           item["leftbottom"][0].asInt(), item["leftbottom"][1].asInt(), item["righttop"][0].asInt(),
-                           item["righttop"][1].asInt(), item["rightbottom"][0].asInt(), item["rightbottom"][1].asInt());
-            qDebug() << "recive data of ocr: " << item["lefttop"][0].asInt() << item["lefttop"][1].asInt();
+            std::string lefttop = item["lefttop"].asString();
+            std::string righttop = item["righttop"].asString();
+            std::string rightbottom = item["rightbottom"].asString();
+            std::string leftbottom = item["leftbottom"].asString();
+            // 解析字符串中的整数
+            int lefttopX, lefttopY, righttopX, righttopY, rightbottomX, rightbottomY, leftbottomX, leftbottomY;
+            sscanf(lefttop.c_str(), "[%d, %d]", &lefttopX, &lefttopY);
+            sscanf(righttop.c_str(), "[%d, %d]", &righttopX, &righttopY);
+            sscanf(rightbottom.c_str(), "[%d, %d]", &rightbottomX, &rightbottomY);
+            sscanf(leftbottom.c_str(), "[%d, %d]", &leftbottomX, &leftbottomY);
+            OcrRes resItem(item["result"].asString(), lefttopX, lefttopY, leftbottomX, leftbottomY, righttopX,
+                           righttopY, leftbottomX, leftbottomY);
             ocrRes.push_back(std::move(resItem));
         }
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
@@ -952,10 +984,17 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         }
         QImage ocrImage = Utils::matToQImage(mat);
         QPainter painter(&ocrImage);
-        for (const auto &item : ocrRes)
+        for (auto &resItem : ocrRes)
         {
-            // painter.drawLine(QPaint(0, 0), QPaint(100, 100));
+            drawOcrRes(ocrImage, resItem);
         }
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        ocrImage.save(&buffer, "jpg");
+        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        // invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, ocrImage));
     });
 }
 
@@ -992,7 +1031,7 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
         QBuffer buffer(&byteArray);
         buffer.open(QIODevice::WriteOnly);
         Image.save(&buffer, "jpg");
-        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        Utils::saveImageToFile(byteArray, strOcrResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
         invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, Image));
     });
 }
