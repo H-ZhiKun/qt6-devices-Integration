@@ -422,7 +422,7 @@ GroupBox {
     }
 
     function refreshItemState() {
-        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.RefreshMainPage, "");
+        var jsRet = appMetaFlash.qmlCallExpected(StrightMainWindow.ExpectedFunction.RefreshStrightMainPage, "");
         var result = JSON.parse(jsRet);
         if (result.ok) {
             result.details.dominoState === "1" ? imagedomino.source = "file:///" + appdir + "/ico/green.png" : imagedomino.source = "file:///" + appdir + "/ico/red.png";
