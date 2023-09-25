@@ -576,7 +576,7 @@ GroupBox {
     }
 
     function refreshProduce() {
-        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.RefreshElecData, "");
+        var jsRet = appMetaFlash.qmlCallExpected(StrightMainWindow.ExpectedFunction.RefreshElecData, "");
         var result = JSON.parse(jsRet);
         if (result.ok) {
             positiveActiveEnergy.text = result.details.positive_active_energy;

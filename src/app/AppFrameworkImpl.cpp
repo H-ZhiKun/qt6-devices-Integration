@@ -62,9 +62,10 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
     registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
-
     registerExpectation(ExpectedFunction::RefreshElecData,
                         std::bind(&AppFrameworkImpl::refreshElecData, this)); // 注册直线式电能表数据
+    registerExpectation(ExpectedFunction::RefreshStrightMainPage,
+                        std::bind(&AppFrameworkImpl::refreshStrightMainPage, this));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -451,7 +452,7 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     return result;
 }
 
-std::string AppFrame::AppFrameworkImpl::refreshStraightMainPage()
+std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage()
 {
     bool ret = true;
     Json::Value jsMainVal;
