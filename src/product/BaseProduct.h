@@ -1,7 +1,6 @@
 #pragma once
 #include "Logger.h"
 #include "NonCopyable.h"
-#include "PLCDevice.h"
 #include "Utils.h"
 #include <bitset>
 #include <memory>
