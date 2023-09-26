@@ -7,7 +7,15 @@ Cognex::Cognex(QObject *parent)
 void Cognex::dealing(std::vector<unsigned char> buffer)
 {
     std::string str(buffer.begin(), buffer.end());
-    emit ReadQRCode(str);
+    if (str.find("HTTP") != std::string::npos)
+    {
+        LogInfo("Cognex recv: {}", str);
+        emit ReadQRCode(str);
+    }
+    else
+    {
+        LogInfo("Cognex recv other: {}", str);
+    }
 }
 
 // void Cognex::pingBehavior()
