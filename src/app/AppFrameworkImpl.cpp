@@ -611,7 +611,9 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     QObject::connect(cognex_, &Cognex::ReadQRCode, [this](const std::string &value) { afterCognexRecv(value); });
     // 获取到物流码并存储
     QObject::connect(permission_, &Permission::codeRight,
-                     [this](const std::string &code1, const std::string &code2) { afterPermissionRecv(code1, code2); });
+                     [this](const std::string &num, const std::string &code1, const std::string &code2) {
+                         afterPermissionRecv(num, code1, code2);
+                     });
     LogInfo("network client start success.");
 }
 
@@ -884,18 +886,14 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
     Utils::asyncTask([this, code] {
         product_->updateQRCode(code);
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
-
-        // 测试代码！！！测试完成删除
-        std::string currentTime = Utils::getCurrentTime(true).substr(11, 12);
-        currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
-        currentTime += "ab";
-        product_->updateLogistics("123abcabc123", currentTime);
     });
 }
 
-void AppFrame::AppFrameworkImpl::afterPermissionRecv(const std::string &code1, const std::string &code2)
+void AppFrame::AppFrameworkImpl::afterPermissionRecv(const std::string &num, const std::string &code1,
+                                                     const std::string &code2)
 {
-    product_->updateLogistics(code1, code2);
+    uint32_t number = Utils::anyFromString<uint32_t>(num);
+    product_->updateLogistics(number, code1, code2);
 }
 
 void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const cv::Mat &mat)

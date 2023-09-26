@@ -59,7 +59,6 @@ struct ProductItem
     std::string OCRResult;      // 物流码结果
 
     // 时间点表
-    std::string QRSigTime;          // 二维码读码信号时间
     std::string QRCodeTime;         // 二维码读码返回时间
     std::string logisticsTime;      // 物流码返回时间
     std::string LocationSigTime;    // 定位信号时间
@@ -93,25 +92,31 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual void updateQRCode(const std::string &code)
     {
-        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
-        {
-            if ((*ptr)->bottleNum_ > 0 && (*ptr)->QRCodeTime.empty())
-            {
-                (*ptr)->QRCode = code;
-                (*ptr)->QRCodeTime = Utils::getCurrentTime(true);
-            }
-        }
+        ++curBottleNum_;
+        auto pd = std::make_shared<ProductItem>(curBottleNum_, pdType_, "", "");
+        qProduct_.push_front(pd);
+
+        pd->QRCode = code;
+        pd->QRCodeTime = Utils::getCurrentTime(true);
+        // 测试代码！！！测试完成删除
+        std::string currentTime = Utils::getCurrentTime(false).substr(11, 8);
+        currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
+        currentTime += "abcabc";
+        pd->logistics1 = "123abcabc123";
+        pd->logistics2 = currentTime;
+        pd->logisticsTime = Utils::getCurrentTime(true);
     }
 
-    virtual void updateLogistics(const std::string &code1, const std::string &code2)
+    virtual void updateLogistics(const uint32_t number, const std::string &code1, const std::string &code2)
     {
         for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
         {
-            if ((*ptr)->bottleNum_ > 0 && (*ptr)->logisticsTime.empty())
+            if ((*ptr)->bottleNum_ == number)
             {
                 (*ptr)->logistics1 = code1;
                 (*ptr)->logistics2 = code2;
                 (*ptr)->logisticsTime = Utils::getCurrentTime(true);
+                return;
             }
         }
     }
@@ -205,6 +210,10 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index)
     {
+        if (index >= qProduct_.size())
+        {
+            return nullptr;
+        }
         return qProduct_[index];
     }
 

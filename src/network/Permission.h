@@ -11,9 +11,9 @@ class Permission : public TCPClient
     virtual void dealing(std::vector<unsigned char> buffer) override;
     virtual void pingBehavior() override;
   public slots:
-    void sendQRCode(const std::string &code);
+    void sendQRCode(const std::string &code, const std::string &num);
   signals:
-    void codeRight(const std::string &code1, const std::string &code2);
+    void codeRight(const std::string &num, const std::string &code1, const std::string &code2);
 
   private:
     std::string strCodeError = "FFFFEor1\r\n";  // 激光码返回错误信息

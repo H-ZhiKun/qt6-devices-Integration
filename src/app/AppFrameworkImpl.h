@@ -86,7 +86,7 @@ class AppFrameworkImpl final : public AppFramework
     void whenSignaRemove();
 
     void afterCognexRecv(const std::string &code);
-    void afterPermissionRecv(const std::string &code1, const std::string &code2);
+    void afterPermissionRecv(const std::string &num, const std::string &code1, const std::string &code2);
     void afterCaputureImage(const uint8_t &windId, const cv::Mat &mat);
 
     void processOCR(const std::string &);
