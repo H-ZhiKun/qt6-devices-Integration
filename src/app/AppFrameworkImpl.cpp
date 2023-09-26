@@ -891,9 +891,9 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
 
         // 测试代码！！！测试完成删除
-        std::string currentTime = Utils::getCurrentTime(true).substr(11, 12);
+        std::string currentTime = Utils::getCurrentTime(false).substr(11, 8);
         currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
-        currentTime += "ab";
+        currentTime += "abcabc";
         product_->updateLogistics("123abcabc123", currentTime);
     });
 }

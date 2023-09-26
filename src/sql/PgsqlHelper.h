@@ -77,13 +77,25 @@ class PgsqlHelper : public AppFrame::NonCopyable
 
         for (const QString &key : data.keys())
         {
+            if (data[key].isNull() || !data[key].isValid() || data[key] == "")
+            {
+                continue; // 跳过空值字段
+            }
+
             keys << key;
             placeholders += "?,";
         }
 
+        if (keys.isEmpty())
+        {
+            // 所有字段都为空值，不执行插入操作
+            pool_->releaseConnection(connect);
+            return true;
+        }
+
         sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ");";
         query.prepare(sqlQuery);
-        for (const QString &key : data.keys())
+        for (const QString &key : keys)
         {
             query.addBindValue(data[key]);
         }
