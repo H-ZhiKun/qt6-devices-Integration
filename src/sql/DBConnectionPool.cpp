@@ -1,13 +1,3 @@
-/*
- * @Author: A炼 834022125@qq.com
- * @Date: 2023-06-26 13:41:40
- * @LastEditors: A炼 834022125@qq.com
- * @LastEditTime: 2023-06-29 17:00:41
- * @FilePath: \deviceintegration\src\sql\DBConnectionPool.cpp
- * @Description:
- *
- * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
- */
 #include "DBConnectionPool.h"
 #include "Logger.h"
 #include "Utils.h"
