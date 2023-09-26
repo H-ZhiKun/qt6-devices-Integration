@@ -43,7 +43,7 @@ struct ProductItem
     uint32_t bottleNum_ = 0;  // 应用层维护瓶编号，自增
     std::string batchNum_;    // 批号
     std::string formulaName_; // 配方名
-    bool isComplete_ = false; // 流程完成状态
+    bool isRemove_ = false;   // 是否需要踢瓶
     // 数据表
     std::string QRCode;         // 二维码读码结果
     std::string logistics1;     // 物流码真实值1
@@ -83,12 +83,25 @@ class BaseProduct : public AppFrame::NonCopyable
     {
         return pdType_;
     }
-    virtual void signalQR(uint32_t pdNum = 0) = 0;
-    virtual void signalLocation() = 0;
-    virtual void signalCheck() = 0;
-    virtual std::shared_ptr<ProductItem> signalCoding() = 0;
-    virtual void signalOCR() = 0;
-    virtual void signalComplete() = 0;
+    virtual void signalQR(uint32_t pdNum = 0)
+    {
+    }
+    virtual void signalLocation()
+    {
+    }
+    virtual void signalCheck()
+    {
+    }
+    virtual std::shared_ptr<ProductItem> signalCoding()
+    {
+        return nullptr;
+    }
+    virtual void signalOCR()
+    {
+    }
+    virtual void signalComplete()
+    {
+    }
 
     virtual void updateQRCode(const std::string &code)
     {
