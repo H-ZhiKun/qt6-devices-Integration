@@ -11,6 +11,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
+#include <iostream>
 #include <list>
 class PgsqlHelper : public AppFrame::NonCopyable
 {
