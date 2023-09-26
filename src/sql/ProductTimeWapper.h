@@ -23,7 +23,6 @@ class ProductTimeWapper
         mapData.insert("formula_name", ptr->formulaName_.c_str());
         mapData.insert("is_complete", ptr->isComplete_);
 
-        mapData.insert("qrcode_signal_time", ptr->QRSigTime.c_str());
         mapData.insert("qrcode_time", ptr->QRCodeTime.c_str());
         mapData.insert("logistics_ret_time", ptr->logisticsTime.c_str());
 
