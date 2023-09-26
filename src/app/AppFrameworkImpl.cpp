@@ -2,10 +2,12 @@
 #include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
+#include "CircleDevice.h"
 #include "CircleProduct.h"
 #include "DBConnectionPool.h"
 #include "Domino.h"
 #include "FormulaWapper.h"
+#include "LineDevice.h"
 #include "LineProduct.h"
 #include "MysqlConnectionPool.h"
 #include "UserWapper.h"
@@ -619,13 +621,23 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
-    std::string strType = config_["plc"]["type"].as<std::string>();
-    plcDev_ = new PLCDevice;
+    std::string strType = config_["product"]["type"].as<std::string>();
+    if (strType == "line")
+    {
+        plcDev_ = new LineDevice;
+    }
+    else if (strType == "circle")
+    {
+        plcDev_ = new CircleDevice;
+    }
+    else if (strType == "cap")
+    {
+    }
     plcDev_->init(config_);
-    QObject::connect(plcDev_, &PLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
-    QObject::connect(plcDev_, &PLCDevice::signalCoding, [this]() { whenSignalCoding(); });
-    QObject::connect(plcDev_, &PLCDevice::signalOCR, [this]() { whenSignaOCR(); });
-    QObject::connect(plcDev_, &PLCDevice::signalRemove, [this]() { whenSignaRemove(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalCoding, [this]() { whenSignalCoding(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalOCR, [this]() { whenSignaOCR(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalRemove, [this]() { whenSignaRemove(); });
 }
 
 void AppFrame::AppFrameworkImpl::updateAlertData()
@@ -717,7 +729,7 @@ void AppFrame::AppFrameworkImpl::initFile()
 
 void AppFrame::AppFrameworkImpl::initProduct()
 {
-    std::string strType = config_["plc"]["type"].as<std::string>();
+    std::string strType = config_["product"]["type"].as<std::string>();
     if (strType == "circle")
     {
         product_ = new CircleProduct();

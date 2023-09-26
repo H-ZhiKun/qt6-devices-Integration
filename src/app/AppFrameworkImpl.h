@@ -1,12 +1,12 @@
 #pragma once
 #include "AppFramework.h"
+#include "BasePLCDevice.h"
 #include "BaseProduct.h"
 #include "BaumerManager.h"
 #include "Cognex.h"
 #include "Domino.h"
 #include "LineProduct.h"
 #include "Logger.h"
-#include "PLCDevice.h"
 #include "Permission.h"
 #include "PgsqlHelper.h"
 #include "WebManager.h"
@@ -121,7 +121,7 @@ class AppFrameworkImpl final : public AppFramework
     Permission *permission_ = nullptr;
     WebManager *webManager_ = nullptr;
     // tcp client end
-    PLCDevice *plcDev_ = nullptr;
+    BasePLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
     std::unordered_map<uint8_t, QObject *> mapStorePainter_;   // 初始化存放所有qml中的painter对象
     std::unordered_map<std::string, uint8_t> mapWindId2Index_; // 存放窗口名到窗口对象序号的映射
