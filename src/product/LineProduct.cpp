@@ -46,6 +46,7 @@ void LineProduct::signalOCR()
         if ((*ptr)->bottleNum_ > 0 && (*ptr)->OCRSigTime.empty())
         {
             (*ptr)->OCRSigTime = Utils::getCurrentTime(true);
+            return;
         }
     }
 }
