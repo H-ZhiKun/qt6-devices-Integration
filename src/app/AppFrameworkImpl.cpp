@@ -885,11 +885,6 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
 {
     Utils::asyncTask([this, code] {
         product_->updateQRCode(code);
-        if (code == "no read")
-        {
-            // 失败逻辑
-            return;
-        }
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
     });
 }
@@ -993,7 +988,7 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         buffer.open(QIODevice::WriteOnly);
         ocrImage.save(&buffer, "jpg");
         Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        // invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, ocrImage));
+        invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, ocrImage));
     });
 }
 
