@@ -5,7 +5,6 @@
 #include "Utils.h"
 #include <bitset>
 #include <memory>
-#include <mutex>
 
 enum class TypeProduct
 {
@@ -81,6 +80,10 @@ class BaseProduct : public AppFrame::NonCopyable
   public:
     explicit BaseProduct() = default;
     virtual ~BaseProduct() = default;
+    const TypeProduct &getType()
+    {
+        return pdType_;
+    }
     virtual void signalQR(uint32_t pdNum = 0) = 0;
     virtual void signalLocation() = 0;
     virtual void signalCheck() = 0;
@@ -88,13 +91,125 @@ class BaseProduct : public AppFrame::NonCopyable
     virtual void signalOCR() = 0;
     virtual void signalComplete() = 0;
 
-    virtual void updateQRCode(const std::string &code) = 0;
-    virtual void updateLogistics(const std::string &code1, const std::string &code2) = 0;
-    virtual uint32_t updateLocation(const cv::Mat &mat, const std::string &path) = 0;
-    virtual std::shared_ptr<ProductItem> updateLocationResult(const uint32_t number, const std::string &value) = 0;
-    virtual uint32_t updateCheck(const cv::Mat &mat, const std::string &path) = 0;
-    virtual std::shared_ptr<ProductItem> updateCheckResult(const uint32_t number, const std::string &value) = 0;
-    virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path) = 0;
-    virtual std::shared_ptr<ProductItem> updateOCRResult(const uint32_t number, const std::string &value) = 0;
-    virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index) = 0;
+    virtual void updateQRCode(const std::string &code)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ > 0 && (*ptr)->QRCodeTime.empty())
+            {
+                (*ptr)->QRCode = code;
+                (*ptr)->QRCodeTime = Utils::getCurrentTime(true);
+            }
+        }
+    }
+
+    virtual void updateLogistics(const std::string &code1, const std::string &code2)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ > 0 && (*ptr)->logisticsTime.empty())
+            {
+                (*ptr)->logistics1 = code1;
+                (*ptr)->logistics2 = code2;
+                (*ptr)->logisticsTime = Utils::getCurrentTime(true);
+            }
+        }
+    }
+
+    virtual uint32_t updateLocation(const cv::Mat &mat, const std::string &path)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ > 0 && (*ptr)->LocationImageTime.empty())
+            {
+                (*ptr)->LocationImage = mat;
+                (*ptr)->LocationPath = path;
+                (*ptr)->LocationImageTime = Utils::getCurrentTime(true);
+                return (*ptr)->bottleNum_;
+            }
+        }
+        return 0;
+    }
+
+    virtual std::shared_ptr<ProductItem> updateLocationResult(const uint32_t number, const std::string &value)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ == number)
+            {
+                (*ptr)->LocationResult = value;
+                (*ptr)->LocationResultTime = Utils::getCurrentTime(true);
+                return *ptr;
+            }
+        }
+        return nullptr; // 或者根据需要返回适当的值
+    }
+
+    virtual uint32_t updateCheck(const cv::Mat &mat, const std::string &path)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ > 0 && (*ptr)->CheckImageTime.empty())
+            {
+                (*ptr)->CheckImage = mat;
+                (*ptr)->CheckPath = path;
+                (*ptr)->CheckImageTime = Utils::getCurrentTime(true);
+                return (*ptr)->bottleNum_;
+            }
+        }
+        return 0;
+    }
+
+    virtual std::shared_ptr<ProductItem> updateCheckResult(const uint32_t number, const std::string &value)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ == number)
+            {
+                (*ptr)->CheckResult = value;
+                (*ptr)->CheckResultTime = Utils::getCurrentTime(true);
+                return *ptr;
+            }
+        }
+        return nullptr; // 或者根据需要返回适当的值
+    }
+
+    virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ > 0 && (*ptr)->OCRImageTime.empty())
+            {
+                (*ptr)->OCRImage = mat;
+                (*ptr)->OCRPath = path;
+                (*ptr)->OCRImageTime = Utils::getCurrentTime(true);
+                return (*ptr)->bottleNum_;
+            }
+        }
+        return 0;
+    }
+
+    virtual std::shared_ptr<ProductItem> updateOCRResult(const uint32_t number, const std::string &value)
+    {
+        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
+        {
+            if ((*ptr)->bottleNum_ == number)
+            {
+                (*ptr)->OCRResult = value;
+                (*ptr)->OCRResultTime = Utils::getCurrentTime(true);
+                return *ptr;
+            }
+        }
+        return nullptr; // 或者根据需要返回适当的值
+    }
+
+    virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index)
+    {
+        return qProduct_[index];
+    }
+
+  protected:
+    uint32_t curBottleNum_{0};
+    TypeProduct pdType_{TypeProduct::TypeCircle};
+    std::deque<std::shared_ptr<ProductItem>> qProduct_;
 };

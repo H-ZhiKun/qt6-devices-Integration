@@ -10,7 +10,7 @@
 class CircleProduct : public BaseProduct
 {
   public:
-    explicit CircleProduct() = default;
+    explicit CircleProduct();
     virtual ~CircleProduct() = default;
     virtual void signalQR(uint32_t pdNum = 0) override;
     virtual void signalLocation() override;
@@ -30,6 +30,8 @@ class CircleProduct : public BaseProduct
     virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index) override;
 
   private:
-    std::deque<std::shared_ptr<ProductItem>> qProduct_;
-    TypeProduct pdType_{TypeProduct::TypeCircle};
+    uint16_t OffsetQRCode = 0;
+    uint16_t OffsetLocate = 3;
+    uint16_t OffsetLocateCheck = 6;
+    uint16_t OffsetOCR = 14;
 };
