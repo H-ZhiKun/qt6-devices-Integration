@@ -883,11 +883,6 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
 {
     Utils::asyncTask([this, code] {
         product_->updateQRCode(code);
-        if (code == "no read")
-        {
-            // 失败逻辑
-            return;
-        }
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
 
         // 测试代码！！！测试完成删除
