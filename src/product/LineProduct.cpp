@@ -12,10 +12,6 @@ LineProduct::~LineProduct()
 
 void LineProduct::signalQR(uint32_t pdNum)
 {
-    ++curBottleNum_;
-    auto pd = std::make_shared<ProductItem>(curBottleNum_, pdType_, "", "");
-    pd->QRSigTime = Utils::getCurrentTime(true);
-    qProduct_.push_front(pd);
 }
 
 void LineProduct::signalLocation()
