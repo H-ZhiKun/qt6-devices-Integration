@@ -994,7 +994,7 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         buffer.open(QIODevice::WriteOnly);
         ocrImage.save(&buffer, "jpg");
         Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        // invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, ocrImage));
+        invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, ocrImage));
     });
 }
 
