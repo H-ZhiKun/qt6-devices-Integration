@@ -278,7 +278,7 @@ GroupBox {
         height: 37
         text: qsTr("相机参数设置")
         onClicked: {
-            var component = Qt.createComponent("CameraParam.qml");
+            var component = Qt.createComponent("StrightCameraParam.qml");
             var window = component.createObject(cameraPage);
             window.show();
         }
