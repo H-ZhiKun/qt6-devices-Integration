@@ -113,7 +113,7 @@ class BaseProduct : public AppFrame::NonCopyable
     {
     }
 
-    virtual void updateQRCode(const std::string &code)
+    virtual uint32_t updateQRCode(const std::string &code)
     {
         ++curBottleNum_;
         auto pd = std::make_shared<ProductItem>(curBottleNum_, pdType_, "", "");
@@ -128,6 +128,8 @@ class BaseProduct : public AppFrame::NonCopyable
         pd->logistics1 = "123abcabc123";
         pd->logistics2 = currentTime;
         pd->logisticsTime = Utils::getCurrentTime(true);
+
+        return curBottleNum_;
     }
 
     virtual void updateLogistics(const uint32_t number, const std::string &code1, const std::string &code2)

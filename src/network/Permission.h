@@ -11,7 +11,7 @@ class Permission : public TCPClient
     virtual void dealing(std::vector<unsigned char> buffer) override;
     virtual void pingBehavior() override;
   public slots:
-    void sendQRCode(const std::string &code, const std::string &num);
+    void sendQRCode(const uint32_t num, const std::string &code);
   signals:
     void codeRight(const std::string &num, const std::string &code1, const std::string &code2);
 

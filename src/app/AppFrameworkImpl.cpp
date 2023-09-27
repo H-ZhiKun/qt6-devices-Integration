@@ -983,8 +983,8 @@ void AppFrame::AppFrameworkImpl::whenSignaRemove()
 void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
 {
     Utils::asyncTask([this, code] {
-        product_->updateQRCode(code);
-        if (code == "No Read")
+        uint32_t number = product_->updateQRCode(code);
+        if (code == "No Read" || number == 0)
         {
             return;
         }
