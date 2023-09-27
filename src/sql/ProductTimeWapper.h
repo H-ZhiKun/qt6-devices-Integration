@@ -21,7 +21,7 @@ class ProductTimeWapper
         mapData.insert("bottle_num", ptr->bottleNum_);
         mapData.insert("batch_num", ptr->batchNum_.c_str());
         mapData.insert("formula_name", ptr->formulaName_.c_str());
-        mapData.insert("is_complete", ptr->isComplete_);
+        mapData.insert("is_remove", ptr->isRemove_);
 
         mapData.insert("qrcode_time", ptr->QRCodeTime.c_str());
         mapData.insert("logistics_ret_time", ptr->logisticsTime.c_str());

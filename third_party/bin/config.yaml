@@ -22,46 +22,40 @@ app:
     user: 'postgres'
     # passwd: release '' by default,password security considerations
     passwd: ''
-plc:
+product:
   # type: circle or line,cap; required current choosed device type
   type: line
+plc:
   # this block define the kind of registers address and size
   # normal_address interval 500ms
   # realtime_address interval 5ms
-  details:
-    - name: circle
-      # host: plc address,192.168.1.10 by default
-      host: 192.168.123.10
-      # port: plc port, 502 by default
-      port: 502
-      normal_address: 412289
-      normal_size: 400
-      realtime_address: 412642
-      realtime_size: 14
-      write_address: 412689
-      write_size: 316
-    - name: line
-      # host: plc address,192.168.1.10 by default
-      host: 192.168.123.10
-      # port: plc port, 502 by default
-      port: 502
-      normal_address: 40001
-      normal_size: 81
-      realtime_address: 40081
-      realtime_size: 1
-      write_address: 40001
-      write_size: 81
-    - name: cap
-      # host: plc address,192.168.1.10 by default
-      host: 192.168.123.10
-      # port: plc port, 502 by default
-      port: 502
-      normal_address: 40001
-      normal_size: 116
-      realtime_address: 40117
-      realtime_size: 1
-      write_address: 0
-      write_size: 0
+  # # # product line device # # #
+  host: 192.168.123.10
+  port: 502
+  normal_address: 40001
+  normal_size: 81
+  realtime_address: 40081
+  realtime_size: 1
+  write_address: 40001
+  write_size: 81
+  # # # product circle device # # #
+  # host: 192.168.123.10       
+  # port: 502         
+  # normal_address: 412289
+  # normal_size: 400
+  # realtime_address: 412642
+  # realtime_size: 14
+  # write_address: 412689
+  # write_size: 316
+  # # # product cap device # # #
+  # host: 192.168.123.10
+  # port: 502
+  # normal_address: 40001
+  # normal_size: 116
+  # realtime_address: 40117
+  # realtime_size: 1
+  # write_address: 0
+  # write_size: 0
 algorithm:
   url_ocr: 'http://192.168.101.8:5001/paddleOCR'
   url_predict: 'http://127.0.0.1:5000/predict_tangle'

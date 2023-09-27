@@ -10,18 +10,6 @@ LineProduct::~LineProduct()
 {
 }
 
-void LineProduct::signalQR(uint32_t pdNum)
-{
-}
-
-void LineProduct::signalLocation()
-{
-}
-
-void LineProduct::signalCheck()
-{
-}
-
 std::shared_ptr<ProductItem> LineProduct::signalCoding()
 {
     for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)

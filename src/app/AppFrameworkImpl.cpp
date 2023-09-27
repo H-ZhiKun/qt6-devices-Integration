@@ -2,10 +2,12 @@
 #include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
+#include "CircleDevice.h"
 #include "CircleProduct.h"
 #include "DBConnectionPool.h"
 #include "Domino.h"
 #include "FormulaWapper.h"
+#include "LineDevice.h"
 #include "LineProduct.h"
 #include "MysqlConnectionPool.h"
 #include "UserWapper.h"
@@ -619,13 +621,23 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
-    std::string strType = config_["plc"]["type"].as<std::string>();
-    plcDev_ = new PLCDevice;
+    std::string strType = config_["product"]["type"].as<std::string>();
+    if (strType == "line")
+    {
+        plcDev_ = new LineDevice;
+    }
+    else if (strType == "circle")
+    {
+        plcDev_ = new CircleDevice;
+    }
+    else if (strType == "cap")
+    {
+    }
     plcDev_->init(config_);
-    QObject::connect(plcDev_, &PLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
-    QObject::connect(plcDev_, &PLCDevice::signalCoding, [this]() { whenSignalCoding(); });
-    QObject::connect(plcDev_, &PLCDevice::signalOCR, [this]() { whenSignaOCR(); });
-    QObject::connect(plcDev_, &PLCDevice::signalRemove, [this]() { whenSignaRemove(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalCoding, [this]() { whenSignalCoding(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalOCR, [this]() { whenSignaOCR(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalRemove, [this]() { whenSignaRemove(); });
 }
 
 void AppFrame::AppFrameworkImpl::updateAlertData()
@@ -717,7 +729,7 @@ void AppFrame::AppFrameworkImpl::initFile()
 
 void AppFrame::AppFrameworkImpl::initProduct()
 {
-    std::string strType = config_["plc"]["type"].as<std::string>();
+    std::string strType = config_["product"]["type"].as<std::string>();
     if (strType == "circle")
     {
         product_ = new CircleProduct();
@@ -856,7 +868,53 @@ void AppFrame::AppFrameworkImpl::drawOcrRes(QImage &img, OcrRes &ocr)
 
 void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
 {
-    Utils::asyncTask([this, number] { product_->signalQR(number); });
+    Utils::asyncTask([this, number] {
+        if (product_->getType() == TypeProduct::TypeCircle)
+        {
+            product_->signalQR(number);
+            // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
+
+            // 电机旋转工位=5 下发定位在旋转前=5
+            const auto rotate = product_->getIndexObject(5);
+
+            // 打码工位=9 下发复合定位在打码前=8
+            const auto locateCheck = product_->getIndexObject(8);
+
+            // 打码工位=9 收到进入打码工位信号立刻下发数据到打印机=9
+            const auto printer = product_->getIndexObject(9);
+
+            // 打码复合工位=14 考虑图片接受时延+算法时延=16
+            const auto remove = product_->getIndexObject(16);
+            if (!rotate->LocationResult.empty())
+            {
+                plcDev_->writeDevice("r", "13002", "", rotate->LocationResult);
+                plcDev_->writeDevice("n", "12993", "", std::to_string(rotate->bottleNum_));
+                LogInfo("product process:write plc:number={},value={}.", rotate->bottleNum_, rotate->LocationResult);
+            }
+            if (!locateCheck->CheckResult.empty())
+            {
+                plcDev_->writeDevice("b", "13004", "0", locateCheck->CheckResult);
+                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->bottleNum_,
+                        locateCheck->CheckResult);
+            }
+            if (printer->CheckResult == "1")
+            {
+                invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
+                          Q_ARG(std::string, printer->logistics2));
+                LogInfo("product process:print:number={},code1={},code2={}.", printer->bottleNum_, printer->logistics1,
+                        printer->logistics2);
+            }
+            if (remove)
+            {
+                plcDev_->writeDevice("b", "13004", "1", remove->isRemove_ ? "1" : "0");
+                product_->signalComplete();
+            }
+        }
+        else
+        {
+            product_->signalQR(number);
+        }
+    });
 }
 
 void AppFrame::AppFrameworkImpl::whenSignalCoding()
