@@ -27,7 +27,7 @@ class LineProductDataWapper
         mapData["logistics_true_value_2"] = ptr->logistics2.c_str();
         mapData["ocr_image_path"] = ptr->OCRPath.c_str();
         mapData["ocr_result"] = ptr->OCRResult.c_str();
-        bool res = PgsqlHelper::getSqlHelper().insertData("product_data", mapData);
+        bool res = PgsqlHelper::getSqlHelper().insertData("line_product_data", mapData);
         return res;
     }
 };

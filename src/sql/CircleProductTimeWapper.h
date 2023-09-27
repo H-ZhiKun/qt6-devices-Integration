@@ -41,7 +41,7 @@ class CircleProductTimeWapper
         mapData.insert("ocr_image_time", ptr->OCRImageTime.c_str());
         mapData.insert("ocr_result_time", ptr->OCRResultTime.c_str());
         mapData.insert("complete_signal_time", ptr->completeSigTime.c_str());
-        bool res = PgsqlHelper::getSqlHelper().insertData("product_time", mapData);
+        bool res = PgsqlHelper::getSqlHelper().insertData("circle_product_time", mapData);
         return res;
     }
 };
