@@ -445,7 +445,41 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
     jsMainVal["textProduceState"] = plcDev_->readDevice("n", "12612");
 
-    jsMainVal["textEquipmentSteps"] = plcDev_->readDevice("n", "12613");
+    std::string textEquipmentSteps = plcDev_->readDevice("n", "12613");
+    switch (std::atoi(textEquipmentSteps.c_str()))
+    {
+    case 0:
+        jsMainVal["textEquipmentSteps"] = "未启动";
+        break;
+
+    case 1:
+        jsMainVal["textEquipmentSteps"] = "条件检查";
+        break;
+
+    case 2:
+        jsMainVal["textEquipmentSteps"] = "启动各轴";
+        break;
+
+    case 4:
+        jsMainVal["textEquipmentSteps"] = "自动运行";
+        break;
+
+    case 5:
+        jsMainVal["textEquipmentSteps"] = "暂停";
+        break;
+
+    case 8:
+        jsMainVal["textEquipmentSteps"] = "点动运行";
+        break;
+
+    case 9:
+        jsMainVal["textEquipmentSteps"] = "点动暂停";
+        break;
+
+    default:
+        jsMainVal["textEquipmentSteps"] = "未获取到信息";
+        break;
+    }
     std::vector<uint8_t> cameraState = baumerManager_->cameraState();
     for (uint8_t i = 0; i < cameraState.size(); i++)
     {
