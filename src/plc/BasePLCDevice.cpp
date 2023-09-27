@@ -9,7 +9,11 @@ BasePLCDevice::BasePLCDevice(QObject *parent) : QObject(parent)
 BasePLCDevice::~BasePLCDevice()
 {
     updateHolder_.store(false, std::memory_order_release);
-    thUpdate_.join();
+    if (thUpdate_)
+    {
+        thUpdate_->join();
+        delete thUpdate_;
+    }
     if (client_)
     {
         delete client_;
@@ -120,7 +124,7 @@ bool BasePLCDevice::writeDevice(const std::string &type, const std::string &addr
 }
 void BasePLCDevice::updateReadInfo()
 {
-    thUpdate_ = std::thread([this] {
+    thUpdate_ = new std::thread([this] {
         std::vector<uint16_t> readCache(readCacheSize_);
         while (updateHolder_.load(std::memory_order_acquire))
         {
@@ -131,7 +135,7 @@ void BasePLCDevice::updateReadInfo()
                     parsingReadInfo(readCache.data(), readCacheSize_);
                 }
                 int8_t readCount = 100;
-                while (readCount)
+                while (readCount && updateHolder_.load(std::memory_order_acquire))
                 {
                     auto realInfo = client_->readRealtimeInfo();
                     if (realInfo.cache.size() > 0)

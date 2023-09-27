@@ -6,6 +6,10 @@ LineDevice::LineDevice(QObject *parent) : BasePLCDevice(parent)
     devType = DeviceType::LineDevice;
 }
 
+LineDevice::~LineDevice()
+{
+}
+
 void LineDevice::parsingReadInfo(const uint16_t *readInfo, uint16_t size)
 {
 }
