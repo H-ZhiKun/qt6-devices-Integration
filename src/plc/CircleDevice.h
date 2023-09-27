@@ -16,7 +16,7 @@ class CircleDevice : public BasePLCDevice
     Q_OBJECT
   public:
     explicit CircleDevice(QObject *parent = nullptr);
-    ~CircleDevice() = default;
+    virtual ~CircleDevice();
 
   protected:
     virtual void updateReadInfo() override;

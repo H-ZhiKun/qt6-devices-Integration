@@ -15,7 +15,7 @@ class LineDevice : public BasePLCDevice
     Q_OBJECT
   public:
     explicit LineDevice(QObject *parent = nullptr);
-    ~LineDevice() = default;
+    virtual ~LineDevice();
 
   protected:
     virtual void parsingReadInfo(const uint16_t *alertGroup, uint16_t size) override;
