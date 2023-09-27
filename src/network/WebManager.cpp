@@ -12,15 +12,19 @@ void WebManager::init(const YAML::Node &config)
 {
     const std::string &urlTangle = config["algorithm"]["ws_tangle"].as<std::string>();
     const std::string &urlTangleCheck = config["algorithm"]["ws_tangleCheck"].as<std::string>();
-    const std::string &urlOcr = config["algorithm"]["url_ocr"].as<std::string>();
+    const std::string &urlOcr = config["algorithm"]["ws_ocr"].as<std::string>();
     tangleClient_ = new WebsocketClient(this);
     tangleCheckClient_ = new WebsocketClient(this);
+    ocrClient_ = new WebsocketClient(this);
     tangleClient_->connectToServer(urlTangle);
     tangleCheckClient_->connectToServer(urlTangleCheck);
+    ocrClient_->connectToServer(urlOcr);
     QObject::connect(tangleClient_, &WebsocketClient::messageReceived,
                      [this](const std::string &data) { emit tangleRecv(data); });
     QObject::connect(tangleCheckClient_, &WebsocketClient::messageReceived,
                      [this](const std::string &data) { emit tangleCheckRecv(data); });
+    QObject::connect(ocrClient_, &WebsocketClient::messageReceived,
+                     [this](const std::string &data) { emit ocrRecv(data); });
 }
 
 void WebManager::sendToALGO(const uint8_t typeALGO, const std::string &jsonData, const QByteArray &imageBinaryData)

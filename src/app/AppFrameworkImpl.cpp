@@ -2,10 +2,12 @@
 #include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
+#include "CircleDevice.h"
 #include "CircleProduct.h"
 #include "DBConnectionPool.h"
 #include "Domino.h"
 #include "FormulaWapper.h"
+#include "LineDevice.h"
 #include "LineProduct.h"
 #include "MysqlConnectionPool.h"
 #include "UserWapper.h"
@@ -18,6 +20,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QThread>
+#include <algorithm>
 using namespace AppFrame;
 
 AppFramework &AppFramework::instance()
@@ -61,9 +64,10 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
     registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
-
     registerExpectation(ExpectedFunction::RefreshElecData,
                         std::bind(&AppFrameworkImpl::refreshElecData, this)); // 注册直线式电能表数据
+    registerExpectation(ExpectedFunction::RefreshStrightMainPage,
+                        std::bind(&AppFrameworkImpl::refreshStrightMainPage, this));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -84,6 +88,7 @@ int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
     initPLC();
     // runtime task
     timerTask();
+
     return 0;
 }
 
@@ -189,7 +194,7 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
     bool ret = false;
     auto params = Utils::stringToJson(value);
     std::string winName = params["display_window"].asString();
-    Json::Value jsVal = baumerManager_->getCamera(mapWindId2Index_[winName]);
+    Json::Value jsVal = baumerManager_->getCamera(mapWindId2Index_.at(winName));
     std::string des;
     if (jsVal.isNull())
     {
@@ -210,7 +215,7 @@ std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
     if (!jsParams.isNull())
     {
         std::string winName = jsParams["display_window"].asString();
-        ret = baumerManager_->setCamera(mapWindId2Index_[winName], jsParams, des);
+        ret = baumerManager_->setCamera(mapWindId2Index_.at(winName), jsParams, des);
     }
     return Utils::makeResponse(ret, {}, std::move(des));
 }
@@ -450,6 +455,55 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     return result;
 }
 
+std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage()
+{
+    bool ret = true;
+    Json::Value jsMainVal;
+    jsMainVal["image0"] = "0";
+    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
+    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
+    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
+    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    std::string textEquipmentSteps = plcDev_->readDevice("di", "0006");
+    switch (std::atoi(textEquipmentSteps.c_str()))
+    {
+    case 0:
+        jsMainVal["textEquipmentSteps"] = "未开启";
+        break;
+
+    case 1:
+        jsMainVal["textEquipmentSteps"] = "待启动";
+        break;
+
+    case 2:
+        jsMainVal["textEquipmentSteps"] = "运行中";
+        break;
+
+    case 3:
+        jsMainVal["textEquipmentSteps"] = "急停中";
+        break;
+
+    case 4:
+        jsMainVal["textEquipmentSteps"] = "终止";
+        break;
+
+    case 5:
+        jsMainVal["textEquipmentSteps"] = "暂停";
+        break;
+
+    default:
+        jsMainVal["textEquipmentSteps"] = "未获取到信息";
+        break;
+    }
+    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
+    for (uint8_t i = 0; i < cameraState.size(); i++)
+    {
+        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
+    }
+    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
+    return result;
+}
+
 std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
 {
     Json::Value jsPowerVal;
@@ -559,19 +613,31 @@ void AppFrame::AppFrameworkImpl::initNetworkClient()
     QObject::connect(cognex_, &Cognex::ReadQRCode, [this](const std::string &value) { afterCognexRecv(value); });
     // 获取到物流码并存储
     QObject::connect(permission_, &Permission::codeRight,
-                     [this](const std::string &code1, const std::string &code2) { afterPermissionRecv(code1, code2); });
+                     [this](const std::string &num, const std::string &code1, const std::string &code2) {
+                         afterPermissionRecv(num, code1, code2);
+                     });
     LogInfo("network client start success.");
 }
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
-    std::string strType = config_["plc"]["type"].as<std::string>();
-    plcDev_ = new PLCDevice;
+    std::string strType = config_["product"]["type"].as<std::string>();
+    if (strType == "line")
+    {
+        plcDev_ = new LineDevice;
+    }
+    else if (strType == "circle")
+    {
+        plcDev_ = new CircleDevice;
+    }
+    else if (strType == "cap")
+    {
+    }
     plcDev_->init(config_);
-    QObject::connect(plcDev_, &PLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
-    QObject::connect(plcDev_, &PLCDevice::signalCoding, [this]() { whenSignalCoding(); });
-    QObject::connect(plcDev_, &PLCDevice::signalOCR, [this]() { whenSignaOCR(); });
-    QObject::connect(plcDev_, &PLCDevice::signalRemove, [this]() { whenSignaRemove(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalCoding, [this]() { whenSignalCoding(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalOCR, [this]() { whenSignaOCR(); });
+    QObject::connect(plcDev_, &BasePLCDevice::signalRemove, [this]() { whenSignaRemove(); });
 }
 
 void AppFrame::AppFrameworkImpl::updateAlertData()
@@ -663,7 +729,7 @@ void AppFrame::AppFrameworkImpl::initFile()
 
 void AppFrame::AppFrameworkImpl::initProduct()
 {
-    std::string strType = config_["plc"]["type"].as<std::string>();
+    std::string strType = config_["product"]["type"].as<std::string>();
     if (strType == "circle")
     {
         product_ = new CircleProduct();
@@ -753,7 +819,7 @@ void AppFrame::AppFrameworkImpl::timerTask()
                     }
                     afterCaputureImage(typeALGO, mat);
                     LogInfo("product process:image locate get.");
-                    invokeCpp(mapStorePainter_[index], "updateImage", Q_ARG(QImage, Utils::matToQImage(mat)));
+                    invokeCpp(mapStorePainter_.at(index), "updateImage", Q_ARG(QImage, Utils::matToQImage(mat)));
                 }
             }
         }
@@ -781,9 +847,74 @@ void AppFrame::AppFrameworkImpl::drawText(QImage &img, const QString &text)
     pp.drawText(QPointF(20, 50), text);
 }
 
+void AppFrame::AppFrameworkImpl::drawOcrRes(QImage &img, OcrRes &ocr)
+{
+    QPainter pp(&img);
+    QFont font = pp.font();
+    font.setPixelSize(50); // 改变字体大小
+    font.setFamily("Microsoft YaHei");
+    pp.setFont(font);
+    pp.setPen(QPen(Qt::red, 5));
+    pp.setBrush(QBrush(Qt::red));
+    pp.drawText(QPointF(20, 50), QString::fromStdString(ocr.result));
+    QPointF lefttop(ocr.lefttopx, ocr.lefttopy);
+    QPointF leftbottom(ocr.leftbottomx, ocr.leftbottomy);
+    QPointF righttop(ocr.righttopx, ocr.righttopy);
+    QPointF rightbottom(ocr.rightbottomx, ocr.rightbottomy);
+    QVector<QPointF> points;
+    points << lefttop << righttop << rightbottom << leftbottom;
+    pp.drawPolygon(points);
+}
+
 void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
 {
-    Utils::asyncTask([this, number] { product_->signalQR(number); });
+    Utils::asyncTask([this, number] {
+        if (product_->getType() == TypeProduct::TypeCircle)
+        {
+            product_->signalQR(number);
+            // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
+
+            // 电机旋转工位=5 下发定位在旋转前=5
+            const auto rotate = product_->getIndexObject(5);
+
+            // 打码工位=9 下发复合定位在打码前=8
+            const auto locateCheck = product_->getIndexObject(8);
+
+            // 打码工位=9 收到进入打码工位信号立刻下发数据到打印机=9
+            const auto printer = product_->getIndexObject(9);
+
+            // 打码复合工位=14 考虑图片接受时延+算法时延=16
+            const auto remove = product_->getIndexObject(16);
+            if (!rotate->LocationResult.empty())
+            {
+                plcDev_->writeDevice("r", "13002", "", rotate->LocationResult);
+                plcDev_->writeDevice("n", "12993", "", std::to_string(rotate->bottleNum_));
+                LogInfo("product process:write plc:number={},value={}.", rotate->bottleNum_, rotate->LocationResult);
+            }
+            if (!locateCheck->CheckResult.empty())
+            {
+                plcDev_->writeDevice("b", "13004", "0", locateCheck->CheckResult);
+                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->bottleNum_,
+                        locateCheck->CheckResult);
+            }
+            if (printer->CheckResult == "1")
+            {
+                invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
+                          Q_ARG(std::string, printer->logistics2));
+                LogInfo("product process:print:number={},code1={},code2={}.", printer->bottleNum_, printer->logistics1,
+                        printer->logistics2);
+            }
+            if (remove)
+            {
+                plcDev_->writeDevice("b", "13004", "1", remove->isRemove_ ? "1" : "0");
+                product_->signalComplete();
+            }
+        }
+        else
+        {
+            product_->signalQR(number);
+        }
+    });
 }
 
 void AppFrame::AppFrameworkImpl::whenSignalCoding()
@@ -812,18 +943,15 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
 {
     Utils::asyncTask([this, code] {
         product_->updateQRCode(code);
-        if (code == "no read")
-        {
-            // 失败逻辑
-            return;
-        }
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
     });
 }
 
-void AppFrame::AppFrameworkImpl::afterPermissionRecv(const std::string &code1, const std::string &code2)
+void AppFrame::AppFrameworkImpl::afterPermissionRecv(const std::string &num, const std::string &code1,
+                                                     const std::string &code2)
 {
-    product_->updateLogistics(code1, code2);
+    uint32_t number = Utils::anyFromString<uint32_t>(num);
+    product_->updateLogistics(number, code1, code2);
 }
 
 void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const cv::Mat &mat)
@@ -839,9 +967,8 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const c
             cv::Mat newMat;
             cv::resize(image, newMat, {800, 800});
             modelName = "tangle";
-            bottomNum = plcDev_->getFIFOInfo().numPosition;
             filePath = strTanglePath_ + currentDateTimeStr.toStdString() + ".jpg";
-            product_->updateLocation(image, filePath);
+            bottomNum = product_->updateLocation(image, filePath);
             break;
         }
         case 1: {
@@ -852,20 +979,22 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const c
         }
         case 2: {
             modelName = "tangleCheck";
-            bottomNum = plcDev_->getFIFOInfo().numVerifyPos;
             filePath = strTangleCheckPath_ + currentDateTimeStr.toStdString() + ".jpg";
-            product_->updateCheck(image, filePath);
+            bottomNum = product_->updateCheck(image, filePath);
             break;
         }
         default:
             break;
         }
-        std::string sendJson;
-        QByteArray sendBytes;
-        LogInfo("product process:send to algo:number={},model={},bytes={}.", bottomNum, type, sendBytes.size());
-        Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
-        invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, type), Q_ARG(std::string, sendJson),
-                  Q_ARG(QByteArray, sendBytes));
+        LogInfo("product process:send to algo:number={},model={}.", bottomNum, type);
+        if (bottomNum > 0)
+        {
+            std::string sendJson;
+            QByteArray sendBytes;
+            Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
+            invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, type), Q_ARG(std::string, sendJson),
+                      Q_ARG(QByteArray, sendBytes));
+        }
     });
 }
 
@@ -875,13 +1004,27 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
         jsValue = Utils::stringToJson(jsValue["box"].asString());
+        if (jsValue.empty())
+        {
+            return;
+        }
         std::string result;
         std::vector<OcrRes> ocrRes;
         for (const auto &item : jsValue)
         {
             result += item["result"].asString();
-            OcrRes resItem(item["result"].asString(), item["lefttop"].asInt(), item["leftbottom"].asInt(),
-                           item["righttop"].asInt(), item["rightbottom"].asInt());
+            std::string lefttop = item["lefttop"].asString();
+            std::string righttop = item["righttop"].asString();
+            std::string rightbottom = item["rightbottom"].asString();
+            std::string leftbottom = item["leftbottom"].asString();
+            // 解析字符串中的整数
+            int lefttopX, lefttopY, righttopX, righttopY, rightbottomX, rightbottomY, leftbottomX, leftbottomY;
+            sscanf(lefttop.c_str(), "[%d, %d]", &lefttopX, &lefttopY);
+            sscanf(righttop.c_str(), "[%d, %d]", &righttopX, &righttopY);
+            sscanf(rightbottom.c_str(), "[%d, %d]", &rightbottomX, &rightbottomY);
+            sscanf(leftbottom.c_str(), "[%d, %d]", &leftbottomX, &leftbottomY);
+            OcrRes resItem(item["result"].asString(), lefttopX, lefttopY, leftbottomX, leftbottomY, righttopX,
+                           righttopY, leftbottomX, leftbottomY);
             ocrRes.push_back(std::move(resItem));
         }
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
@@ -892,11 +1035,18 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
             return;
         }
         QImage ocrImage = Utils::matToQImage(mat);
-        QPainter painter(&ocrImage); // this为绘图设备，即表明在该部件上进行绘制
-        for (const auto &item : ocrRes)
+        QPainter painter(&ocrImage);
+        for (auto &resItem : ocrRes)
         {
-            // painter.drawLine(QPaint(0, 0), QPaint(100, 100));
+            drawOcrRes(ocrImage, resItem);
         }
+        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        ocrImage.save(&buffer, "jpg");
+        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        invokeCpp(mapStorePainter_.at(mapWindId2Index_.at("OCR")), "updateImage", Q_ARG(QImage, ocrImage));
     });
 }
 
@@ -936,8 +1086,8 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
         QBuffer buffer(&byteArray);
         buffer.open(QIODevice::WriteOnly);
         Image.save(&buffer, "jpg");
-        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, Image));
+        Utils::saveImageToFile(byteArray, strOcrResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
+        invokeCpp(mapStorePainter_.at(mapWindId2Index_.at("Location")), "updateImage", Q_ARG(QImage, Image));
     });
 }
 

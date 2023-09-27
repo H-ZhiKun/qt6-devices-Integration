@@ -53,21 +53,11 @@ Window {
                 width: 144
                 height: 34
                 currentIndex: 0
-                model: ["定位相机", "打码复核相机", "定位复核相机"]
+                model: ["打码复核相机"]
 
                 onCurrentValueChanged: {
-                    var cameraName = "";
-                    if (currentCamera.currentIndex == 0) {
-                        cameraName = "Location";
-                    }
-                    if (currentCamera.currentIndex == 1) {
-                        cameraName = "OCR";
-                    }
-                    if (currentCamera.currentIndex == 2) {
-                        cameraName = "LocateCheck";
-                    }
                     var json = {
-                        "display_window": cameraName
+                        "display_window": "OCR"
                     };
                     var strSend = JSON.stringify(json);
                     var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.GetCameraParam, strSend);
