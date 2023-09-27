@@ -192,7 +192,7 @@ std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
     bool ret = false;
     auto params = Utils::stringToJson(value);
     std::string winName = params["display_window"].asString();
-    Json::Value jsVal = baumerManager_->getCamera(mapWindId2Index_[winName]);
+    Json::Value jsVal = baumerManager_->getCamera(mapWindId2Index_.at(winName));
     std::string des;
     if (jsVal.isNull())
     {
@@ -213,7 +213,7 @@ std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
     if (!jsParams.isNull())
     {
         std::string winName = jsParams["display_window"].asString();
-        ret = baumerManager_->setCamera(mapWindId2Index_[winName], jsParams, des);
+        ret = baumerManager_->setCamera(mapWindId2Index_.at(winName), jsParams, des);
     }
     return Utils::makeResponse(ret, {}, std::move(des));
 }
@@ -807,7 +807,7 @@ void AppFrame::AppFrameworkImpl::timerTask()
                     }
                     afterCaputureImage(typeALGO, mat);
                     LogInfo("product process:image locate get.");
-                    invokeCpp(mapStorePainter_[index], "updateImage", Q_ARG(QImage, Utils::matToQImage(mat)));
+                    invokeCpp(mapStorePainter_.at(index), "updateImage", Q_ARG(QImage, Utils::matToQImage(mat)));
                 }
             }
         }
@@ -988,7 +988,7 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         buffer.open(QIODevice::WriteOnly);
         ocrImage.save(&buffer, "jpg");
         Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, ocrImage));
+        invokeCpp(mapStorePainter_.at(mapWindId2Index_.at("OCR")), "updateImage", Q_ARG(QImage, ocrImage));
     });
 }
 
@@ -1026,7 +1026,7 @@ void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
         buffer.open(QIODevice::WriteOnly);
         Image.save(&buffer, "jpg");
         Utils::saveImageToFile(byteArray, strOcrResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        invokeCpp(mapStorePainter_[mapWindId2Index_["Location"]], "updateImage", Q_ARG(QImage, Image));
+        invokeCpp(mapStorePainter_.at(mapWindId2Index_.at("Location")), "updateImage", Q_ARG(QImage, Image));
     });
 }
 
