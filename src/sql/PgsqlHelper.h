@@ -11,6 +11,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
+#include <iostream>
 #include <list>
 class PgsqlHelper : public AppFrame::NonCopyable
 {
@@ -77,16 +78,27 @@ class PgsqlHelper : public AppFrame::NonCopyable
 
         for (const QString &key : data.keys())
         {
+            if (data[key].isNull() || !data[key].isValid() || data[key] == "")
+            {
+                continue; // 跳过空值字段
+            }
+
             keys << key;
             placeholders += "?,";
         }
 
-        sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ")";
-        query.prepare(sqlQuery);
-
-        for (const QString &key : data.keys())
+        if (keys.isEmpty())
         {
-            query.bindValue(key, data[key]);
+            // 所有字段都为空值，不执行插入操作
+            pool_->releaseConnection(connect);
+            return true;
+        }
+
+        sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ");";
+        query.prepare(sqlQuery);
+        for (const QString &key : keys)
+        {
+            query.addBindValue(data[key]);
         }
 
         if (!query.exec())
@@ -94,7 +106,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
             LogError("Failed to insert data: {}", query.lastError().text().toStdString());
             ret = false;
         }
-
         pool_->releaseConnection(connect);
         return ret;
     }

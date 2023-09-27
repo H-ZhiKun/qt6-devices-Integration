@@ -27,7 +27,8 @@ enum class ExpectedFunction
     WritePLC = 16,         // 写PLC数据
     RefreshMainPage = 17,  // 刷新主页面数据
     RefreshPowerPage = 18, // 刷新电能数据
-    RefreshElecData = 19   // 刷新直线式电能表数据
+    RefreshElecData = 19,   // 刷新直线式电能表数据
+    RefreshStrightMainPage = 20  // 刷新主页面数据
 };
 class AppFramework : public NonCopyable
 {

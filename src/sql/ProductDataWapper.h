@@ -21,7 +21,7 @@ class ProductDataWapper
         mapData["bottle_num"] = ptr->bottleNum_;
         mapData["batch_num"] = ptr->batchNum_.c_str();
         mapData["formula_name"] = ptr->formulaName_.c_str();
-        mapData["is_complete"] = ptr->isComplete_;
+        mapData["is_remove"] = ptr->isRemove_;
         mapData["qrcode_result"] = ptr->QRCode.c_str();
         mapData["logistics_true_value_1"] = ptr->logistics1.c_str();
         mapData["logistics_true_value_2"] = ptr->logistics2.c_str();

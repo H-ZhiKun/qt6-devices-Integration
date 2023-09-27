@@ -1,12 +1,12 @@
 #pragma once
 #include "AppFramework.h"
+#include "BasePLCDevice.h"
 #include "BaseProduct.h"
 #include "BaumerManager.h"
 #include "Cognex.h"
 #include "Domino.h"
 #include "LineProduct.h"
 #include "Logger.h"
-#include "PLCDevice.h"
 #include "Permission.h"
 #include "PgsqlHelper.h"
 #include "WebManager.h"
@@ -57,6 +57,7 @@ class AppFrameworkImpl final : public AppFramework
     std::string readPLC(const std::string &);
     std::string writePLC(const std::string &);
     std::string refreshMainPage();
+    std::string refreshStrightMainPage();
     std::string refreshPowerPage();
 
     std::string refreshElecData(); // 刷新直线式电能表数据
@@ -85,7 +86,7 @@ class AppFrameworkImpl final : public AppFramework
     void whenSignaRemove();
 
     void afterCognexRecv(const std::string &code);
-    void afterPermissionRecv(const std::string &code1, const std::string &code2);
+    void afterPermissionRecv(const std::string &num, const std::string &code1, const std::string &code2);
     void afterCaputureImage(const uint8_t &windId, const cv::Mat &mat);
 
     void processOCR(const std::string &);
@@ -94,6 +95,7 @@ class AppFrameworkImpl final : public AppFramework
 
     void sendOneToAlgo(); // 初始化服务端的python模型
     void drawText(QImage &img, const QString &text);
+    void drawOcrRes(QImage &img, OcrRes &ocr);
 
   private:
     // 私有变量区域
@@ -119,7 +121,7 @@ class AppFrameworkImpl final : public AppFramework
     Permission *permission_ = nullptr;
     WebManager *webManager_ = nullptr;
     // tcp client end
-    PLCDevice *plcDev_ = nullptr;
+    BasePLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
     std::unordered_map<uint8_t, QObject *> mapStorePainter_;   // 初始化存放所有qml中的painter对象
     std::unordered_map<std::string, uint8_t> mapWindId2Index_; // 存放窗口名到窗口对象序号的映射

@@ -187,7 +187,6 @@ CREATE TABLE IF NOT EXISTS product_time(
    batch_num VARCHAR(64),
    formula_name VARCHAR(64),
    is_complete BOOLEAN,
-   qrcode_signal_time timestamp(3),
    qrcode_time timestamp(3),
    logistics_ret_time timestamp(3),
    location_signal_time timestamp(3),
