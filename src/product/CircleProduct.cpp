@@ -41,13 +41,14 @@ void CircleProduct::signalComplete()
     qProduct_.pop_back();
 }
 
-void CircleProduct::updateQRCode(const std::string &code)
+uint32_t CircleProduct::updateQRCode(const std::string &code)
 {
     auto ptr = qProduct_[OffsetQRCode];
     if (ptr->bottleNum_ == 0)
-        return;
+        return 0;
     ptr->QRCode = code;
     ptr->QRCodeTime = Utils::getCurrentTime(true);
+    return ptr->bottleNum_;
 }
 
 uint32_t CircleProduct::updateLocation(const cv::Mat &mat, const std::string &path)

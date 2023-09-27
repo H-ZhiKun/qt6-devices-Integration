@@ -28,9 +28,9 @@ void Permission::dealing(std::vector<unsigned char> buffer)
     }
     emit codeRight(number, code1, code2);
 }
-void Permission::sendQRCode(const std::string &code, const std::string &num)
+void Permission::sendQRCode(const uint32_t num, const std::string &code)
 {
-    std::string cmd = strHead + num + "," + code + strTail;
+    std::string cmd = strHead + std::to_string(num) + "," + code + strTail;
     QByteArray byteArray = QByteArray(cmd.c_str(), static_cast<int>(cmd.size()));
     sendData(byteArray);
 }
