@@ -179,8 +179,8 @@ CREATE TABLE IF NOT EXISTS plc_register_rw (
 --   created_time timestamp DEFAULT CURRENT_TIMESTAMP
 -- );
 
--- Table structure for product_time
-CREATE TABLE IF NOT EXISTS product_time(
+-- Table structure for line_product_time
+CREATE TABLE IF NOT EXISTS line_product_time(
    id serial,
    type_pd VARCHAR(64),
    bottle_num VARCHAR(64),
@@ -189,9 +189,57 @@ CREATE TABLE IF NOT EXISTS product_time(
    is_remove BOOLEAN,
    qrcode_time timestamp(3),
    logistics_ret_time timestamp(3),
+   coding_signal_time timestamp(3),
+   ocr_signal_time timestamp(3),
+   ocr_image_time timestamp(3),
+   ocr_result_time timestamp(3),
+   complete_signal_time timestamp(3),
+   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
+   created_date date DEFAULT CURRENT_DATE,
+   PRIMARY KEY (id, created_date)
+)PARTITION BY RANGE (created_date);
+CREATE INDEX idx_line_product_time ON line_product_time (created_time);
+
+-- Table structure for line_product_data
+CREATE TABLE IF NOT EXISTS line_product_data(
+   id serial,
+   type_pd VARCHAR(64),
+   bottle_num VARCHAR(64),
+   batch_num VARCHAR(64),
+   formula_name VARCHAR(64),
+   is_remove BOOLEAN,
+   qrcode_result VARCHAR(256),
+   logistics_true_value_1 VARCHAR(256),
+   logistics_true_value_2 VARCHAR(256),
+   ocr_image_path VARCHAR(256),
+   ocr_result VARCHAR(256),
+   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
+   created_date date DEFAULT CURRENT_DATE,
+   PRIMARY KEY (id, created_date)
+)PARTITION BY RANGE (created_date);
+CREATE INDEX idx_line_product_data ON line_product_data (created_time);
+
+CREATE TABLE line_product_time_2023_09 PARTITION OF line_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE line_product_data_2023_09 PARTITION OF line_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE line_product_time_2023_10 PARTITION OF line_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE line_product_data_2023_10 PARTITION OF line_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+
+
+-- Table structure for circle_product_time
+CREATE TABLE IF NOT EXISTS circle_product_time(
+   id serial,
+   type_pd VARCHAR(64),
+   bottle_num VARCHAR(64),
+   batch_num VARCHAR(64),
+   formula_name VARCHAR(64),
+   is_remove BOOLEAN,
+   qrcode_time timestamp(3),
+   logistics_ret_time timestamp(3),
+   issued_rotate_time timestamp(3),
    location_signal_time timestamp(3),
    location_image_time timestamp(3),
    location_result_time timestamp(3),
+   issued_locateCheck_time timestamp(3),
    check_signal_time timestamp(3),
    check_image_time timestamp(3),
    check_result_time timestamp(3),
@@ -204,10 +252,10 @@ CREATE TABLE IF NOT EXISTS product_time(
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
 )PARTITION BY RANGE (created_date);
-CREATE INDEX idx_product_time ON product_time (created_time);
+CREATE INDEX idx_circle_product_time ON circle_product_time (created_time);
 
--- Table structure for product_data
-CREATE TABLE IF NOT EXISTS product_data(
+-- Table structure for circle_product_data
+CREATE TABLE IF NOT EXISTS circle_product_data(
    id serial,
    type_pd VARCHAR(64),
    bottle_num VARCHAR(64),
@@ -227,40 +275,12 @@ CREATE TABLE IF NOT EXISTS product_data(
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
 )PARTITION BY RANGE (created_date);
-CREATE INDEX idx_product_data ON product_data (created_time);
+CREATE INDEX idx_circle_product_data ON circle_product_data (created_time);
 
-
-CREATE TABLE product_time_2023_09 PARTITION OF product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE product_data_2023_09 PARTITION OF product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE product_time_2023_10 PARTITION OF product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-CREATE TABLE product_data_2023_10 PARTITION OF product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-
--- 创建分区表的函数
--- CREATE OR REPLACE FUNCTION create_partition_table()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     DECLARE
---         partition_table_name TEXT := 'product_time_' || to_char(CURRENT_DATE, 'YYYY_MM');
---     BEGIN
---         IF NOT EXISTS (
---             SELECT 1
---             FROM pg_tables
---             WHERE tablename = partition_table_name
---         ) THEN
---             EXECUTE 'CREATE TABLE ' || partition_table_name || ' PARTITION OF product_time FOR VALUES FROM (''' || to_char(CURRENT_DATE, 'YYYY-MM-01') || ''') TO (''' || to_char((CURRENT_DATE + INTERVAL '1 month')::date, 'YYYY-MM-01') || ''')';
---         END IF;
---         EXECUTE 'INSERT INTO ' || partition_table_name || ' SELECT ($1).*'
---         USING NEW;    
---         RETURN NULL;
---     END;
--- END;
--- $$ LANGUAGE plpgsql;
-
--- CREATE TRIGGER insert_partition_trigger
--- BEFORE INSERT ON "public"."product_time"
--- FOR EACH STATEMENT
--- EXECUTE PROCEDURE "public"."create_partition_table"();
-
+CREATE TABLE circle_product_time_2023_09 PARTITION OF circle_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE circle_product_data_2023_09 PARTITION OF circle_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE circle_product_time_2023_10 PARTITION OF circle_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE circle_product_data_2023_10 PARTITION OF circle_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 
 
 

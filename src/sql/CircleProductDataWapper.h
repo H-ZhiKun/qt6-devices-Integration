@@ -8,12 +8,12 @@
 #include <memory>
 #include <string>
 
-class ProductDataWapper
+class CircleProductDataWapper
 {
 #define TABLE_PRODUCT_DATA "product_data"
   public:
-    ProductDataWapper() = default;
-    ~ProductDataWapper() = default;
+    CircleProductDataWapper() = default;
+    ~CircleProductDataWapper() = default;
     static bool insert(std::shared_ptr<ProductItem> ptr)
     {
         QVariantMap mapData;

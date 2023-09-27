@@ -889,11 +889,13 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
             {
                 plcDev_->writeDevice("r", "13002", "", rotate->LocationResult);
                 plcDev_->writeDevice("n", "12993", "", std::to_string(rotate->bottleNum_));
+                rotate->issuedRotateTime = Utils::getCurrentTime(true);
                 LogInfo("product process:write plc:number={},value={}.", rotate->bottleNum_, rotate->LocationResult);
             }
             if (!locateCheck->CheckResult.empty())
             {
                 plcDev_->writeDevice("b", "13004", "0", locateCheck->CheckResult);
+                locateCheck->issuedLocateCheckTime = Utils::getCurrentTime(true);
                 LogInfo("product process:locateCheck:number={},value={}.", locateCheck->bottleNum_,
                         locateCheck->CheckResult);
             }

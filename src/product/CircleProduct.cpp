@@ -35,8 +35,8 @@ void CircleProduct::signalComplete()
     if (ptr->bottleNum_ > 0)
     {
         ptr->completeSigTime = Utils::getCurrentTime(true);
-        ProductTimeWapper::insert(ptr);
-        ProductDataWapper::insert(ptr);
+        CircleProductTimeWapper::insert(ptr);
+        CircleProductDataWapper::insert(ptr);
     }
     qProduct_.pop_back();
 }

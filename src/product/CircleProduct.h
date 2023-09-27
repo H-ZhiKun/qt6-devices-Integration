@@ -1,8 +1,8 @@
 #pragma once
 #include "BaseProduct.h"
 #include "Logger.h"
-#include "ProductDataWapper.h"
-#include "ProductTimeWapper.h"
+#include "CircleProductDataWapper.h"
+#include "CircleProductTimeWapper.h"
 #include "Utils.h"
 #include <memory>
 #include <mutex>
