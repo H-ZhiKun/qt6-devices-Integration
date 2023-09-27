@@ -15,7 +15,7 @@ class CircleProduct : public BaseProduct
     virtual void signalQR(uint32_t pdNum = 0) override;
     virtual void signalComplete() override;
 
-    virtual void updateQRCode(const std::string &code) override;
+    virtual uint32_t updateQRCode(const std::string &code) override;
     virtual uint32_t updateLocation(const cv::Mat &mat, const std::string &path) override;
     virtual uint32_t updateCheck(const cv::Mat &mat, const std::string &path) override;
     virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path) override;

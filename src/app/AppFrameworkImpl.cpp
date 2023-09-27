@@ -445,7 +445,41 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
     jsMainVal["textProduceState"] = plcDev_->readDevice("n", "12612");
 
-    jsMainVal["textEquipmentSteps"] = plcDev_->readDevice("n", "12613");
+    std::string textEquipmentSteps = plcDev_->readDevice("n", "12613");
+    switch (std::atoi(textEquipmentSteps.c_str()))
+    {
+    case 0:
+        jsMainVal["textEquipmentSteps"] = "未启动";
+        break;
+
+    case 1:
+        jsMainVal["textEquipmentSteps"] = "条件检查";
+        break;
+
+    case 2:
+        jsMainVal["textEquipmentSteps"] = "启动各轴";
+        break;
+
+    case 4:
+        jsMainVal["textEquipmentSteps"] = "自动运行";
+        break;
+
+    case 5:
+        jsMainVal["textEquipmentSteps"] = "暂停";
+        break;
+
+    case 8:
+        jsMainVal["textEquipmentSteps"] = "点动运行";
+        break;
+
+    case 9:
+        jsMainVal["textEquipmentSteps"] = "点动暂停";
+        break;
+
+    default:
+        jsMainVal["textEquipmentSteps"] = "未获取到信息";
+        break;
+    }
     std::vector<uint8_t> cameraState = baumerManager_->cameraState();
     for (uint8_t i = 0; i < cameraState.size(); i++)
     {
@@ -885,21 +919,28 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
 
             // 打码复合工位=14 考虑图片接受时延+算法时延=16
             const auto remove = product_->getIndexObject(16);
-            if (!rotate->LocationResult.empty())
+            if (rotate && !rotate->LocationResult.empty())
             {
                 plcDev_->writeDevice("r", "13002", "", rotate->LocationResult);
                 plcDev_->writeDevice("n", "12993", "", std::to_string(rotate->bottleNum_));
                 rotate->issuedRotateTime = Utils::getCurrentTime(true);
                 LogInfo("product process:write plc:number={},value={}.", rotate->bottleNum_, rotate->LocationResult);
             }
-            if (!locateCheck->CheckResult.empty())
+            if (locateCheck)
             {
-                plcDev_->writeDevice("b", "13004", "0", locateCheck->CheckResult);
+                if (locateCheck->logistics1.empty())
+                {
+                    plcDev_->writeDevice("b", "13004", "0", "0");
+                }
+                else
+                {
+                    // plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
+                    plcDev_->writeDevice("b", "13004", "00", "1");
+                    plcDev_->writeDevice("n", "12994", "", std::to_string(locateCheck->bottleNum_));
+                }
                 locateCheck->issuedLocateCheckTime = Utils::getCurrentTime(true);
-                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->bottleNum_,
-                        locateCheck->CheckResult);
             }
-            if (printer->CheckResult == "1")
+            if (printer && !printer->logistics1.empty() && printer->CheckResult == "1")
             {
                 invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
                           Q_ARG(std::string, printer->logistics2));
@@ -944,7 +985,11 @@ void AppFrame::AppFrameworkImpl::whenSignaRemove()
 void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
 {
     Utils::asyncTask([this, code] {
-        product_->updateQRCode(code);
+        uint32_t number = product_->updateQRCode(code);
+        if (code == "No Read" || number == 0)
+        {
+            return;
+        }
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
     });
 }

@@ -41,13 +41,14 @@ void CircleProduct::signalComplete()
     qProduct_.pop_back();
 }
 
-void CircleProduct::updateQRCode(const std::string &code)
+uint32_t CircleProduct::updateQRCode(const std::string &code)
 {
     auto ptr = qProduct_[OffsetQRCode];
     if (ptr->bottleNum_ == 0)
-        return;
+        return 0;
     ptr->QRCode = code;
     ptr->QRCodeTime = Utils::getCurrentTime(true);
+    return ptr->bottleNum_;
 }
 
 uint32_t CircleProduct::updateLocation(const cv::Mat &mat, const std::string &path)
@@ -58,6 +59,7 @@ uint32_t CircleProduct::updateLocation(const cv::Mat &mat, const std::string &pa
     ptr->LocationImage = mat;
     ptr->LocationPath = path;
     ptr->LocationImageTime = Utils::getCurrentTime(true);
+    return ptr->bottleNum_;
 }
 
 uint32_t CircleProduct::updateCheck(const cv::Mat &mat, const std::string &path)
@@ -68,6 +70,7 @@ uint32_t CircleProduct::updateCheck(const cv::Mat &mat, const std::string &path)
     ptr->CheckImage = mat;
     ptr->CheckPath = path;
     ptr->CheckImageTime = Utils::getCurrentTime(true);
+    return ptr->bottleNum_;
 }
 
 uint32_t CircleProduct::updateOCR(const cv::Mat &mat, const std::string &path)
@@ -78,4 +81,5 @@ uint32_t CircleProduct::updateOCR(const cv::Mat &mat, const std::string &path)
     ptr->OCRImage = mat;
     ptr->OCRPath = path;
     ptr->OCRImageTime = Utils::getCurrentTime(true);
+    return ptr->bottleNum_;
 }
