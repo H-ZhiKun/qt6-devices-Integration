@@ -885,19 +885,26 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
 
             // 打码复合工位=14 考虑图片接受时延+算法时延=16
             const auto remove = product_->getIndexObject(16);
-            if (!rotate->LocationResult.empty())
+            if (rotate && !rotate->LocationResult.empty())
             {
                 plcDev_->writeDevice("r", "13002", "", rotate->LocationResult);
                 plcDev_->writeDevice("n", "12993", "", std::to_string(rotate->bottleNum_));
                 LogInfo("product process:write plc:number={},value={}.", rotate->bottleNum_, rotate->LocationResult);
             }
-            if (!locateCheck->CheckResult.empty())
+            if (locateCheck)
             {
-                plcDev_->writeDevice("b", "13004", "0", locateCheck->CheckResult);
-                LogInfo("product process:locateCheck:number={},value={}.", locateCheck->bottleNum_,
-                        locateCheck->CheckResult);
+                if (locateCheck->logistics1.empty())
+                {
+                    plcDev_->writeDevice("b", "13004", "0", "0");
+                }
+                else
+                {
+                    // plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
+                    plcDev_->writeDevice("b", "13004", "00", "1");
+                    plcDev_->writeDevice("n", "12994", "", std::to_string(locateCheck->bottleNum_));
+                }
             }
-            if (printer->CheckResult == "1")
+            if (printer && !printer->logistics1.empty() && printer->CheckResult == "1")
             {
                 invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
                           Q_ARG(std::string, printer->logistics2));
@@ -943,6 +950,10 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
 {
     Utils::asyncTask([this, code] {
         product_->updateQRCode(code);
+        if (code == "No Read")
+        {
+            return;
+        }
         invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
     });
 }

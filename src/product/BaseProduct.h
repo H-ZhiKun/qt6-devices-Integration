@@ -31,6 +31,17 @@ struct OcrRes
     uint16_t rightbottomy;
 };
 
+struct ProductData
+{
+    ProductData() = default;
+    uint32_t countAll = 0;
+    uint32_t countPass = 0;
+    uint32_t countWaste = 0;
+    uint32_t countLocateWaste = 0;
+    uint32_t countCodeWaste = 0;
+    uint32_t countPauseWaste = 0;
+};
+
 struct ProductItem
 {
     ProductItem(uint32_t num, TypeProduct type, std::string batchNum, std::string formulaName)
