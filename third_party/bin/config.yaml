@@ -85,8 +85,8 @@ baumer:
       display_window: OCR
       trigger_mode: 1
       expose: 0.8
-      gain: 1
+      gain: 5
       width: 1024
       height: 1024
-      offset_x: 0
+      offset_x: 704
       offset_y: 0
