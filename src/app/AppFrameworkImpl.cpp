@@ -575,6 +575,7 @@ void AppFrame::AppFrameworkImpl::loadConfig()
 
 void AppFrame::AppFrameworkImpl::saveConfig()
 {
+    return; // 不启用配置保存
     try
     {
         baumerManager_->saveConfig(config_);
