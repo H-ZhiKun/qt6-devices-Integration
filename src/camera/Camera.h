@@ -7,7 +7,6 @@
 #include "LockFreeQueue.h"
 #include "bgapi2_genicam/bgapi2_genicam.hpp"
 #include "json/json.h"
-#include <QImage>
 #include <functional>
 #include <mutex>
 #include <opencv2/core/core.hpp>
@@ -16,11 +15,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <yaml-cpp/yaml.h>
 
 class Camera
 {
   public:
-    explicit Camera(BGAPI2::Device *bgapi_device);
+    explicit Camera(BGAPI2::Device *bgapi_device, const YAML::Node &config);
     virtual ~Camera();
 
     bool getInitialized();
@@ -60,4 +60,5 @@ class Camera
     std::list<BGAPI2::Buffer *> streamBuffers_;
     std::unordered_map<std::string, std::string> mapCameraString_;
     Json::Value jsReadOnly_;
+    YAML::Node paramConfig_;
 };
