@@ -38,30 +38,16 @@ BaumerManager::~BaumerManager()
 
 void BaumerManager::start(const YAML::Node &launchConfig)
 {
-    for (const auto &mac : launchConfig["baumer"]["interface"])
-    {
-        std::string temp = mac.as<std::string>();
-        std::transform(temp.begin(), temp.end(), temp.begin(), [](unsigned char c) { return std::tolower(c); });
-        std::replace(temp.begin(), temp.end(), '-', ':');
-        MACAddress.push_back(temp);
-    }
-    lvParams_.resize(launchConfig["baumer"]["paramters"].size());
-    lvCameras_.resize(launchConfig["baumer"]["paramters"].size());
-    uint8_t windId = 0;
-    for (const auto &item : launchConfig["baumer"]["paramters"])
-    {
-        Json::Value jsVal;
-        jsVal["trigger_mode"] = item["trigger_mode"].as<uint16_t>();
-        jsVal["expose"] = item["expose"].as<double>();
-        jsVal["gain"] = item["gain"].as<uint16_t>();
-        jsVal["width"] = item["width"].as<uint16_t>();
-        jsVal["height"] = item["height"].as<uint16_t>();
-        jsVal["offset_x"] = item["offset_x"].as<uint16_t>();
-        jsVal["offset_y"] = item["offset_y"].as<uint16_t>();
-        jsVal["sn_number"] = item["sn_number"].as<std::string>();
-        lvParams_[windId] = std::move(jsVal);
-        ++windId;
-    }
+
+    interfaceMAC_ = launchConfig["baumer"]["interface"]["mac"].as<std::string>();
+    std::transform(interfaceMAC_.begin(), interfaceMAC_.end(), interfaceMAC_.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    std::replace(interfaceMAC_.begin(), interfaceMAC_.end(), '-', ':');
+    interfaceMask_ = launchConfig["baumer"]["interface"]["mask"].as<std::string>();
+    interfaceIp_ = launchConfig["baumer"]["interface"]["ip"].as<std::string>();
+
+    nodeParams_ = launchConfig["baumer"]["camera"];
+    lvCameras_.resize(launchConfig["baumer"]["camera"].size());
     initializeBGAPI();
     searchCamera();
 }
@@ -69,48 +55,42 @@ void BaumerManager::start(const YAML::Node &launchConfig)
 void BaumerManager::searchCamera()
 {
     thSearch_ = std::thread([this] {
-        while (bSearch_.load(std::memory_order_acquire))
+        while (bHold_.load(std::memory_order_acquire))
         {
-            bool bNeed = false;
-            for (auto camera : lvCameras_)
+            try
             {
-                if (camera == nullptr)
+                BGAPI2::InterfaceList *interface_list = pSystem_->GetInterfaces();
+                interface_list->Refresh(100);
+                for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin();
+                     ifc_iter != interface_list->end(); ifc_iter++)
                 {
-                    bNeed = true;
-                }
-            }
-            if (bNeed)
-            {
-                try
-                {
-                    BGAPI2::InterfaceList *interface_list = pSystem_->GetInterfaces();
-                    interface_list->Refresh(100);
-                    for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin();
-                         ifc_iter != interface_list->end(); ifc_iter++)
+                    if (ifc_iter->second->IsOpen())
                     {
-                        if (ifc_iter->second->IsOpen())
+                        BGAPI2::DeviceList *device_list = ifc_iter->second->GetDevices();
+                        device_list->Refresh(100);
+                        for (BGAPI2::DeviceList::iterator device_iter = device_list->begin();
+                             device_iter != device_list->end(); device_iter++)
                         {
-                            BGAPI2::DeviceList *device_list = ifc_iter->second->GetDevices();
-                            device_list->Refresh(100);
-                            for (BGAPI2::DeviceList::iterator device_iter = device_list->begin();
-                                 device_iter != device_list->end(); device_iter++)
+                            BGAPI2::NodeMap *pDeviceNodeMap = device_iter->second->GetNodeList();
+                            std::string number = device_iter->second->GetSerialNumber().get();
+                            if (forceIP(number, pDeviceNodeMap))
                             {
-                                std::string number = device_iter->second->GetSerialNumber().get();
-                                std::string status = device_iter->second->GetAccessStatus().get();
-                                if (status == "RW" && !device_iter->second->IsOpen())
-                                {
-                                    addCamera(number, device_iter->second);
-                                }
+                                continue;
+                            }
+                            std::string status = device_iter->second->GetAccessStatus().get();
+                            if (status == "RW" && !device_iter->second->IsOpen())
+                            {
+                                addCamera(number, device_iter->second);
                             }
                         }
                     }
                 }
-                catch (BGAPI2::Exceptions::IException &ex)
-                {
-                    LogError("Error Type: {}", ex.GetType().get());
-                    LogError("Error function: {}", ex.GetFunctionName().get());
-                    LogError("Error description: {}", ex.GetErrorDescription().get());
-                }
+            }
+            catch (BGAPI2::Exceptions::IException &ex)
+            {
+                LogError("Error Type: {}", ex.GetType().get());
+                LogError("Error function: {}", ex.GetFunctionName().get());
+                LogError("Error description: {}", ex.GetErrorDescription().get());
             }
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
@@ -119,7 +99,7 @@ void BaumerManager::searchCamera()
 
 void BaumerManager::stop()
 {
-    bSearch_.store(false, std::memory_order_release);
+    bHold_.store(false, std::memory_order_release);
     thSearch_.join();
     if (lvCameras_.size() > 0)
     {
@@ -171,20 +151,26 @@ void BaumerManager::initializeBGAPI()
                 std::string mac = ifc_iter->second->GetNode("GevInterfaceMACAddress")->GetValue().get();
                 std::string mask = ifc_iter->second->GetNode("GevInterfaceSubnetMask")->GetValue().get();
                 // 为相机对应数据流注册掉线触发事件
-                auto finder = std::find(MACAddress.begin(), MACAddress.end(), mac);
-                if (finder == MACAddress.end())
+                if (mac != interfaceMAC_)
                 {
-                    LogInfo("interface not matched: ");
-                    LogInfo("ignore ip: {}", ip);
-                    LogInfo("ignore MAC: {}", mac);
+                    LogInfo("ignore {}, interface mac not matched.", mac);
+                    ifc_iter->second->Close();
+                    continue;
+                }
+                else if (ip != interfaceIp_)
+                {
+                    LogInfo("ignore ip {}, interface ip not matched.", ip);
                     ifc_iter->second->Close();
                     continue;
                 }
                 ifc_iter->second->RegisterPnPEvent(BGAPI2::Events::EVENTMODE_EVENT_HANDLER);
                 ifc_iter->second->RegisterPnPEventHandler(this, (Events::PnPEventHandler)&PnPEventHandler);
+                u32InterfaceIp_ = ifc_iter->second->GetNode("GevInterfaceSubnetIPAddress")->GetInt();
+                u32InterfaceMask_ = ifc_iter->second->GetNode("GevInterfaceSubnetMask")->GetInt();
                 LogInfo("interface founded: ");
                 LogInfo("founded ip: {}", ip);
                 LogInfo("founded MAC: {}", mac);
+                LogInfo("founded mask: {}", mask);
             }
         }
     }
@@ -229,12 +215,12 @@ bool BaumerManager::addCamera(const std::string &snNumber, BGAPI2::Device *dev)
 {
     bool ret = false;
     uint8_t index = 0;
-    for (; index < lvParams_.size(); index++)
+    for (; index < nodeParams_.size(); index++)
     {
-        if (lvParams_[index]["sn_number"].asString() == snNumber)
+        if (nodeParams_[index]["sn_number"].as<std::string>() == snNumber)
         {
             std::lock_guard lock(mtxCamera_);
-            Camera *camera_obj = new Camera(dev);
+            Camera *camera_obj = new Camera(dev, nodeParams_[index]);
             if (!camera_obj->getInitialized())
             {
                 delete camera_obj;
@@ -242,24 +228,56 @@ bool BaumerManager::addCamera(const std::string &snNumber, BGAPI2::Device *dev)
                 return false;
             }
             lvCameras_[index] = camera_obj;
-            LogInfo("sn number {}, add success.", snNumber);
+            BGAPI2::NodeMap *node = dev->GetNodeList();
+            LogInfo("sn={},ip={}, add success.", snNumber, node->GetNode("GevDeviceIPAddress")->GetValue().get());
             ret = true;
             break;
         }
     }
-    if (ret)
+    return ret;
+}
+
+bool BaumerManager::forceIP(const std::string &snNumber, BGAPI2::NodeMap *nodeMap)
+{
+    bool ret = false;
+    uint8_t index = 0;
+    for (; index < nodeParams_.size(); index++)
     {
-        std::string des;
-        setCamera(index, lvParams_[index], des);
+        if (nodeParams_[index]["sn_number"].as<std::string>() == snNumber)
+        {
+            try
+            {
+                std::string subnetIp = nodeMap->GetNode("GevDeviceIPAddress")->GetValue().get();
+                std::string subnetMask = nodeMap->GetNode("GevDeviceSubnetMask")->GetValue().get();
+                std::string ip = nodeParams_[index]["ip"].as<std::string>();
+                std::string mask = nodeParams_[index]["mask"].as<std::string>();
+                if (ip != subnetIp || mask != subnetMask)
+                {
+                    bo_int64 iDeviceMacAddress = nodeMap->GetNode("GevDeviceMACAddress")->GetInt();
+                    nodeMap->GetNode("MACAddressNeededToForce")->SetInt(iDeviceMacAddress);
+                    nodeMap->GetNode("ForcedIPAddress")->SetValue(ip.c_str());
+                    nodeMap->GetNode("ForcedSubnetMask")->SetValue(mask.c_str());
+                    nodeMap->GetNode("ForcedGateway")->SetInt(u32InterfaceMask_ & u32InterfaceIp_);
+                    nodeMap->GetNode("ForceIP")->Execute();
+                    ret = true;
+                }
+            }
+            catch (BGAPI2::Exceptions::IException &ex)
+            {
+                std::cout << "ExceptionType:    " << ex.GetType() << std::endl;
+                std::cout << "ErrorDescription: " << ex.GetErrorDescription() << std::endl;
+                std::cout << "in function:      " << ex.GetFunctionName() << std::endl;
+            }
+        }
     }
     return ret;
 }
 
 void BaumerManager::removeCamera(const std::string &snNumber)
 {
-    for (uint8_t index = 0; index < lvParams_.size(); index++)
+    for (uint8_t index = 0; index < nodeParams_.size(); index++)
     {
-        if (lvParams_[index]["sn_number"].asString() == snNumber)
+        if (nodeParams_[index]["sn_number"].as<std::string>() == snNumber)
         {
             std::lock_guard lock(mtxCamera_);
             delete lvCameras_[index];
@@ -271,19 +289,19 @@ void BaumerManager::removeCamera(const std::string &snNumber)
 
 void BaumerManager::saveConfig(YAML::Node &launchConfig)
 {
-    for (uint8_t index = 0; index < lvParams_.size(); index++)
-    {
-        auto curItem = launchConfig["baumer"]["paramters"][index];
-        const auto &params = lvParams_[index];
-        curItem["trigger_mode"] = params["trigger_mode"].asUInt();
-        curItem["expose"] = params["expose"].asDouble();
-        curItem["gain"] = params["gain"].asUInt();
-        curItem["width"] = params["width"].asUInt();
-        curItem["height"] = params["height"].asUInt();
-        curItem["offset_x"] = params["offset_x"].asUInt();
-        curItem["offset_y"] = params["offset_y"].asUInt();
-        launchConfig["baumer"]["paramters"][index] = curItem;
-    }
+    // for (uint8_t index = 0; index < lvParams_.size(); index++)
+    // {
+    //     auto curItem = launchConfig["baumer"]["paramters"][index];
+    //     const auto &params = lvParams_[index];
+    //     curItem["trigger_mode"] = params["trigger_mode"].asUInt();
+    //     curItem["expose"] = params["expose"].asDouble();
+    //     curItem["gain"] = params["gain"].asUInt();
+    //     curItem["width"] = params["width"].asUInt();
+    //     curItem["height"] = params["height"].asUInt();
+    //     curItem["offset_x"] = params["offset_x"].asUInt();
+    //     curItem["offset_y"] = params["offset_y"].asUInt();
+    //     launchConfig["baumer"]["paramters"][index] = curItem;
+    // }
 }
 
 std::vector<uint8_t> BaumerManager::cameraState()
@@ -322,13 +340,11 @@ bool BaumerManager::setCamera(uint8_t number, const Json::Value &param, std::str
         if (key == "expose")
         {
             double temp = Utils::anyFromString<double>(strValue);
-            lvParams_[number][key] = temp;
             value = temp * 1000.0;
         }
         else
         {
             value = Utils::anyFromString<uint64_t>(strValue);
-            lvParams_[number][key] = value;
         }
         if (!pCamera->setParams(key, value))
         {
@@ -343,23 +359,23 @@ bool BaumerManager::setCamera(uint8_t number, const Json::Value &param, std::str
 
 Json::Value BaumerManager::getCamera(uint8_t number)
 {
-    Json::Value ret = lvParams_[number];
-    Json::Value temp;
-    if (number < lvCameras_.size())
-    {
-        std::lock_guard lock(mtxCamera_);
-        if (lvCameras_[number])
-        {
-            temp = lvCameras_[number]->getROParams();
-        }
-        else
-        {
-            return {};
-        }
-    }
-    for (const auto &key : temp.getMemberNames())
-    {
-        ret[key] = temp[key];
-    }
-    return ret;
+    // Json::Value ret = lvParams_[number];
+    // Json::Value temp;
+    // if (number < lvCameras_.size())
+    // {
+    //     std::lock_guard lock(mtxCamera_);
+    //     if (lvCameras_[number])
+    //     {
+    //         temp = lvCameras_[number]->getROParams();
+    //     }
+    //     else
+    //     {
+    //         return {};
+    //     }
+    // }
+    // for (const auto &key : temp.getMemberNames())
+    // {
+    //     ret[key] = temp[key];
+    // }
+    return {};
 }

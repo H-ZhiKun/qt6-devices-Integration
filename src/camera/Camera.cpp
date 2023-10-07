@@ -40,7 +40,7 @@ void BGAPI2CALL BufferHandler(void *callBackOwner, BGAPI2::Buffer *pBufferFilled
     }
 }
 
-Camera::Camera(BGAPI2::Device *bgapi_device) : cameraPtr_(bgapi_device)
+Camera::Camera(BGAPI2::Device *bgapi_device, const YAML::Node &config) : cameraPtr_(bgapi_device), paramConfig_(config)
 {
     mapCameraString_["trigger_mode"] = SFNC_TRIGGERMODE;
     mapCameraString_["expose"] = SFNC_EXPOSURETIME;
@@ -65,11 +65,11 @@ void Camera::initialize()
     if (openDevice())
     {
         bOpen_ = true;
+        initParams();
         if (addBuffersToStream())
         {
             startCollect();
         }
-        initParams();
     }
 }
 
@@ -394,15 +394,60 @@ cv::Mat Camera::mono10ToMat(unsigned char *buffer, uint64_t width, uint64_t heig
 
 void Camera::initParams()
 {
-    writeParam(SFNC_EXPOSUREAUTO, 0);
-    writeParam(SFNC_GAINAUTO, 0);
-
+    // writeParam(SFNC_EXPOSUREAUTO, 0);
+    // writeParam(SFNC_GAINAUTO, 0);
+    // mapCameraString_["trigger_mode"] = SFNC_TRIGGERMODE;
+    // mapCameraString_["expose"] = SFNC_EXPOSURETIME;
+    // mapCameraString_["gain"] = SFNC_GAIN;
+    // mapCameraString_["width"] = SFNC_WIDTH;
+    // mapCameraString_["height"] = SFNC_HEIGHT;
+    // mapCameraString_["offset_x"] = SFNC_OFFSETX;
+    // mapCameraString_["offset_y"] = SFNC_OFFSETY;
     //  jsReadOnly_["fps"] = cameraPtr_->GetRemoteNode(SFNC_ACQUISITION_FRAMERATE)->GetInt();
-    jsReadOnly_["max_width"] = cameraPtr_->GetRemoteNode(SFNC_WIDTHMAX)->GetInt();
-    jsReadOnly_["max_height"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHTMAX)->GetInt();
-    jsReadOnly_["width_increment"] = cameraPtr_->GetRemoteNode(SFNC_WIDTH)->GetIntInc();
-    jsReadOnly_["height_increment"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHT)->GetIntInc();
-    jsReadOnly_["offsetx_increment"] = cameraPtr_->GetRemoteNode(SFNC_OFFSETX)->GetIntInc();
-    jsReadOnly_["offsety_increment"] = cameraPtr_->GetRemoteNode(SFNC_OFFSETY)->GetIntInc();
-    qDebug() << jsReadOnly_.toStyledString();
+    // jsReadOnly_["max_width"] = cameraPtr_->GetRemoteNode(SFNC_WIDTHMAX)->GetInt();
+    // jsReadOnly_["max_height"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHTMAX)->GetInt();
+    // jsReadOnly_["width_increment"] = cameraPtr_->GetRemoteNode(SFNC_WIDTH)->GetIntInc();
+    // jsReadOnly_["height_increment"] = cameraPtr_->GetRemoteNode(SFNC_HEIGHT)->GetIntInc();
+    // jsReadOnly_["offsetx_increment"] = cameraPtr_->GetRemoteNode(SFNC_OFFSETX)->GetIntInc();
+    // jsReadOnly_["offsety_increment"] = cameraPtr_->GetRemoteNode(SFNC_OFFSETY)->GetIntInc();
+    // qDebug() << jsReadOnly_.toStyledString();
+    try
+    {
+        double expose = paramConfig_["expose"].as<double>() * 1000.0;
+        int gain = paramConfig_["gain"].as<int>();
+        int width = paramConfig_["width"].as<int>();
+        int height = paramConfig_["height"].as<int>();
+        int offset_x = paramConfig_["offset_x"].as<int>();
+        int offset_y = paramConfig_["offset_y"].as<int>();
+        cameraPtr_->GetRemoteNode(SFNC_EXPOSUREAUTO)->SetString("Off");
+        cameraPtr_->GetRemoteNode(SFNC_GAINAUTO)->SetString("Off");
+        cameraPtr_->GetRemoteNode(SFNC_TRIGGERMODE)->SetString("On");
+        cameraPtr_->GetRemoteNode(SFNC_EXPOSURETIME)->SetDouble(expose);
+        cameraPtr_->GetRemoteNode(SFNC_GAIN)->SetInt(gain);
+        cameraPtr_->GetRemoteNode(SFNC_WIDTH)->SetInt(width);
+        cameraPtr_->GetRemoteNode(SFNC_HEIGHT)->SetInt(height);
+        cameraPtr_->GetRemoteNode(SFNC_OFFSETX)->SetInt(offset_x);
+        cameraPtr_->GetRemoteNode(SFNC_OFFSETY)->SetInt(offset_y);
+        LogInfo("camera set params:\
+                sn={}, \
+                ip={}, \
+                expose={}, \
+                gain={}, \
+                width={}, \
+                height={}, \
+                offset_x={}, \
+                offset_y={}.",
+                paramConfig_["sn_number"].as<std::string>(), paramConfig_["ip"].as<std::string>(), expose, gain, width,
+                height, offset_x, offset_y);
+    }
+    catch (BGAPI2::Exceptions::IException &ex)
+    {
+        LogInfo("camera set params error:\
+                sn={}, \
+                ip={}.",
+                paramConfig_["sn_number"].as<std::string>(), paramConfig_["ip"].as<std::string>());
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
+    }
 }

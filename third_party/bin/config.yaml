@@ -72,18 +72,20 @@ permission:
   host: 192.168.123.100
   port: 2000
 baumer:
-  # interface: The MAC address of the NIC example: CC-82-7F-3A-FA-37
-  interface: [CC-82-7F-3A-FA-37]
-  # display_window: Location;LocateCheck;OCR; only this value
-  # trigger_mode: software = 0;hardware=1;
-  # expose: expose time unit millisecond
-  # gain: range 0 ~ 100
-  # width: capture image width px
-  # height: capture image height px700009842711
-  paramters:
-    - sn_number: 700009202538
+  interface: 
+    mac: B4-45-06-BB-90-0B
+    ip: 192.168.60.60
+    mask: 255.255.255.0
+  camera:
+    # display_window: Location;LocateCheck;OCR; only this value
+    # expose: float, expose time unit millisecond
+    # gain: int, range 0 ~ 100
+    # width: int, capture image width px
+    # height: int, capture image height px
+    - sn_number: 700009429365
+      ip: 192.168.60.61
+      mask: 255.255.255.0
       display_window: OCR
-      trigger_mode: 1
       expose: 0.8
       gain: 5
       width: 1024
