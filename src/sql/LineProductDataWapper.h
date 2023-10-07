@@ -8,12 +8,12 @@
 #include <memory>
 #include <string>
 
-class ProductDataWapper
+class LineProductDataWapper
 {
 #define TABLE_PRODUCT_DATA "product_data"
   public:
-    ProductDataWapper() = default;
-    ~ProductDataWapper() = default;
+    LineProductDataWapper() = default;
+    ~LineProductDataWapper() = default;
     static bool insert(std::shared_ptr<ProductItem> ptr)
     {
         QVariantMap mapData;
@@ -25,13 +25,9 @@ class ProductDataWapper
         mapData["qrcode_result"] = ptr->QRCode.c_str();
         mapData["logistics_true_value_1"] = ptr->logistics1.c_str();
         mapData["logistics_true_value_2"] = ptr->logistics2.c_str();
-        mapData["location_image_path"] = ptr->LocationPath.c_str();
-        mapData["check_image_path"] = ptr->CheckPath.c_str();
         mapData["ocr_image_path"] = ptr->OCRPath.c_str();
-        mapData["location_result"] = ptr->LocationResult.c_str();
-        mapData["check_result"] = ptr->CheckResult.c_str();
         mapData["ocr_result"] = ptr->OCRResult.c_str();
-        bool res = PgsqlHelper::getSqlHelper().insertData("product_data", mapData);
+        bool res = PgsqlHelper::getSqlHelper().insertData("line_product_data", mapData);
         return res;
     }
 };

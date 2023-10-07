@@ -8,12 +8,12 @@
 #include <memory>
 #include <string>
 
-class ProductTimeWapper
+class LineProductTimeWapper
 {
 #define TABLE_PRODUCT_TIME "product_time"
   public:
-    ProductTimeWapper() = default;
-    ~ProductTimeWapper() = default;
+    LineProductTimeWapper() = default;
+    ~LineProductTimeWapper() = default;
     static bool insert(std::shared_ptr<ProductItem> ptr)
     {
         QVariantMap mapData;
@@ -26,20 +26,12 @@ class ProductTimeWapper
         mapData.insert("qrcode_time", ptr->QRCodeTime.c_str());
         mapData.insert("logistics_ret_time", ptr->logisticsTime.c_str());
 
-        mapData.insert("location_signal_time", ptr->LocationSigTime.c_str());
-        mapData.insert("location_image_time", ptr->LocationImageTime.c_str());
-        mapData.insert("location_result_time", ptr->LocationResultTime.c_str());
-
-        mapData.insert("check_signal_time", ptr->CheckSigTime.c_str());
-        mapData.insert("check_image_time", ptr->CheckImageTime.c_str());
-        mapData.insert("check_result_time", ptr->CheckResultTime.c_str());
-
         mapData.insert("coding_signal_time", ptr->codingSigTime.c_str());
         mapData.insert("ocr_signal_time", ptr->OCRSigTime.c_str());
         mapData.insert("ocr_image_time", ptr->OCRImageTime.c_str());
         mapData.insert("ocr_result_time", ptr->OCRResultTime.c_str());
         mapData.insert("complete_signal_time", ptr->completeSigTime.c_str());
-        bool res = PgsqlHelper::getSqlHelper().insertData("product_time", mapData);
+        bool res = PgsqlHelper::getSqlHelper().insertData("line_product_time", mapData);
         return res;
     }
 };

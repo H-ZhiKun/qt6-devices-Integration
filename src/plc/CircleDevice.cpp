@@ -7,6 +7,10 @@ CircleDevice::CircleDevice(QObject *parent) : BasePLCDevice(parent)
     devType = DeviceType::CircleDevice;
 }
 
+CircleDevice::~CircleDevice()
+{
+}
+
 void CircleDevice::parsingReadInfo(const uint16_t *readInfo, uint16_t size)
 {
     std::map<std::string, std::string> mapRealAlertInfo;

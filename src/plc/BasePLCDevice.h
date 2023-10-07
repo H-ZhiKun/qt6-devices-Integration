@@ -16,7 +16,7 @@ class BasePLCDevice : public QObject
     Q_OBJECT
   public:
     explicit BasePLCDevice(QObject *parent = nullptr);
-    ~BasePLCDevice();
+    virtual ~BasePLCDevice();
     void init(const YAML::Node &config);
     std::string readDevice(const std::string &type, const std::string &addr, const std::string &bit = "");
     bool writeDevice(const std::string &type, const std::string &addr, const std::string &bit = "",
@@ -41,7 +41,7 @@ class BasePLCDevice : public QObject
     virtual void parsingRealtimeInfo(const uint16_t *alertGroup, uint16_t size) = 0;
 
     std::atomic_bool updateHolder_{true};
-    std::thread thUpdate_;
+    std::thread *thUpdate_;
     ModbusClient *client_ = nullptr;
     uint16_t readBeginAddress_ = 0;
     uint16_t readCacheSize_ = 0;
