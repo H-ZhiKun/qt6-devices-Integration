@@ -96,6 +96,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
 
         sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ");";
         query.prepare(sqlQuery);
+        qDebug() << "sql: " << sqlQuery;
         for (const QString &key : keys)
         {
             query.addBindValue(data[key]);

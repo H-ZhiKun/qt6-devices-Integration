@@ -97,7 +97,7 @@ GroupBox {
                     display: "id"
                 }
                 TableModelColumn {
-                    display: "name"
+                    display: "username"
                 }
                 TableModelColumn {
                     display: "option"
@@ -302,7 +302,7 @@ GroupBox {
             var jsonData = JSON.parse(value);
             userTableModel.appendRow({
                     "id": jsonData.id,
-                    "name": jsonData.name,
+                    "username": jsonData.username,
                     "option": true
                 });
         }

@@ -41,7 +41,7 @@ Rectangle {
         TabButton {
             id: cameraBtn
             text: qsTr("         相        机")
-            height: 71
+            height: 91
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
@@ -89,7 +89,7 @@ Rectangle {
         TabButton {
             id: produceDataBtn
             text: qsTr("         生产数据")
-            height: 71
+            height: 91
             font.pointSize: 14
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter
@@ -137,7 +137,7 @@ Rectangle {
         TabButton {
             id: alarmBtn
             text: qsTr("         报警显示")
-            height: 71
+            height: 91
             font.pointSize: 14
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter
@@ -199,7 +199,7 @@ Rectangle {
         TabButton {
             id: valveBtn
             text: qsTr("         阀        门")
-            height: 71
+            height: 91
             font.pointSize: 14
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter
@@ -254,7 +254,7 @@ Rectangle {
         TabButton {
             id: powerBtn
             text: qsTr("         电        机")
-            height: 71
+            height: 91
             font.pointSize: 14
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter
@@ -309,7 +309,7 @@ Rectangle {
         TabButton {
             id: manageBtn
             text: qsTr("         用户管理")
-            height: 71
+            height: 91
             font.pointSize: 14
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter
@@ -357,7 +357,7 @@ Rectangle {
         TabButton {
             id: operateBtn
             text: qsTr("         操作日志")
-            height: 71
+            height: 91
             font.pointSize: 14
             width: master.width / 8
             anchors.horizontalCenter: parent.horizontalCenter

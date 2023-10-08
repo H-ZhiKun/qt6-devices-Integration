@@ -25,7 +25,15 @@ CREATE TABLE IF NOT EXISTS users (
   id serial PRIMARY KEY,
   username varchar(10) NOT NULL UNIQUE,
   password varchar(64) NOT NULL,
-  permissions jsonb,
+  camera_permission boolean,
+  data_permission boolean,
+  alarm_permission boolean,
+  formula_permission boolean,
+  sensor_permission boolean,
+  valve_permission boolean,
+  power_permission boolean,
+  log_permission boolean,
+  user_manage_permission boolean,
   created_time timestamp DEFAULT CURRENT_TIMESTAMP,
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
