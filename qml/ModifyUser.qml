@@ -9,7 +9,7 @@ Window {
     modality: Qt.WindowModal
     color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     title: "权限设置"
-    GroupBox{
+    GroupBox {
         title: "权限设置: " + userName
         anchors.fill: parent
         anchors.margins: 30
@@ -79,17 +79,17 @@ Window {
             y: 90
             text: qsTr("全选")
             onCheckedChanged: {
-                cameraCheckBox.checked = true
-                if(checked){
-                    sensorCheckBox.checked = true
-                    valveCheckBox.checked = true
-                    powerCheckBox.checked = true
-                    logCheckBox.checked = true
-                }else{
-                    sensorCheckBox.checked = false
-                    valveCheckBox.checked = false
-                    powerCheckBox.checked = false
-                    logCheckBox.checked = false
+                cameraCheckBox.checked = true;
+                if (checked) {
+                    sensorCheckBox.checked = true;
+                    valveCheckBox.checked = true;
+                    powerCheckBox.checked = true;
+                    logCheckBox.checked = true;
+                } else {
+                    sensorCheckBox.checked = false;
+                    valveCheckBox.checked = false;
+                    powerCheckBox.checked = false;
+                    logCheckBox.checked = false;
                 }
             }
         }
@@ -103,18 +103,25 @@ Window {
         text: qsTr("确定")
         onClicked: {
             // 连接数据库，更新数据
-            var json = {"name": userName, "camera_permission": cameraCheckBox.checked ? 1 : 0, "data_permission": dataCheckBox.checked ? 1 : 0,
-            "alarm_permission": alarmCheckBox.checked ? 1 : 0, "formula_permission": formulaCheckBox.checked ? 1 : 0,
-            "sensor_permission": sensorCheckBox.checked ? 1 : 0, "valve_permission": valveCheckBox.checked ? 1 : 0,
-            "power_permission": powerCheckBox.checked ? 1 : 0, "log_permission": logCheckBox.checked ? 1 : 0,
-            "user_manage_permission": 0}
+            var json = {
+                "name": userName,
+                "camera_permission": cameraCheckBox.checked ? 1 : 0,
+                "data_permission": dataCheckBox.checked ? 1 : 0,
+                "alarm_permission": alarmCheckBox.checked ? 1 : 0,
+                "formula_permission": formulaCheckBox.checked ? 1 : 0,
+                "sensor_permission": sensorCheckBox.checked ? 1 : 0,
+                "valve_permission": valveCheckBox.checked ? 1 : 0,
+                "power_permission": powerCheckBox.checked ? 1 : 0,
+                "log_permission": logCheckBox.checked ? 1 : 0,
+                "user_manage_permission": 0
+            };
             var strSend = JSON.stringify(json);
             var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ModifyUser, strSend);
             var result = JSON.parse(jsRet);
-            if(result.ok){
-                close()
-            }else{
-                okLabel.text = "修改失败！"
+            if (result.ok) {
+                close();
+            } else {
+                okLabel.text = "修改失败！";
             }
         }
     }
@@ -126,24 +133,26 @@ Window {
         width: 80
         text: qsTr("取消")
         onClicked: {
-            close()
+            close();
         }
     }
 
     Component.onCompleted: {
-        var json = {"name": userName}
+        var json = {
+            "name": userName
+        };
         var strSend = JSON.stringify(json);
         var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.SelectUser, strSend);
         var result = JSON.parse(jsRet);
         if (result.ok === true) {
-            cameraCheckBox.checked = result.details.camera_permission === "1" ? true : false;
-            dataCheckBox.checked = result.details.data_permission === "1" ? true : false;
-            alarmCheckBox.checked = result.details.alarm_permission === "1" ? true : false;
-            formulaCheckBox.checked = result.details.formula_permission === "1" ? true : false;
-            sensorCheckBox.checked = result.details.sensor_permission === "1" ? true : false;
-            valveCheckBox.checked = result.details.valve_permission === "1" ? true : false;
-            powerCheckBox.checked = result.details.power_permission === "1" ? true : false;
-            logCheckBox.checked = result.details.log_permission === "1" ? true : false;
+            cameraCheckBox.checked = result.details.camera_permission === "true" ? true : false;
+            dataCheckBox.checked = result.details.data_permission === "true" ? true : false;
+            alarmCheckBox.checked = result.details.alarm_permission === "true" ? true : false;
+            formulaCheckBox.checked = result.details.formula_permission === "true" ? true : false;
+            sensorCheckBox.checked = result.details.sensor_permission === "true" ? true : false;
+            valveCheckBox.checked = result.details.valve_permission === "true" ? true : false;
+            powerCheckBox.checked = result.details.power_permission === "true" ? true : false;
+            logCheckBox.checked = result.details.log_permission === "true" ? true : false;
         }
     }
 }

@@ -42,6 +42,11 @@ ListView {
         width: singleWidth
 
         // background: Qt.rgba(245/255,248/255,245/255,1)
+        background: {
+            Rectangle: {
+                radius: 10;
+            }
+        }
 
         Rectangle {
             id: sensorRec
