@@ -97,7 +97,7 @@ GroupBox {
                     display: "id"
                 }
                 TableModelColumn {
-                    display: "name"
+                    display: "username"
                 }
                 TableModelColumn {
                     display: "option"
@@ -176,7 +176,7 @@ GroupBox {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).name;
+                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).username;
                                     var component = Qt.createComponent("ModifyUserInfo.qml");
                                     var window = component.createObject(userPageWin);
                                     window.show();
@@ -207,7 +207,7 @@ GroupBox {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).name;
+                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).username;
                                     var component = Qt.createComponent("ModifyUser.qml");
                                     var window = component.createObject(userPageWin);
                                     window.show();
@@ -302,7 +302,7 @@ GroupBox {
             var jsonData = JSON.parse(value);
             userTableModel.appendRow({
                     "id": jsonData.id,
-                    "name": jsonData.name,
+                    "username": jsonData.username,
                     "option": true
                 });
         }

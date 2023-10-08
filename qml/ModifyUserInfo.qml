@@ -30,20 +30,22 @@ Window {
         width: 80
         text: qsTr("确定")
         onClicked: {
-            if(accountPassword.text === ""){
-                passwordLabel.text = "密码不得为空！"
-            }else{
-                var json = {"name": userName, "password": accountPassword.text}
-                var strSend = JSON.stringify(json)
+            if (accountPassword.text === "") {
+                passwordLabel.text = "密码不得为空！";
+            } else {
+                var json = {
+                    "name": userName,
+                    "password": accountPassword.text
+                };
+                var strSend = JSON.stringify(json);
                 var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ModifyUser, strSend);
                 var result = JSON.parse(jsRet);
-                if(result.ok){
-                    close()
-                }else{
-                    okLabel.text = "修改密码失败！"
+                if (result.ok) {
+                    close();
+                } else {
+                    okLabel.text = "修改密码失败！";
                 }
             }
-
         }
     }
 
@@ -54,7 +56,7 @@ Window {
         width: 80
         text: qsTr("取消")
         onClicked: {
-            close()
+            close();
         }
     }
 
@@ -75,7 +77,7 @@ Window {
         placeholderText: qsTr("请输入新的密码")
         echoMode: TextInput.Password
         onTextEdited: {
-            passwordLabel.text = ""
+            passwordLabel.text = "";
         }
     }
 

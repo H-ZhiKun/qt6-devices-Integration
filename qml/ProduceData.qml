@@ -698,9 +698,7 @@ GroupBox {
         running: false //是否开启定时，默认是false，当为true的时候，进入此界面就开始定时
         triggeredOnStart: false // 是否开启定时就触发onTriggered，一些特殊用户可以用来设置初始值。
         onTriggered: {
-            console.log("in produce timer1");
             refreshProduce();
-            console.log("in produce timer2");
         }
     }
 
