@@ -45,6 +45,7 @@ class FormulaWapper
 
     static bool modifyFormula(const QString &jsonString)
     {
+        QVariantMap mapData;
         Json::Value updateData = Utils::stringToJson(jsonString.toStdString());
         // updateData["code_x_position"] = jsonres["code_x_position"];
         // updateData["code_y_position"] = jsonres["code_y_position"];
@@ -54,7 +55,15 @@ class FormulaWapper
         // updateData["deceleration_produce"] = jsonres["deceleration_produce"];
         std::string selectStr = fmt::format("name = '{}'", updateData["name"].asString().c_str());
         updateData.removeMember("name");
-        if (PgsqlHelper::getSqlHelper().updateData("formula_data", std::move(updateData), std::move(selectStr)))
+        for (auto iter = updateData.begin(); iter != updateData.end(); iter++)
+        {
+            if (iter.name() == "name")
+            {
+                continue;
+            }
+            mapData[iter.name().c_str()] = iter->asCString();
+        }
+        if (PgsqlHelper::getSqlHelper().updateData("formula_data", mapData, std::move(selectStr)))
         {
             qDebug() << "Data updated successfully";
             return true;

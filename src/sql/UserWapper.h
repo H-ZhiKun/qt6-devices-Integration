@@ -56,15 +56,15 @@ class UserWapper
 
     static bool modifyUser(const QString &jsonString)
     {
+        QVariantMap mapData;
         Json::Value updateData = Utils::stringToJson(jsonString.toStdString());
         if (updateData.isMember("password"))
         {
             std::string password = Utils::encrytByAES(updateData["password"].asString());
-            updateData["password"] = password;
+            mapData["password"] = password.c_str();
         }
         std::string selectStr = fmt::format("name = '{}'", updateData["name"].asString().c_str());
-        updateData.removeMember("name");
-        if (PgsqlHelper::getSqlHelper().updateData(TABLE_USER_NAME, std::move(updateData), std::move(selectStr)))
+        if (PgsqlHelper::getSqlHelper().updateData(TABLE_USER_NAME, mapData, std::move(selectStr)))
         {
             return true;
         }

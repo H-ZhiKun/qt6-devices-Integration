@@ -171,16 +171,9 @@ class PgsqlHelper : public AppFrame::NonCopyable
         return ret;
     }
 
-    bool updateData(const std::string &tableName, Json::Value &&jsValue, const std::string &&condition)
+    bool updateData(const std::string &tableName, const QVariantMap &data, const std::string &&condition)
     {
         bool ret = true;
-
-        if (jsValue.isNull())
-        {
-            // 如果 jsValue 是空，无需处理
-            return false;
-        }
-
         QSqlDatabase *connect = pool_->getConnection();
         if (connect == nullptr)
         {
@@ -188,32 +181,32 @@ class PgsqlHelper : public AppFrame::NonCopyable
         }
 
         QSqlQuery query(*connect);
-        QVariantList params;
+        QStringList keys;
 
         // 构建更新数据的SQL语句
-        QString sql = "UPDATE " + QString::fromStdString(tableName) + " SET ";
-        for (auto it = jsValue.begin(); it != jsValue.end(); ++it)
+        QString sqlQuery = "UPDATE " + QString::fromStdString(tableName) + " SET ";
+        for (const QString &key : data.keys())
         {
-            sql += QString::fromStdString(it.key().asString()) + " = ?, ";
-            QVariant curVal;
-            if (it->isBool())
-                curVal = it->asBool();
-            if (it->isInt())
-                curVal = it->asInt();
-            if (it->isDouble())
-                curVal = it->asFloat();
-            if (it->isString())
-                curVal = it->asCString();
-
-            params << curVal;
+            if (data[key].isNull() || !data[key].isValid() || data[key] == "")
+            {
+                continue; // 跳过空值字段
+            }
+            keys << key;
         }
 
-        sql.chop(2); // 去除最后的逗号和空格
-        sql += QString(" WHERE ") + condition.c_str();
-        query.prepare(sql);
-        for (int i = 0; i < params.size(); ++i)
+        if (keys.isEmpty())
         {
-            query.addBindValue(params[i].toString());
+            // 所有字段都为空值，不执行插入操作
+            pool_->releaseConnection(connect);
+            return true;
+        }
+        sqlQuery += keys.join(" = ?, ");
+        sqlQuery.chop(2); // 去除最后的逗号和空格
+        sqlQuery += QString(" WHERE ") + condition.c_str();
+        query.prepare(sqlQuery);
+        for (const QString &key : keys)
+        {
+            query.addBindValue(data[key]);
         }
 
         if (!query.exec())
@@ -222,7 +215,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
             ret = false;
         }
         pool_->releaseConnection(connect);
-        qDebug() << "sql update: " << sql;
         return ret;
     }
 
