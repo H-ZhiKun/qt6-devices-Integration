@@ -524,19 +524,19 @@ GroupBox {
         fillMode: Image.PreserveAspectFit
     }
 
-    Button {
-        id: button
-        x: 399
-        y: 455
-        width: 111
-        height: 37
-        text: qsTr("相机参数设置")
-        onClicked: {
-            var component = Qt.createComponent("CameraParam.qml");
-            var window = component.createObject(cameraPage);
-            window.show();
-        }
-    }
+    // Button {
+    //     id: button
+    //     x: 399
+    //     y: 455
+    //     width: 111
+    //     height: 37
+    //     text: qsTr("相机参数设置")
+    //     onClicked: {
+    //         var component = Qt.createComponent("CameraParam.qml");
+    //         var window = component.createObject(cameraPage);
+    //         window.show();
+    //     }
+    // }
 
     Button {
         id: button1
@@ -629,7 +629,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Image {
@@ -639,7 +639,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Image {
@@ -649,7 +649,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Image {
@@ -659,7 +659,7 @@ GroupBox {
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
-        mipmap:true
+        mipmap: true
     }
 
     Timer {
