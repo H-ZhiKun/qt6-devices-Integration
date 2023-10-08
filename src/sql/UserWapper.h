@@ -102,6 +102,8 @@ class UserWapper
         std::string password = jsonSingleValue["password"].asString();
         password = Utils::decrytByAES(password);
         jsonSingleValue["password"] = password;
+        jsonSingleValue["formula_permission"];
+        qDebug() << "jsvalue bool" << jsonSingleValue["formula_permission"].asString();
         return Utils::jsonToString(jsonSingleValue).c_str();
     }
 };

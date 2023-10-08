@@ -176,7 +176,7 @@ GroupBox {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).name;
+                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).username;
                                     var component = Qt.createComponent("ModifyUserInfo.qml");
                                     var window = component.createObject(userPageWin);
                                     window.show();
@@ -207,7 +207,7 @@ GroupBox {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).name;
+                                    curname = userTableModel.getRow(index - (userTableView.rows * 2)).username;
                                     var component = Qt.createComponent("ModifyUser.qml");
                                     var window = component.createObject(userPageWin);
                                     window.show();
