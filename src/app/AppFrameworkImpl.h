@@ -20,6 +20,7 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 #include <yaml-cpp/yaml.h>
+#include <CapProduct.h>
 namespace AppFrame
 {
 

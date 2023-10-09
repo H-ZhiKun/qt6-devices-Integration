@@ -3,7 +3,7 @@
 
 CapProduct::CapProduct()
 {
-    pdType_ = TypeProduct::TypeLine;
+    pdType_ = TypeProduct::TypeCap;
 }
 
 CapProduct::~CapProduct()
@@ -41,7 +41,7 @@ void CapProduct::signalComplete()
     auto ptr = qProduct_.back();
     // 插入数据库
     ptr->completeSigTime = Utils::getCurrentTime(true);
-    LineProductTimeWapper::insert(ptr);
-    LineProductDataWapper::insert(ptr);
+    CapProductTimeWapper::insert(ptr);
+    CapProductDataWapper::insert(ptr);
     qProduct_.pop_back();
 }
