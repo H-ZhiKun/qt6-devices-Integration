@@ -37,21 +37,21 @@ class AlertWapper
     {
         if (mapModify.size() == 0)
             return;
+        QVariantMap mapData;
         for (auto &[key, value] : mapModify)
         {
-            Json::Value item;
-            item["state"] = 0;
+            mapData["state"] = 0;
             std::string condition = fmt::format("`register_address` = '{}'", key);
-            PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
+            PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, mapData, std::move(condition));
         }
     }
 
     static void modifyAllStatus()
     {
-        Json::Value item;
-        item["state"] = "False";
+        QVariantMap mapData;
+        mapData["state"] = 0;
         std::string condition = "state = TRUE";
-        PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, std::move(item), std::move(condition));
+        PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, mapData, std::move(condition));
     }
     static void updateRealtimeAlert(std::map<std::string, std::string> &mapAlert)
     {
