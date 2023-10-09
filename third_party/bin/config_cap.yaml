@@ -1,0 +1,51 @@
+app:
+  log:
+    log_file_name: applog.html
+    log_file_count: 5
+    log_file_size: 10M
+    log_level: 1
+  database:
+    rdbms: postgresql
+    host: localhost
+    port: 5132
+    dbname: integration
+    user: postgres
+    passwd: ""
+product:
+  type: cap
+plc:
+  host: 192.168.123.10
+  port: 502
+  normal_address: 40001
+  normal_size: 80
+  realtime_address: 40080
+  realtime_size: 1
+  write_address: 40001
+  write_size: 80
+algorithm:
+  url_ocr: http://192.168.101.8:5001/paddleOCR
+  url_predict: http://127.0.0.1:5000/predict_tangle
+  ws_tangle: ws://localhost:5000/
+  ws_tangleCheck: ws://localhost:5001/
+  ws_ocr: ws://localhost:5002/
+domino:
+  host: 127.0.0.1
+  port: 20001
+cognex:
+  host: 192.168.80.121
+  port: 23
+permission:
+  host: 192.168.123.100
+  port: 2000
+baumer:
+  interface: [CC-82-7F-3A-FA-37]
+  paramters:
+    - sn_number: 700009202538
+      display_window: OCR
+      trigger_mode: 1
+      expose: 0.80000000000000004
+      gain: 5
+      width: 1024
+      height: 1024
+      offset_x: 704
+      offset_y: 0

@@ -18,7 +18,7 @@ class UserWapper
         password = Utils::encrytByAES(password);
         //  将加密后的密码转换为 QString，并更新 QVariantMap 对象
         QVariantMap mapData;
-        mapData.insert("name", insertData["name"].asCString());
+        mapData.insert("username", insertData["name"].asCString());
         mapData.insert("password", password.c_str());
         mapData.insert("camera_permission", insertData["camera_permission"].asBool());
         mapData.insert("data_permission", insertData["data_permission"].asBool());
@@ -49,22 +49,22 @@ class UserWapper
     {
         QJsonDocument jsonDocument = QJsonDocument::fromJson(jsonString.toUtf8());
         QVariantMap updateData = jsonDocument.toVariant().toMap();
-        std::string selectStr = "name = '" + updateData["name"].toString().toStdString() + "'";
+        std::string selectStr = "username = '" + updateData["name"].toString().toStdString() + "'";
         QString userID = PgsqlHelper::getSqlHelper().selectOneData(TABLE_USER_NAME, "id", selectStr, "created_time");
         return userID;
     }
 
     static bool modifyUser(const QString &jsonString)
     {
+        QVariantMap mapData;
         Json::Value updateData = Utils::stringToJson(jsonString.toStdString());
         if (updateData.isMember("password"))
         {
             std::string password = Utils::encrytByAES(updateData["password"].asString());
-            updateData["password"] = password;
+            mapData["password"] = password.c_str();
         }
         std::string selectStr = fmt::format("name = '{}'", updateData["name"].asString().c_str());
-        updateData.removeMember("name");
-        if (PgsqlHelper::getSqlHelper().updateData(TABLE_USER_NAME, std::move(updateData), std::move(selectStr)))
+        if (PgsqlHelper::getSqlHelper().updateData(TABLE_USER_NAME, mapData, std::move(selectStr)))
         {
             return true;
         }
@@ -92,7 +92,7 @@ class UserWapper
 
     static QString selectUser(const std::string &name)
     {
-        std::string selectStr = "name = '" + name + "'";
+        std::string selectStr = "username = '" + name + "'";
         Json::Value value = PgsqlHelper::getSqlHelper().selectData(TABLE_USER_NAME, std::move(selectStr), "");
         Json::Value jsonSingleValue;
         for (const Json::Value &jsonValue : value)
@@ -102,6 +102,8 @@ class UserWapper
         std::string password = jsonSingleValue["password"].asString();
         password = Utils::decrytByAES(password);
         jsonSingleValue["password"] = password;
+        jsonSingleValue["formula_permission"];
+        qDebug() << "jsvalue bool" << jsonSingleValue["formula_permission"].asString();
         return Utils::jsonToString(jsonSingleValue).c_str();
     }
 };
