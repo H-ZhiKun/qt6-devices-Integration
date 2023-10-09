@@ -289,6 +289,8 @@ CREATE INDEX idx_circle_product_data ON circle_product_data (created_time);
 -- CREATE TABLE circle_product_time_2023_10 PARTITION OF circle_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 -- CREATE TABLE circle_product_data_2023_10 PARTITION OF circle_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 
+
+--分区表创建函数
 CREATE OR REPLACE FUNCTION create_partition()
 RETURNS VOID AS $$
 DECLARE
@@ -325,6 +327,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--创建pgagent定时job，时间间隔1分钟执行
 DO $$
 DECLARE
     jid integer;
