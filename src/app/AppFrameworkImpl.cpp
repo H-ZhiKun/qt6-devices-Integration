@@ -117,7 +117,7 @@ bool AppFrame::AppFrameworkImpl::registerExpectation(const ExpectedFunction &exp
 void AppFrame::AppFrameworkImpl::storeImagePainter(QQmlApplicationEngine *engine)
 {
     uint8_t windId = 0;
-    for (const auto &item : config_["baumer"]["paramters"])
+    for (const auto &item : config_["baumer"]["camera"])
     {
         const std::string &title = item["display_window"].as<std::string>();
         mapWindId2Index_[title] = windId;
@@ -991,7 +991,7 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
         {
             return;
         }
-        invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
+        invokeCpp(permission_, "sendQRCode", Q_ARG(uint32_t, number), Q_ARG(std::string, code));
     });
 }
 
