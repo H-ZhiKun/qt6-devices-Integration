@@ -124,12 +124,12 @@ class BaseProduct : public AppFrame::NonCopyable
         pd->QRCode = code;
         pd->QRCodeTime = Utils::getCurrentTime(true);
         // 测试代码！！！测试完成删除
-        std::string currentTime = Utils::getCurrentTime(false).substr(11, 8);
-        currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
-        currentTime += "abcabc";
-        pd->logistics1 = "123abcabc123";
-        pd->logistics2 = currentTime;
-        pd->logisticsTime = Utils::getCurrentTime(true);
+        // std::string currentTime = Utils::getCurrentTime(false).substr(11, 8);
+        // currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
+        // currentTime += "abcabc";
+        // pd->logistics1 = "123abcabc123";
+        // pd->logistics2 = currentTime;
+        // pd->logisticsTime = Utils::getCurrentTime(true);
 
         return curBottleNum_;
     }

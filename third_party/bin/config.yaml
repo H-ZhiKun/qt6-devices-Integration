@@ -73,7 +73,7 @@ permission:
   port: 2000
 baumer:
   interface: 
-    mac: B4-45-06-BB-90-0B
+    mac: CC-82-7F-3A-FA-37
     ip: 192.168.60.60
     mask: 255.255.255.0
   camera:
@@ -82,8 +82,8 @@ baumer:
     # gain: int, range 0 ~ 100
     # width: int, capture image width px
     # height: int, capture image height px
-    - sn_number: 700009429365
-      ip: 192.168.60.61
+    - sn_number: 700009202538
+      ip: 192.168.60.71
       mask: 255.255.255.0
       display_window: OCR
       expose: 0.8
