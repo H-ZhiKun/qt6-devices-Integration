@@ -779,6 +779,7 @@ void AppFrame::AppFrameworkImpl::initProduct()
     }
     else if (strType == "cap")
     {
+        product_ = new CapProduct();
     }
 }
 
