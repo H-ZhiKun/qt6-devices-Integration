@@ -88,13 +88,17 @@ int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
     initPLC();
     // runtime task
     timerTask();
-
+    bInitComplete = true;
     return 0;
 }
 
 std::string AppFrame::AppFrameworkImpl::expected(const ExpectedFunction &expectedType, const std::string &jsValue)
 {
     std::string strRet = Utils::makeResponse(false, "function not find");
+    if (bInitComplete == false)
+    {
+        return strRet;
+    }
     if (mapExpectedFunction_.find(expectedType) != mapExpectedFunction_.end())
     {
         strRet = mapExpectedFunction_[expectedType](jsValue);
