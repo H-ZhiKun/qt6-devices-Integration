@@ -3,6 +3,7 @@
 #include "BasePLCDevice.h"
 #include "BaseProduct.h"
 #include "BaumerManager.h"
+#include "CapProduct.h"
 #include "Cognex.h"
 #include "Domino.h"
 #include "LineProduct.h"
@@ -99,6 +100,7 @@ class AppFrameworkImpl final : public AppFramework
 
   private:
     // 私有变量区域
+    bool bInitComplete = false;
     // 程序路径 begin
     std::string strAppPath_;
     std::string strTanglePath_;
