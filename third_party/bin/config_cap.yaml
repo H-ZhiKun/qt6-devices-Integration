@@ -33,11 +33,11 @@ plc:
   host: 192.168.123.10
   port: 502
   normal_address: 40001
-  normal_size: 81
-  realtime_address: 40081
+  normal_size: 80
+  realtime_address: 40080
   realtime_size: 1
   write_address: 40001
-  write_size: 81
+  write_size: 80
   # # # product circle device # # #
   # host: 192.168.123.10       
   # port: 502         
@@ -66,14 +66,14 @@ domino:
   host: 127.0.0.1
   port: 20001                     
 cognex:
-  host: 192.168.60.121
+  host: 192.168.80.121
   port: 23
 permission:
   host: 192.168.123.100
   port: 2000
 baumer:
   interface: 
-    mac: CC-82-7F-3A-FA-37
+    mac: B4-45-06-BB-90-0B
     ip: 192.168.60.60
     mask: 255.255.255.0
   camera:
@@ -82,8 +82,8 @@ baumer:
     # gain: int, range 0 ~ 100
     # width: int, capture image width px
     # height: int, capture image height px
-    - sn_number: 700009202538
-      ip: 192.168.60.71
+    - sn_number: 700009429365
+      ip: 192.168.60.61
       mask: 255.255.255.0
       display_window: OCR
       expose: 0.8
