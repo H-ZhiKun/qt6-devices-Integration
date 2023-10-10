@@ -1,7 +1,7 @@
 #pragma once
 #include "BaseProduct.h"
-#include "LineProductDataWapper.h"
-#include "LineProductTimeWapper.h"
+#include "CapProductDataWapper.h"
+#include "CapProductTimeWapper.h"
 #include "Logger.h"
 #include "Utils.h"
 

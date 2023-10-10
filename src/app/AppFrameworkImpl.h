@@ -3,6 +3,7 @@
 #include "BasePLCDevice.h"
 #include "BaseProduct.h"
 #include "BaumerManager.h"
+#include "CapProduct.h"
 #include "Cognex.h"
 #include "Domino.h"
 #include "LineProduct.h"
@@ -20,7 +21,6 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 #include <yaml-cpp/yaml.h>
-#include <CapProduct.h>
 namespace AppFrame
 {
 
