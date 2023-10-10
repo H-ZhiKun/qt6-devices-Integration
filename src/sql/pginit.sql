@@ -227,10 +227,10 @@ CREATE TABLE IF NOT EXISTS line_product_data(
 )PARTITION BY RANGE (created_date);
 CREATE INDEX idx_line_product_data ON line_product_data (created_time);
 
--- CREATE TABLE line_product_time_2023_09 PARTITION OF line_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
--- CREATE TABLE line_product_data_2023_09 PARTITION OF line_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
--- CREATE TABLE line_product_time_2023_10 PARTITION OF line_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
--- CREATE TABLE line_product_data_2023_10 PARTITION OF line_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE line_product_time_2023_09 PARTITION OF line_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE line_product_data_2023_09 PARTITION OF line_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE line_product_time_2023_10 PARTITION OF line_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE line_product_data_2023_10 PARTITION OF line_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 
 -- Table structure for circle_product_time
 CREATE TABLE IF NOT EXISTS circle_product_time(
@@ -284,95 +284,95 @@ CREATE TABLE IF NOT EXISTS circle_product_data(
 )PARTITION BY RANGE (created_date);
 CREATE INDEX idx_circle_product_data ON circle_product_data (created_time);
 
--- CREATE TABLE circle_product_time_2023_09 PARTITION OF circle_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
--- CREATE TABLE circle_product_data_2023_09 PARTITION OF circle_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
--- CREATE TABLE circle_product_time_2023_10 PARTITION OF circle_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
--- CREATE TABLE circle_product_data_2023_10 PARTITION OF circle_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE circle_product_time_2023_09 PARTITION OF circle_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE circle_product_data_2023_09 PARTITION OF circle_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE circle_product_time_2023_10 PARTITION OF circle_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE circle_product_data_2023_10 PARTITION OF circle_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 
 
 --分区表创建函数
-CREATE OR REPLACE FUNCTION create_partition()
-RETURNS VOID AS $$
-DECLARE
-    partition_date DATE := date_trunc('month', CURRENT_DATE)::DATE;
-    circle_product_time_table_name TEXT := format('circle_product_time_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
-    circle_product_data_table_name TEXT := format('circle_product_data_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
-    line_product_time_table_name TEXT := format('line_product_time_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
-    line_product_data_table_name TEXT := format('line_product_data_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
-BEGIN
-    EXECUTE format(
-        'CREATE TABLE IF NOT EXISTS %I PARTITION OF circle_product_time FOR VALUES FROM (%L) TO (%L)',
-        circle_product_time_table_name,
-        partition_date,
-        (partition_date + INTERVAL '1 month')::DATE
-    );
-    EXECUTE format(
-        'CREATE TABLE IF NOT EXISTS %I PARTITION OF circle_product_data FOR VALUES FROM (%L) TO (%L)',
-        circle_product_data_table_name,
-        partition_date,
-        (partition_date + INTERVAL '1 month')::DATE
-    );
-    EXECUTE format(
-        'CREATE TABLE IF NOT EXISTS %I PARTITION OF line_product_time FOR VALUES FROM (%L) TO (%L)',
-        line_product_time_table_name,
-        partition_date,
-        (partition_date + INTERVAL '1 month')::DATE
-    );
-    EXECUTE format(
-        'CREATE TABLE IF NOT EXISTS %I PARTITION OF line_product_data FOR VALUES FROM (%L) TO (%L)',
-        line_product_data_table_name,
-        partition_date,
-        (partition_date + INTERVAL '1 month')::DATE
-    );
-END;
-$$ LANGUAGE plpgsql;
+-- CREATE OR REPLACE FUNCTION create_partition()
+-- RETURNS VOID AS $$
+-- DECLARE
+--     partition_date DATE := date_trunc('month', CURRENT_DATE)::DATE;
+--     circle_product_time_table_name TEXT := format('circle_product_time_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
+--     circle_product_data_table_name TEXT := format('circle_product_data_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
+--     line_product_time_table_name TEXT := format('line_product_time_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
+--     line_product_data_table_name TEXT := format('line_product_data_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
+-- BEGIN
+--     EXECUTE format(
+--         'CREATE TABLE IF NOT EXISTS %I PARTITION OF circle_product_time FOR VALUES FROM (%L) TO (%L)',
+--         circle_product_time_table_name,
+--         partition_date,
+--         (partition_date + INTERVAL '1 month')::DATE
+--     );
+--     EXECUTE format(
+--         'CREATE TABLE IF NOT EXISTS %I PARTITION OF circle_product_data FOR VALUES FROM (%L) TO (%L)',
+--         circle_product_data_table_name,
+--         partition_date,
+--         (partition_date + INTERVAL '1 month')::DATE
+--     );
+--     EXECUTE format(
+--         'CREATE TABLE IF NOT EXISTS %I PARTITION OF line_product_time FOR VALUES FROM (%L) TO (%L)',
+--         line_product_time_table_name,
+--         partition_date,
+--         (partition_date + INTERVAL '1 month')::DATE
+--     );
+--     EXECUTE format(
+--         'CREATE TABLE IF NOT EXISTS %I PARTITION OF line_product_data FOR VALUES FROM (%L) TO (%L)',
+--         line_product_data_table_name,
+--         partition_date,
+--         (partition_date + INTERVAL '1 month')::DATE
+--     );
+-- END;
+-- $$ LANGUAGE plpgsql;
 
---创建pgagent定时job，时间间隔1分钟执行
-DO $$
-DECLARE
-    jid integer;
-    scid integer;
-BEGIN
--- Creating a new job
-INSERT INTO pgagent.pga_job(
-    jobjclid, jobname, jobdesc, jobhostagent, jobenabled
-) VALUES (
-    1::integer, 'pgagent_'::text, ''::text, ''::text, true
-) RETURNING jobid INTO jid;
+-- --创建pgagent定时job，时间间隔1分钟执行
+-- DO $$
+-- DECLARE
+--     jid integer;
+--     scid integer;
+-- BEGIN
+-- -- Creating a new job
+-- INSERT INTO pgagent.pga_job(
+--     jobjclid, jobname, jobdesc, jobhostagent, jobenabled
+-- ) VALUES (
+--     1::integer, 'pgagent_'::text, ''::text, ''::text, true
+-- ) RETURNING jobid INTO jid;
 
--- Steps
--- Inserting a step (jobid: NULL)
-INSERT INTO pgagent.pga_jobstep (
-    jstjobid, jstname, jstenabled, jstkind,
-    jstconnstr, jstdbname, jstonerror,
-    jstcode, jstdesc
-) VALUES (
-    jid, 'step1'::text, true, 's'::character(1),
-    ''::text, 'integration'::name, 'i'::character(1),
-    'SELECT create_partition();'::text, ''::text
-) ;
+-- -- Steps
+-- -- Inserting a step (jobid: NULL)
+-- INSERT INTO pgagent.pga_jobstep (
+--     jstjobid, jstname, jstenabled, jstkind,
+--     jstconnstr, jstdbname, jstonerror,
+--     jstcode, jstdesc
+-- ) VALUES (
+--     jid, 'step1'::text, true, 's'::character(1),
+--     ''::text, 'integration'::name, 'i'::character(1),
+--     'SELECT create_partition();'::text, ''::text
+-- ) ;
 
--- Schedules
--- Inserting a schedule
-INSERT INTO pgagent.pga_schedule(
-    jscjobid, jscname, jscdesc, jscenabled,
-    jscstart, jscend,    jscminutes, jschours, jscweekdays, jscmonthdays, jscmonths
-) VALUES (
-    jid, 'schedule'::text, ''::text, true,
-    '2023-10-08 12:43:39 +08:00'::timestamp with time zone, '2099-11-26T12:43:40+08:00'::timestamp with time zone,
-    -- Minutes
-    ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
-    -- Hours
-    ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
-    -- Week days
-    ARRAY[true,true,true,true,true,true,true]::boolean[],
-    -- Month days
-    ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
-    -- Months
-    ARRAY[true,true,true,true,true,true,true,true,true,true,true,true]::boolean[]
-) RETURNING jscid INTO scid;
-END
-$$;
+-- -- Schedules
+-- -- Inserting a schedule
+-- INSERT INTO pgagent.pga_schedule(
+--     jscjobid, jscname, jscdesc, jscenabled,
+--     jscstart, jscend,    jscminutes, jschours, jscweekdays, jscmonthdays, jscmonths
+-- ) VALUES (
+--     jid, 'schedule'::text, ''::text, true,
+--     '2023-10-08 12:43:39 +08:00'::timestamp with time zone, '2099-11-26T12:43:40+08:00'::timestamp with time zone,
+--     -- Minutes
+--     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
+--     -- Hours
+--     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
+--     -- Week days
+--     ARRAY[true,true,true,true,true,true,true]::boolean[],
+--     -- Month days
+--     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
+--     -- Months
+--     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true]::boolean[]
+-- ) RETURNING jscid INTO scid;
+-- END
+-- $$;
 
 
 
