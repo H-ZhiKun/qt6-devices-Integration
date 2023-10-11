@@ -6,13 +6,12 @@
 #include <QDebug>
 #include <QFile>
 #include <QJsonDocument>
+#include <QList>
 #include <QSqlDriver>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
-#include <iostream>
-#include <list>
 class PgsqlHelper : public AppFrame::NonCopyable
 {
   public:
@@ -34,14 +33,6 @@ class PgsqlHelper : public AppFrame::NonCopyable
     }
     bool createTable(const std::string &tableName, std::list<std::string> &&fields) // ok
     {
-        bool ret = true;
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
-        {
-            return false;
-        }
-        QSqlQuery query(*connect);
-
         // 构建创建表的SQL语句
         QString sql = fmt::format("CREATE TABLE IF NOT EXISTS \"{}\" (", tableName.c_str()).c_str();
         for (const auto &field : fields)
@@ -49,142 +40,93 @@ class PgsqlHelper : public AppFrame::NonCopyable
             sql += field.c_str() + QString(", ");
         }
         sql.chop(2); // 去除最后的逗号和空格
-        sql += ")";
-        sql += ";";
-        if (!query.exec(sql))
+        sql += ");";
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sql)))
         {
-            LogError("Failed to create table: {}", query.lastError().text().toStdString());
-            ret = false;
+            LogError("Failed to create table {}.", tableName);
+            return false;
         }
-        pool_->releaseConnection(connect);
-
-        return ret;
+        return true;
     }
 
     bool insertData(const std::string &tableName, const QVariantMap &data)
     {
-        bool ret = true;
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
+        if (data.size() == 0)
         {
+            LogError("{} insert data empty.", tableName);
             return false;
         }
-
-        QSqlQuery query(*connect);
-
         QString sqlQuery = "INSERT INTO " + QString::fromStdString(tableName) + " (";
         QString placeholders;
         QStringList keys;
-
+        QVariantList vals;
         for (const QString &key : data.keys())
         {
             if (data[key].isNull() || !data[key].isValid() || data[key] == "")
             {
                 continue; // 跳过空值字段
             }
-
             keys << key;
             placeholders += "?,";
-        }
-
-        if (keys.isEmpty())
-        {
-            // 所有字段都为空值，不执行插入操作
-            pool_->releaseConnection(connect);
-            return true;
+            vals.append(data[key]);
         }
 
         sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ");";
-        query.prepare(sqlQuery);
-        qDebug() << "sql: " << sqlQuery;
-        for (const QString &key : keys)
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sqlQuery), std::move(vals)))
         {
-            query.addBindValue(data[key]);
+            LogError("{} Failed to insert data.", tableName);
+            return false;
         }
-
-        if (!query.exec())
-        {
-            LogError("Failed to insert data: {}", query.lastError().text().toStdString());
-            ret = false;
-        }
-        pool_->releaseConnection(connect);
-        return ret;
+        return true;
     }
 
     bool insertMultipleData(const std::string &tableName, const QList<QVariantMap> &dataList)
     {
-        bool ret = true;
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
+        if (dataList.size() == 0)
         {
+            LogError("{} insert data empty.", tableName);
             return false;
         }
 
-        QSqlQuery query(*connect);
         QString sqlQuery = "INSERT INTO " + QString::fromStdString(tableName) + " (";
         QString placeholders;
         QStringList keys;
-
-        if (dataList.isEmpty())
-        {
-            // No data to insert, return true as a special case
-            pool_->releaseConnection(connect);
-            return true;
-        }
-
-        // Use the first QVariantMap in dataList to extract keys
-        const QVariantMap &firstData = dataList.first();
-        for (const QString &key : firstData.keys())
+        QVariantList vals;
+        const QVariantMap &data = dataList.first();
+        for (const QString &key : data.keys())
         {
             keys << key;
             placeholders += "?,";
+            vals.append(data[key]);
         }
-
         sqlQuery += keys.join(", ") + ") VALUES ";
-
-        // Add placeholders for each row
         for (int i = 0; i < dataList.size(); ++i)
         {
             placeholders += "(" + placeholders.left(placeholders.length() - 1) + "),";
         }
 
         sqlQuery += placeholders.left(placeholders.length() - 1); // Remove the trailing comma
-
-        query.prepare(sqlQuery);
-
-        // Bind values for each row
-        int index = 0;
-        for (const QVariantMap &data : dataList)
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sqlQuery), std::move(vals), true))
         {
-            for (const QString &key : keys)
-            {
-                query.bindValue(index++, data[key]);
-            }
+            LogError("{} Failed to insert data.", tableName);
+            return false;
         }
-
-        if (!query.execBatch())
-        {
-            LogError("Failed to insert data: {}", query.lastError().text().toStdString());
-            ret = false;
-        }
-
-        pool_->releaseConnection(connect);
-        return ret;
+        return true;
     }
 
     bool updateData(const std::string &tableName, const QVariantMap &data, const std::string &&condition)
     {
-        bool ret = true;
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
+        if (data.size() == 0)
         {
+            LogError("{} update data empty.", tableName);
             return false;
         }
-
-        QSqlQuery query(*connect);
-        QStringList keys;
-
         // 构建更新数据的SQL语句
+        QStringList keys;
+        QVariantList vals;
         QString sqlQuery = "UPDATE " + QString::fromStdString(tableName) + " SET ";
         for (const QString &key : data.keys())
         {
@@ -193,123 +135,79 @@ class PgsqlHelper : public AppFrame::NonCopyable
                 continue; // 跳过空值字段
             }
             keys << key;
+            vals.append(data[key]);
         }
 
-        if (keys.isEmpty())
-        {
-            // 所有字段都为空值，不执行插入操作
-            pool_->releaseConnection(connect);
-            return true;
-        }
         sqlQuery += keys.join(" = ?, ");
         sqlQuery.chop(2); // 去除最后的逗号和空格
         sqlQuery += QString(" WHERE ") + condition.c_str();
-        query.prepare(sqlQuery);
-        for (const QString &key : keys)
-        {
-            query.addBindValue(data[key]);
-        }
 
-        if (!query.exec())
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sqlQuery), std::move(vals)))
         {
-            LogError("Failed to update data: {}", query.lastError().text().toStdString());
-            ret = false;
+            LogError("Failed to update data {}", tableName);
+            return false;
         }
-        pool_->releaseConnection(connect);
-        return ret;
+        return true;
     }
 
-    bool upsertData(const std::string &tableName, const Json::Value &&data) // ok
+    bool upsertData(const std::string &tableName, const QVariantMap &data, const std::string &uniqueColumn)
     {
-        bool ret = true;
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
+        if (data.size() == 0)
+        {
+            LogError("{} upsert data empty.", tableName);
             return false;
-
-        QSqlQuery query(*connect);
-        QVariantList params;
-
-        // 构建UPSERT语句
-        QString upsertSql = fmt::format("INSERT INTO \"{}\" (", tableName.c_str()).c_str();
-        QString updateSql = ") VALUES (";
-        for (auto it = data.begin(); it != data.end(); ++it)
-        {
-            upsertSql += it.name() + ", ";
-            updateSql += "?, ";
-            QVariant curVal;
-            if (it->isBool())
-                curVal = it->asBool();
-            if (it->isInt())
-                curVal = it->asInt();
-            if (it->isDouble())
-                curVal = it->asFloat();
-            if (it->isString())
-                curVal = it->asCString();
-            params << curVal;
-        }
-        upsertSql.chop(2); // 去除最后的逗号和空格
-        updateSql.chop(2); // 去除最后的逗号和空格
-        upsertSql += updateSql + ");";
-        for (auto it = data.begin(); it != data.end(); ++it)
-        {
-            upsertSql += it.name() + " = VALUES(" + it.name() + "), ";
-        }
-        upsertSql.chop(2); // 去除最后的逗号和空格
-        query.prepare(upsertSql);
-        // qDebug() << "sql upsert: " << upsertSql;
-
-        for (int i = 0; i < params.size(); ++i)
-        {
-            query.addBindValue(params[i]);
         }
 
-        if (!query.exec())
+        QStringList keys;
+        QVariantList vals;
+        // 构建插入或更新数据的 SQL 语句
+        QString sqlQuery = "INSERT INTO " + QString::fromStdString(tableName) + " (";
+        QString updateQuery = " ON CONFLICT (" + QString::fromStdString(uniqueColumn) + ") DO UPDATE SET ";
+
+        for (const QString &key : data.keys())
         {
-            LogError("Failed to upsert data: {}", query.lastError().text().toStdString());
-            ret = false;
+            if (data[key].isNull() || !data[key].isValid() || data[key] == "")
+            {
+                continue; // 跳过空值字段
+            }
+            keys << key;
+            vals.append(data[key]);
         }
-        std::cout << upsertSql.toStdString() << std::endl;
-        pool_->releaseConnection(connect);
-        return ret;
+
+        sqlQuery += keys.join(", ") + ") VALUES (";
+        updateQuery += keys.join(" = EXCLUDED.") + ", ";
+
+        sqlQuery += QString("?)");
+        updateQuery.chop(2); // 去除最后的逗号和空格
+
+        sqlQuery += updateQuery;
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sqlQuery), std::move(vals)))
+        {
+            LogError("Failed to upsert data {}", tableName);
+            return false;
+        }
+        return true;
     }
 
     bool deleteData(const std::string &tableName, const std::string &condition) // ok
     {
-        bool ret = true;
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
-            return false;
-
-        QSqlQuery query(*connect);
-
         // 构建删除数据的SQL语句
         QString sql = "DELETE FROM " + QString::fromStdString(tableName) + " WHERE " + condition.c_str();
-
-        query.prepare(sql);
-        qDebug() << "delete user sql" << sql;
-        if (!query.exec())
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sql)))
         {
-            LogError("Failed to delete data: {}", query.lastError().text().toStdString());
-            ret = false;
+            LogError("Failed to delete data: {}", tableName);
+            return false;
         }
-
-        pool_->releaseConnection(connect);
-        std::cout << sql.toStdString() << std::endl;
-        return ret;
+        return true;
     }
 
-    Json::Value selectData(const std::string &tableName, const std::string &&condition, // ok
+    Json::Value selectData(const std::string &tableName, const std::string &&condition = "",
                            const std::string &&orderBy = "")
     {
-        Json::Value jsVal;
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
-        {
-            LogError("Sql poll init failed!");
-            return jsVal;
-        }
-        QSqlQuery query(*connect);
-
+        Json::Value jsValue;
         // 构建查询数据的SQL语句
         QString sql = QString("SELECT * FROM ") + tableName.c_str();
         if (!condition.empty())
@@ -320,47 +218,29 @@ class PgsqlHelper : public AppFrame::NonCopyable
         {
             sql += " ORDER BY " + orderBy;
         }
-        // qDebug() << "sql statement: " << sql;
-        query.prepare(sql);
-        if (query.exec())
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sql)))
         {
-            while (query.next())
+            LogError("Failed to select data: {}", tableName);
+            return jsValue;
+        }
+        for (const auto &items : sels)
+        {
+            for (const auto &key : items.keys())
             {
-                QSqlRecord record = query.record();
-                Json::Value jsItem;
-                for (int i = 0; i < record.count(); ++i)
-                {
-                    QString fieldName = record.fieldName(i);
-                    jsItem[fieldName.toStdString()] = std::move(query.value(i).toString().toStdString());
-                }
-                jsVal.append(jsItem);
-                jsItem.clear();
+                jsValue[key.toStdString()] = std::move(items[key].toString().toStdString());
             }
         }
-        else
-        {
-            LogError("Failed to select data: {}", query.lastError().text().toStdString());
-        }
-
-        pool_->releaseConnection(connect);
-        return jsVal;
+        return jsValue;
     }
 
     Json::Value selectDataPaged(const std::string &tableName, const int pageSize, const int pageNumber,
-                                const std::string &&condition = "", const std::string &&orderBy = "") // ok
+                                const std::string &&condition = "", const std::string &&orderBy = "")
     {
-        Json::Value jsVal;
+        Json::Value jsValue;
 
         // 计算要查询的起始行和偏移量
         int offset = (pageNumber - 1) * pageSize;
-
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
-        {
-            LogError("Sql pool init failed!");
-            return jsVal;
-        }
-        QSqlQuery query(*connect);
 
         // 构建查询数据的SQL语句，包括分页信息
         QString sql = QString("SELECT * FROM %1").arg(tableName.c_str());
@@ -375,75 +255,49 @@ class PgsqlHelper : public AppFrame::NonCopyable
         // 添加分页限制
         sql += QString(" LIMIT %1 OFFSET %2").arg(pageSize).arg(offset);
 
-        query.prepare(sql);
-        if (query.exec())
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sql)))
         {
-            while (query.next())
+            LogError("Failed to select data: {}", tableName);
+            return jsValue;
+        }
+        for (const auto &items : sels)
+        {
+            for (const auto &key : items.keys())
             {
-                QSqlRecord record = query.record();
-                Json::Value jsItem;
-                for (int i = 0; i < record.count(); ++i)
-                {
-                    QString fieldName = record.fieldName(i);
-                    jsItem[fieldName.toStdString()] = std::move(query.value(i).toString().toStdString());
-                }
-                jsVal.append(jsItem);
+                jsValue[key.toStdString()] = std::move(items[key].toString().toStdString());
             }
         }
-        else
-        {
-            LogError("Failed to select data: {}", query.lastError().text().toStdString());
-        }
-
-        pool_->releaseConnection(connect);
-        return jsVal;
+        return jsValue;
     }
 
     bool checkRecordExist(const std::string &tableName, const std::string &columnName, const std::string &columnValue)
     {
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
-        {
-            LogError("Sql poll init failed!");
-            return false;
-        };
-        QSqlQuery query(*connect);
-        QString sqlQuery = QString("SELECT COUNT(*) AS count FROM %1 WHERE %2 = :value")
-                               .arg(QString::fromStdString(tableName))
-                               .arg(QString::fromStdString(columnName));
-        query.prepare(sqlQuery);
-        query.bindValue(":value", QString::fromStdString(columnValue));
 
-        if (query.exec())
+        QString sqlQuery = QString("SELECT COUNT(*) AS count FROM %1 WHERE %2 = %3")
+                               .arg(QString::fromStdString(tableName))
+                               .arg(QString::fromStdString(columnName))
+                               .arg(QString::fromStdString(columnValue));
+
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sqlQuery)))
         {
-            if (query.next())
+            LogError("Failed to check data: {}", tableName);
+            return false;
+        }
+        for (const auto &items : sels)
+        {
+            for (const auto &key : items.keys())
             {
-                int count = query.value("count").toInt();
-                pool_->releaseConnection(connect);
-                return count > 0;
+                return items[key].toInt() > 0;
             }
         }
-        else
-        {
-            LogError("Failed to check data: {}", query.lastError().text().toStdString());
-        }
-
-        pool_->releaseConnection(connect);
         return false;
     }
 
     QString selectOneData(const std::string &tableName, const std::string &selectItem,
                           const std::string &condition = "", const std::string &orderBy = "") // ok
     {
-        Json::Value jsVal;
-        QString fieldName = "";
-        QSqlDatabase *connect = pool_->getConnection();
-        if (connect == nullptr)
-        {
-            LogError("Sql poll init failed!");
-            return fieldName;
-        }
-        QSqlQuery query(*connect);
 
         // 构建查询数据的SQL语句
         QString sql = "SELECT " + QString::fromStdString(selectItem) + " FROM " + QString::fromStdString(tableName);
@@ -455,41 +309,80 @@ class PgsqlHelper : public AppFrame::NonCopyable
         {
             sql += " ORDER BY " + orderBy;
         }
-        qDebug() << "sql statement: " << sql;
-        query.prepare(sql);
-        if (query.exec())
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sql)))
         {
-            while (query.next())
+            LogError("Failed to select one data: {}", tableName);
+            return {};
+        }
+        for (const auto &items : sels)
+        {
+            for (const auto &key : items.keys())
             {
-                fieldName = query.value(0).toString();
+                return items[key].toString();
             }
         }
-        else
-        {
-            LogError("Failed to select data: {}", query.lastError().text().toStdString());
-        }
-
-        pool_->releaseConnection(connect);
-        return fieldName;
+        return {};
     }
-    bool execSql(const QString &sql)
+
+  protected:
+    bool executeSql(QList<QVariantMap> &selectResults, const QString &&sql, const QVariantList &&vals = QVariantList(),
+                    bool isBatch = false)
     {
+        bool ret = true;
         QSqlDatabase *connect = pool_->getConnection();
         if (connect == nullptr)
         {
-            LogError("Sql poll init failed!");
+            LogError("database poll init failed!");
             return false;
         }
         QSqlQuery query(*connect);
         query.prepare(sql);
-        if (!query.exec())
+        for (const auto &val : vals)
         {
-            qDebug() << query.lastError().text();
+            query.addBindValue(val);
+        }
+        bool execStatus = false;
+        if (isBatch)
+        {
+            execStatus = query.execBatch();
+        }
+        else
+        {
+            execStatus = query.exec();
+        }
+        if (execStatus)
+        {
+            if (query.isSelect())
+            {
+                // 这是一个 SELECT 查询，可以处理结果集
+                while (query.next())
+                {
+                    // 处理查询结果
+                    QVariantMap mapData;
+                    const QSqlRecord &record = query.record();
+                    for (int i = 0; i < record.count(); ++i)
+                    {
+                        QString fieldName = record.fieldName(i);
+                        mapData[record.fieldName(i)] = record.value(i);
+                    }
+                    selectResults.append(mapData);
+                }
+            }
+            else
+            {
+                // 这不是一个 SELECT 查询，可能是 INSERT、UPDATE、DELETE 等
+                // 执行相应的错误处理或其他操作
+            }
+        }
+        else
+        {
+            qDebug() << "query lastError: " << query.lastError().text();
             LogError("query lastError: {}", query.lastError().text().toStdString());
-            return false;
+            ret = false;
         }
         pool_->releaseConnection(connect);
-        return true;
+        return ret;
     }
 
   private:
