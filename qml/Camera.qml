@@ -406,6 +406,9 @@ GroupBox {
             font.pointSize: 11
             icon.color: "#ddfb0a0a"
             icon.height: 35
+            onClicked: {
+                appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ZeroClearing, "");
+            }
         }
         title: "   计数信息"
     }
