@@ -94,13 +94,17 @@ int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
     initPLC();
     // runtime task
     timerTask();
-
+    bInitComplete = true;
     return 0;
 }
 
 std::string AppFrame::AppFrameworkImpl::expected(const ExpectedFunction &expectedType, const std::string &jsValue)
 {
     std::string strRet = Utils::makeResponse(false, "function not find");
+    if (bInitComplete == false)
+    {
+        return strRet;
+    }
     if (mapExpectedFunction_.find(expectedType) != mapExpectedFunction_.end())
     {
         strRet = mapExpectedFunction_[expectedType](jsValue);
@@ -123,7 +127,7 @@ bool AppFrame::AppFrameworkImpl::registerExpectation(const ExpectedFunction &exp
 void AppFrame::AppFrameworkImpl::storeImagePainter(QQmlApplicationEngine *engine)
 {
     uint8_t windId = 0;
-    for (const auto &item : config_["baumer"]["paramters"])
+    for (const auto &item : config_["baumer"]["camera"])
     {
         const std::string &title = item["display_window"].as<std::string>();
         mapWindId2Index_[title] = windId;
@@ -793,6 +797,7 @@ void AppFrame::AppFrameworkImpl::initProduct()
     }
     else if (strType == "cap")
     {
+        product_ = new CapProduct();
     }
 }
 
@@ -1009,7 +1014,7 @@ void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
         {
             return;
         }
-        invokeCpp(permission_, "sendQRCode", Q_ARG(std::string, code));
+        invokeCpp(permission_, "sendQRCode", Q_ARG(uint32_t, number), Q_ARG(std::string, code));
     });
 }
 
