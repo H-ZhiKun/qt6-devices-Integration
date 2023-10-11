@@ -225,10 +225,12 @@ class PgsqlHelper : public AppFrame::NonCopyable
         }
         for (const auto &items : sels)
         {
+            Json::Value jsItems;
             for (const auto &key : items.keys())
             {
-                jsValue[key.toStdString()] = std::move(items[key].toString().toStdString());
+                jsItems[key.toStdString()] = std::move(items[key].toString().toStdString());
             }
+            jsValue.append(jsItems);
         }
         return jsValue;
     }
@@ -262,10 +264,12 @@ class PgsqlHelper : public AppFrame::NonCopyable
         }
         for (const auto &items : sels)
         {
+            Json::Value jsItems;
             for (const auto &key : items.keys())
             {
-                jsValue[key.toStdString()] = std::move(items[key].toString().toStdString());
+                jsItems[key.toStdString()] = std::move(items[key].toString().toStdString());
             }
+            jsValue.append(jsItems);
         }
         return jsValue;
     }
