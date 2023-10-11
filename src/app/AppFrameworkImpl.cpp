@@ -689,6 +689,7 @@ void AppFrame::AppFrameworkImpl::initPLC()
     }
     else if (strType == "cap")
     {
+        plcDev_ = new CapDevice;
     }
     plcDev_->init(config_);
     QObject::connect(plcDev_, &BasePLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });

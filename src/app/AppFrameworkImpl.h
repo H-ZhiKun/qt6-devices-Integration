@@ -3,6 +3,7 @@
 #include "BasePLCDevice.h"
 #include "BaseProduct.h"
 #include "BaumerManager.h"
+#include "CapDevice.h"
 #include "CapProduct.h"
 #include "Cognex.h"
 #include "Domino.h"
