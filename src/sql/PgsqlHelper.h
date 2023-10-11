@@ -137,9 +137,8 @@ class PgsqlHelper : public AppFrame::NonCopyable
             keys << key;
             vals.append(data[key]);
         }
-
         sqlQuery += keys.join(" = ?, ");
-        sqlQuery.chop(2); // 去除最后的逗号和空格
+        sqlQuery += " = ?";
         sqlQuery += QString(" WHERE ") + condition.c_str();
 
         QList<QVariantMap> sels;
