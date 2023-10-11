@@ -231,6 +231,10 @@ CREATE TABLE line_product_time_2023_09 PARTITION OF line_product_time FOR VALUES
 CREATE TABLE line_product_data_2023_09 PARTITION OF line_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
 CREATE TABLE line_product_time_2023_10 PARTITION OF line_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 CREATE TABLE line_product_data_2023_10 PARTITION OF line_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE line_product_time_2023_11 PARTITION OF line_product_time FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
+CREATE TABLE line_product_data_2023_11 PARTITION OF line_product_data FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
+CREATE TABLE line_product_time_2023_12 PARTITION OF line_product_time FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
+CREATE TABLE line_product_data_2023_12 PARTITION OF line_product_data FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
 
 -- Table structure for circle_product_time
 CREATE TABLE IF NOT EXISTS circle_product_time(
@@ -288,6 +292,59 @@ CREATE TABLE circle_product_time_2023_09 PARTITION OF circle_product_time FOR VA
 CREATE TABLE circle_product_data_2023_09 PARTITION OF circle_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
 CREATE TABLE circle_product_time_2023_10 PARTITION OF circle_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
 CREATE TABLE circle_product_data_2023_10 PARTITION OF circle_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE circle_product_time_2023_11 PARTITION OF circle_product_time FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
+CREATE TABLE circle_product_data_2023_11 PARTITION OF circle_product_data FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
+CREATE TABLE circle_product_time_2023_12 PARTITION OF circle_product_time FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
+CREATE TABLE circle_product_data_2023_12 PARTITION OF circle_product_data FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
+
+
+-- Table structure for cap_product_time
+CREATE TABLE IF NOT EXISTS cap_product_time(
+   id serial,
+   type_pd VARCHAR(64),
+   bottle_num VARCHAR(64),
+   batch_num VARCHAR(64),
+   formula_name VARCHAR(64),
+   is_remove BOOLEAN,
+   qrcode_time timestamp(3),
+   logistics_ret_time timestamp(3),
+   ocr_signal_time timestamp(3),
+   ocr_image_time timestamp(3),
+   ocr_result_time timestamp(3),
+   complete_signal_time timestamp(3),
+   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
+   created_date date DEFAULT CURRENT_DATE,
+   PRIMARY KEY (id, created_date)
+)PARTITION BY RANGE (created_date);
+CREATE INDEX idx_cap_product_time ON cap_product_time (created_time);
+
+-- Table structure for line_product_data
+CREATE TABLE IF NOT EXISTS cap_product_data(
+   id serial,
+   type_pd VARCHAR(64),
+   bottle_num VARCHAR(64),
+   batch_num VARCHAR(64),
+   formula_name VARCHAR(64),
+   is_remove BOOLEAN,
+   qrcode_result VARCHAR(256),
+   logistics_true_value_1 VARCHAR(256),
+   logistics_true_value_2 VARCHAR(256),
+   ocr_image_path VARCHAR(256),
+   ocr_result VARCHAR(256),
+   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
+   created_date date DEFAULT CURRENT_DATE,
+   PRIMARY KEY (id, created_date)
+)PARTITION BY RANGE (created_date);
+CREATE INDEX idx_cap_product_data ON cap_product_data (created_time);
+
+CREATE TABLE cap_product_time_2023_09 PARTITION OF cap_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE cap_product_data_2023_09 PARTITION OF cap_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
+CREATE TABLE cap_product_time_2023_10 PARTITION OF cap_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE cap_product_data_2023_10 PARTITION OF cap_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
+CREATE TABLE cap_product_time_2023_11 PARTITION OF cap_product_time FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
+CREATE TABLE cap_product_data_2023_11 PARTITION OF cap_product_data FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
+CREATE TABLE cap_product_time_2023_12 PARTITION OF cap_product_time FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
+CREATE TABLE cap_product_data_2023_12 PARTITION OF cap_product_data FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
 
 
 --分区表创建函数
