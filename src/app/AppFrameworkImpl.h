@@ -57,11 +57,13 @@ class AppFrameworkImpl final : public AppFramework
     std::string collectImage(const std::string &);
     std::string readPLC(const std::string &);
     std::string writePLC(const std::string &);
-    std::string refreshMainPage();
-    std::string refreshStrightMainPage();
-    std::string refreshPowerPage();
+    std::string refreshMainPage(const std::string &);
+    std::string refreshStrightMainPage(const std::string &);
+    std::string refreshPowerPage(const std::string &);
+    std::string zeroClearing(const std::string &);
+    std::string strightZeroClearing(const std::string &);
 
-    std::string refreshElecData(); // 刷新直线式电能表数据
+    std::string refreshElecData(const std::string &); // 刷新直线式电能表数据
 
     // 差异调用 接口区域
     void storeImagePainter(QQmlApplicationEngine *engine);
