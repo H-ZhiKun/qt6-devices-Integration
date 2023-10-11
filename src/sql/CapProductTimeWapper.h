@@ -26,7 +26,6 @@ class CapProductTimeWapper
         mapData.insert("qrcode_time", ptr->QRCodeTime.c_str());
         mapData.insert("logistics_ret_time", ptr->logisticsTime.c_str());
 
-        mapData.insert("coding_signal_time", ptr->codingSigTime.c_str());
         mapData.insert("ocr_signal_time", ptr->OCRSigTime.c_str());
         mapData.insert("ocr_image_time", ptr->OCRImageTime.c_str());
         mapData.insert("ocr_result_time", ptr->OCRResultTime.c_str());
