@@ -47,7 +47,7 @@ GroupBox {
 
         ImagePainter {
             id: locationCamera
-            objectName: "locationCamera"
+            objectName: "Location"
             anchors.fill: parent
             anchors.margins: 8
             //anchors.topMargin: 20
@@ -100,7 +100,7 @@ GroupBox {
 
         ImagePainter {
             id: locateCheckCamera
-            objectName: "locateCheckCamera"
+            objectName: "LocateCheck"
             anchors.fill: parent
             anchors.margins: 8
             //anchors.topMargin: 35
@@ -150,7 +150,7 @@ GroupBox {
 
         ImagePainter {
             id: codeCheckCamera
-            objectName: "codeCheckCamera"
+            objectName: "OCR"
             anchors.fill: parent
             anchors.margins: 8
             //anchors.topMargin: 35
@@ -681,9 +681,9 @@ GroupBox {
             result.details.cognexState === "1" ? imagecognex.source = "file:///" + appdir + "/ico/green.png" : imagecognex.source = "file:///" + appdir + "/ico/red.png";
             result.details.permissionState === "1" ? imagepermission.source = "file:///" + appdir + "/ico/green.png" : imagepermission.source = "file:///" + appdir + "/ico/red.png";
             result.details.plcState === "1" ? imageplc.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
-            result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
-            result.details.image1 === "1" ? imageCodeCheck.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
-            result.details.image2 === "1" ? imageLocateCheck.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
+            result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageLocate.source = "file:///" + appdir + "/ico/red.png";
+            result.details.image1 === "1" ? imageCodeCheck.source = "file:///" + appdir + "/ico/green.png" : imageCodeCheck.source = "file:///" + appdir + "/ico/red.png";
+            result.details.image2 === "1" ? imageLocateCheck.source = "file:///" + appdir + "/ico/green.png" : imageLocateCheck.source = "file:///" + appdir + "/ico/red.png";
             textCountPauseWaste = result.details.textProduceState;
             textEquipmentSteps = result.details.textEquipmentSteps;
         }

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("appMetaFlash", &AppMetaFlash::instance());
     engine.rootContext()->setContextProperty("appdir", qApp->applicationDirPath()); // 获取当前路径
-    engine.loadFromModule("DeviceIntegration", "StrightMainWindow");
+    engine.loadFromModule("DeviceIntegration", "MainWindow");
     app.setWindowIcon(QIcon("file:///" + qApp->applicationDirPath() + "/ico/logo.ico")); // 添加图标
 
     appFramework().run(&engine);
