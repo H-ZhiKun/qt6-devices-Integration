@@ -245,6 +245,7 @@ CREATE TABLE IF NOT EXISTS circle_product_time(
    formula_name VARCHAR(64),
    is_remove BOOLEAN,
    qrcode_time timestamp(3),
+   qrcode_signal_time timestamp(3),
    logistics_ret_time timestamp(3),
    issued_rotate_time timestamp(3),
    location_signal_time timestamp(3),
@@ -258,7 +259,7 @@ CREATE TABLE IF NOT EXISTS circle_product_time(
    ocr_signal_time timestamp(3),
    ocr_image_time timestamp(3),
    ocr_result_time timestamp(3),
-   complete_signal_time timestamp(3),
+   remove_signal_time timestamp(3),
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
