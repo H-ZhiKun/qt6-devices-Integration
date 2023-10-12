@@ -31,15 +31,15 @@ struct OcrRes
     uint16_t rightbottomy;
 };
 
-struct ProductData
+class ProductData
 {
+  public:
     ProductData() = default;
-    uint32_t countAll = 0;
-    uint32_t countPass = 0;
-    uint32_t countWaste = 0;
-    uint32_t countLocateWaste = 0;
-    uint32_t countCodeWaste = 0;
-    uint32_t countPauseWaste = 0;
+    ~ProductData() = default;
+    virtual void zeroClear() = 0;
+    uint32_t countAll = 0;   // 进瓶数
+    uint32_t countPass = 0;  // 合格品数
+    uint32_t countWaste = 0; // 废品总数
 };
 
 struct ProductItem

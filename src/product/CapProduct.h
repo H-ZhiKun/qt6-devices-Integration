@@ -14,3 +14,22 @@ class CapProduct : public BaseProduct
     virtual void signalOCR() override;
     virtual void signalComplete() override;
 };
+
+class CapProductData : public ProductData
+{
+  public:
+    CapProductData() = default;
+    ~CapProductData() = default;
+    virtual void zeroClear()
+    {
+        countAll = 0;
+        countPass = 0;
+        countWaste = 0;
+        countLocateWaste = 0;
+        countCodeWaste = 0;
+        countPauseWaste = 0;
+    };
+    uint32_t countLocateWaste = 0; // 定位废品数
+    uint32_t countCodeWaste = 0;   // 喷码废品数
+    uint32_t countPauseWaste = 0;  // 暂停/终止废品数
+};

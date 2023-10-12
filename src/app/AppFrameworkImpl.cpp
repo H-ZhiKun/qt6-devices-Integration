@@ -791,14 +791,17 @@ void AppFrame::AppFrameworkImpl::initProduct()
     if (strType == "circle")
     {
         product_ = new CircleProduct();
+        productData_ = new CircleProductData();
     }
     else if (strType == "line")
     {
         product_ = new LineProduct();
+        productData_ = new LineProductData();
     }
     else if (strType == "cap")
     {
         product_ = new CapProduct();
+        productData_ = new CapProductData();
     }
 }
 
@@ -819,6 +822,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     {
         delete product_;
         product_ = nullptr;
+    }
+    if (productData_)
+    {
+        delete productData_;
+        productData_ = nullptr;
     }
     if (plcDev_ != nullptr)
     {
