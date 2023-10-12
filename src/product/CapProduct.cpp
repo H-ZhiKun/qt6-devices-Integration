@@ -10,25 +10,15 @@ CapProduct::~CapProduct()
 {
 }
 
-void CapProduct::signalOCR()
+void CapProduct::createProduct(uint32_t pdNum, const std::string &batchNum, const std::string &formulaName)
 {
-    for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
-    {
-        if ((*ptr)->bottleNum_ > 0 && (*ptr)->OCRSigTime.empty())
-        {
-            (*ptr)->OCRSigTime = Utils::getCurrentTime(true);
-            return;
-        }
-    }
 }
 
-void CapProduct::signalComplete()
+std::shared_ptr<ProductItem> CapProduct::deleteProduct()
 {
-    LogInfo("CapProduct signalComplete");
-    auto ptr = qProduct_.back();
-    // 插入数据库
-    ptr->completeSigTime = Utils::getCurrentTime(true);
+    LogInfo("CapProduct Complete");
+    auto ptr = BaseProduct::deleteProduct();
     CapProductTimeWapper::insert(ptr);
     CapProductDataWapper::insert(ptr);
-    qProduct_.pop_back();
+    return ptr;
 }

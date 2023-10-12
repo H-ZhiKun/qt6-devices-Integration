@@ -7,6 +7,7 @@
 
 enum class TypeProduct
 {
+    TypeBase,
     TypeCircle,
     TypeLine,
     TypeCap
@@ -31,25 +32,28 @@ struct OcrRes
     uint16_t rightbottomy;
 };
 
-struct ProductData
+class ProductData
 {
+  public:
     ProductData() = default;
-    uint32_t countAll = 0;
-    uint32_t countPass = 0;
-    uint32_t countWaste = 0;
-    uint32_t countLocateWaste = 0;
-    uint32_t countCodeWaste = 0;
-    uint32_t countPauseWaste = 0;
+    ~ProductData() = default;
+    virtual void zeroClear() = 0;
+    uint32_t countAll = 0;   // 进瓶数
+    uint32_t countPass = 0;  // 合格品数
+    uint32_t countWaste = 0; // 废品总数
 };
 
 struct ProductItem
 {
+    ProductItem()
+    {
+    }
     ProductItem(uint32_t num, TypeProduct type, std::string batchNum, std::string formulaName)
         : bottleNum_(num), typePd_(type), batchNum_(batchNum), formulaName_(formulaName)
     {
     }
     // 公共数据
-    TypeProduct typePd_;
+    TypeProduct typePd_{TypeProduct::TypeBase};
     uint32_t bottleNum_ = 0;  // 应用层维护瓶编号，自增
     std::string batchNum_;    // 批号
     std::string formulaName_; // 配方名
@@ -69,6 +73,7 @@ struct ProductItem
     std::string OCRResult;      // 物流码结果
 
     // 时间点表
+    std::string QRCodeSigTime;         // 二维码读码信号时间
     std::string QRCodeTime;            // 二维码读码返回时间
     std::string logisticsTime;         // 物流码返回时间
     std::string LocationSigTime;       // 定位信号时间
@@ -81,7 +86,7 @@ struct ProductItem
     std::string OCRSigTime;            // OCR信号时间
     std::string OCRImageTime;          // OCR图像获取时间
     std::string OCRResultTime;         // OCR结果获取时间
-    std::string completeSigTime;       // 流程完成时间（踢出信号时间）
+    std::string removeSigTime;         // 流程完成时间（踢出信号时间）
     std::string issuedRotateTime;      // 回转式下发旋转时间
     std::string issuedLocateCheckTime; // 回转式下发定位复合时间
 };
@@ -95,47 +100,81 @@ class BaseProduct : public AppFrame::NonCopyable
     {
         return pdType_;
     }
-    virtual void signalQR(uint32_t pdNum = 0)
+    virtual void createProduct(uint32_t pdNum, const std::string &batchNum = "", const std::string &formulaName = "")
     {
+        std::lock_guard lock(mtxProduct_);
+        auto pd = std::make_shared<ProductItem>(pdNum, pdType_, batchNum, formulaName);
+        qProduct_.push_front(pd);
+        ++cursorQRSignal_;
+        ++cursorLocationSignal_;
+        ++cursorCheckSignal_;
+        ++cursorCodingSignal_;
+        ++cursorOCRSignal_;
+        ++cursorRemoveSignal_;
+        ++cursorQRCode_;
+        ++cursorLocation_;
+        ++cursorCheck_;
+        ++cursorOCR_;
+    }
+    virtual std::shared_ptr<ProductItem> deleteProduct()
+    {
+        std::lock_guard lock(mtxProduct_);
+        auto ptr = qProduct_.back();
+        qProduct_.pop_back();
+        return ptr;
+    }
+    virtual void signalQR()
+    {
+        std::lock_guard lock(mtxProduct_);
+        qProduct_[cursorQRSignal_]->QRCodeSigTime = Utils::getCurrentTime(true);
+        moveCursor(cursorQRSignal_);
     }
     virtual void signalLocation()
     {
+        std::lock_guard lock(mtxProduct_);
+        qProduct_[cursorLocationSignal_]->LocationSigTime = Utils::getCurrentTime(true);
+        moveCursor(cursorLocationSignal_);
     }
     virtual void signalCheck()
     {
+        std::lock_guard lock(mtxProduct_);
+        qProduct_[cursorCheck_]->CheckSigTime = Utils::getCurrentTime(true);
+        moveCursor(cursorCheck_);
     }
     virtual std::shared_ptr<ProductItem> signalCoding()
     {
-        return nullptr;
+        std::lock_guard lock(mtxProduct_);
+        auto ptr = qProduct_[cursorCodingSignal_];
+        ptr->codingSigTime = Utils::getCurrentTime(true);
+        moveCursor(cursorCheck_);
+        return ptr;
     }
     virtual void signalOCR()
     {
+        std::lock_guard lock(mtxProduct_);
+        qProduct_[cursorOCRSignal_]->OCRSigTime = Utils::getCurrentTime(true);
+        moveCursor(cursorOCRSignal_);
     }
-    virtual void signalComplete()
+    virtual void signalRemove()
     {
+        std::lock_guard lock(mtxProduct_);
+        qProduct_[cursorRemoveSignal_]->removeSigTime = Utils::getCurrentTime(true);
+        moveCursor(cursorRemoveSignal_);
     }
 
     virtual uint32_t updateQRCode(const std::string &code)
     {
-        ++curBottleNum_;
-        auto pd = std::make_shared<ProductItem>(curBottleNum_, pdType_, "", "");
-        qProduct_.push_front(pd);
-
-        pd->QRCode = code;
-        pd->QRCodeTime = Utils::getCurrentTime(true);
-        // 测试代码！！！测试完成删除
-        // std::string currentTime = Utils::getCurrentTime(false).substr(11, 8);
-        // currentTime.erase(std::remove(currentTime.begin(), currentTime.end(), ':'), currentTime.end());
-        // currentTime += "abcabc";
-        // pd->logistics1 = "123abcabc123";
-        // pd->logistics2 = currentTime;
-        // pd->logisticsTime = Utils::getCurrentTime(true);
-
-        return curBottleNum_;
+        std::lock_guard lock(mtxProduct_);
+        auto ptr = qProduct_[cursorQRCode_];
+        ptr->QRCode = code;
+        ptr->QRCode = Utils::getCurrentTime(true);
+        moveCursor(cursorQRCode_);
+        return ptr->bottleNum_;
     }
 
     virtual void updateLogistics(const uint32_t number, const std::string &code1, const std::string &code2)
     {
+        std::lock_guard lock(mtxProduct_);
         for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
         {
             if ((*ptr)->bottleNum_ == number)
@@ -150,21 +189,18 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual uint32_t updateLocation(const cv::Mat &mat, const std::string &path)
     {
-        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
-        {
-            if ((*ptr)->bottleNum_ > 0 && (*ptr)->LocationImageTime.empty())
-            {
-                (*ptr)->LocationImage = mat;
-                (*ptr)->LocationPath = path;
-                (*ptr)->LocationImageTime = Utils::getCurrentTime(true);
-                return (*ptr)->bottleNum_;
-            }
-        }
-        return 0;
+        std::lock_guard lock(mtxProduct_);
+        auto ptr = qProduct_[cursorLocation_];
+        ptr->LocationImage = mat;
+        ptr->LocationPath = path;
+        ptr->LocationImageTime = Utils::getCurrentTime(true);
+        moveCursor(cursorLocation_);
+        return ptr->bottleNum_;
     }
 
     virtual std::shared_ptr<ProductItem> updateLocationResult(const uint32_t number, const std::string &value)
     {
+        std::lock_guard lock(mtxProduct_);
         for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
         {
             if ((*ptr)->bottleNum_ == number)
@@ -179,21 +215,18 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual uint32_t updateCheck(const cv::Mat &mat, const std::string &path)
     {
-        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
-        {
-            if ((*ptr)->bottleNum_ > 0 && (*ptr)->CheckImageTime.empty())
-            {
-                (*ptr)->CheckImage = mat;
-                (*ptr)->CheckPath = path;
-                (*ptr)->CheckImageTime = Utils::getCurrentTime(true);
-                return (*ptr)->bottleNum_;
-            }
-        }
-        return 0;
+        std::lock_guard lock(mtxProduct_);
+        auto ptr = qProduct_[cursorCheck_];
+        ptr->CheckImage = mat;
+        ptr->CheckPath = path;
+        ptr->CheckImageTime = Utils::getCurrentTime(true);
+        moveCursor(cursorCheck_);
+        return ptr->bottleNum_;
     }
 
     virtual std::shared_ptr<ProductItem> updateCheckResult(const uint32_t number, const std::string &value)
     {
+        std::lock_guard lock(mtxProduct_);
         for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
         {
             if ((*ptr)->bottleNum_ == number)
@@ -208,21 +241,18 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path)
     {
-        for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
-        {
-            if ((*ptr)->bottleNum_ > 0 && (*ptr)->OCRImageTime.empty())
-            {
-                (*ptr)->OCRImage = mat;
-                (*ptr)->OCRPath = path;
-                (*ptr)->OCRImageTime = Utils::getCurrentTime(true);
-                return (*ptr)->bottleNum_;
-            }
-        }
-        return 0;
+        std::lock_guard lock(mtxProduct_);
+        auto ptr = qProduct_[cursorOCR_];
+        ptr->OCRImage = mat;
+        ptr->OCRPath = path;
+        ptr->OCRImageTime = Utils::getCurrentTime(true);
+        moveCursor(cursorOCR_);
+        return ptr->bottleNum_;
     }
 
     virtual std::shared_ptr<ProductItem> updateOCRResult(const uint32_t number, const std::string &value)
     {
+        std::lock_guard lock(mtxProduct_);
         for (auto ptr = qProduct_.rbegin(); ptr != qProduct_.rend(); ++ptr)
         {
             if ((*ptr)->bottleNum_ == number)
@@ -237,15 +267,41 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual std::shared_ptr<ProductItem> getIndexObject(uint32_t index)
     {
-        if (index >= qProduct_.size())
+        std::lock_guard lock(mtxProduct_);
+        if (index < qProduct_.size())
         {
-            return nullptr;
+            auto ptr = qProduct_[index];
+            if (ptr->bottleNum_ > 0)
+            {
+                return ptr;
+            }
         }
-        return qProduct_[index];
+        return nullptr;
     }
 
   protected:
-    uint32_t curBottleNum_{0};
-    TypeProduct pdType_{TypeProduct::TypeCircle};
+    void moveCursor(int16_t &cursor)
+    {
+        while (true)
+        {
+            --cursor;
+            if (cursor <= -1 || qProduct_[cursor]->bottleNum_ > 0)
+            {
+                break;
+            }
+        }
+    }
+    TypeProduct pdType_{TypeProduct::TypeBase};
     std::deque<std::shared_ptr<ProductItem>> qProduct_;
+    std::mutex mtxProduct_;
+    int16_t cursorQRSignal_ = -1;
+    int16_t cursorLocationSignal_ = -1;
+    int16_t cursorCheckSignal_ = -1;
+    int16_t cursorCodingSignal_ = -1;
+    int16_t cursorOCRSignal_ = -1;
+    int16_t cursorRemoveSignal_ = -1;
+    int16_t cursorQRCode_ = -1;
+    int16_t cursorLocation_ = -1;
+    int16_t cursorCheck_ = -1;
+    int16_t cursorOCR_ = -1;
 };

@@ -10,7 +10,25 @@ class LineProduct : public BaseProduct
   public:
     explicit LineProduct();
     virtual ~LineProduct();
-    virtual std::shared_ptr<ProductItem> signalCoding() override;
-    virtual void signalOCR() override;
-    virtual void signalComplete() override;
+    virtual void createProduct(uint32_t pdNum, const std::string &batchNum = "",
+                               const std::string &formulaName = "") override;
+    virtual std::shared_ptr<ProductItem> deleteProduct() override;
+
+  protected:
+    uint32_t customNum_ = 0;
+};
+
+class LineProductData : public ProductData
+{
+  public:
+    LineProductData() = default;
+    ~LineProductData() = default;
+    virtual void zeroClear()
+    {
+        countAll = 0;
+        countPass = 0;
+        countWaste = 0;
+        countCodeWaste = 0;
+    };
+    uint32_t countCodeWaste = 0; // 喷码废品数
 };

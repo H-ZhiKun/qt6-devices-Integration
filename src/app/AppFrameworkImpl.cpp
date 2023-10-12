@@ -791,14 +791,17 @@ void AppFrame::AppFrameworkImpl::initProduct()
     if (strType == "circle")
     {
         product_ = new CircleProduct();
+        productData_ = new CircleProductData();
     }
     else if (strType == "line")
     {
         product_ = new LineProduct();
+        productData_ = new LineProductData();
     }
     else if (strType == "cap")
     {
         product_ = new CapProduct();
+        productData_ = new CapProductData();
     }
 }
 
@@ -819,6 +822,11 @@ void AppFrame::AppFrameworkImpl::memoryClean()
     {
         delete product_;
         product_ = nullptr;
+    }
+    if (productData_)
+    {
+        delete productData_;
+        productData_ = nullptr;
     }
     if (plcDev_ != nullptr)
     {
@@ -930,7 +938,7 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
     Utils::asyncTask([this, number] {
         if (product_->getType() == TypeProduct::TypeCircle)
         {
-            product_->signalQR(number);
+            product_->createProduct(number);
             // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
 
             // 电机旋转工位=5 下发定位在旋转前=5
@@ -975,12 +983,14 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
             if (remove)
             {
                 plcDev_->writeDevice("b", "13004", "1", remove->isRemove_ ? "1" : "0");
-                product_->signalComplete();
+                product_->signalRemove();
+                product_->deleteProduct();
             }
         }
         else
         {
-            product_->signalQR(number);
+            product_->createProduct(number);
+            product_->signalQR();
         }
     });
 }
@@ -1004,7 +1014,10 @@ void AppFrame::AppFrameworkImpl::whenSignaOCR()
 
 void AppFrame::AppFrameworkImpl::whenSignaRemove()
 {
-    Utils::asyncTask([this] { product_->signalComplete(); });
+    Utils::asyncTask([this] {
+        product_->signalRemove();
+        product_->deleteProduct();
+    });
 }
 
 void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)

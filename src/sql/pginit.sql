@@ -127,66 +127,6 @@ CREATE TABLE IF NOT EXISTS plc_register_rw (
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
--- -- Table structure for line_product_data
--- CREATE TABLE IF NOT EXISTS line_product_data (
---   id serial PRIMARY KEY,
---   qr_code varchar(24),           --二维码读取结果
---   logistucs_code varchar(24),    --物流码获取结果
---   code_check_image varchar(128), --oce图片保存路径
---   code_check_res smallint,       --ocr返回的结果
---   ng_result smallint,                     --是否ng
---   created_time timestamp DEFAULT CURRENT_TIMESTAMP
--- );
-
--- -- Table structure for line_product_time
--- CREATE TABLE IF NOT EXISTS line_product_time (
---   id serial PRIMARY KEY,
---   enter_time varchar(24),            --入队/读码时间
---   require_qrcode_time varchar(24),   --二维码获取时间
---   require_logistics_time varchar(24), --物流码获取时间  
---   paint_time varchar(24),            --打码时间
---   ocr_photo_time varchar(24),        --ocr拍照时间
---   ocr_send_time varchar(24),         --ocr图片发送时间
---   ocr_reslut_time varchar(24),       --ocr结果获取时间
---   out_time varchar(24),              --剔除时间
---   created_time timestamp DEFAULT CURRENT_TIMESTAMP
--- );
-
--- -- Table structure for line_product_data
--- CREATE TABLE IF NOT EXISTS circle_product_data (
---   id serial PRIMARY KEY,
---   qr_code varchar(24),             --二维码读取结果
---   logistics_code varchar(24),      --物流码获取结果
---   locate_image varchar(128),       --定位图片路径
---   locate_res smallint,             --定位结果
---   locate_check_image varchar(128), --定位复合图片路径
---   locate_check_res smallint,       --定位复合结果
---   code_check_image varchar(128),   --oce图片保存路径
---   code_check_res smallint,         --ocr返回的结果
---   created_time timestamp DEFAULT CURRENT_TIMESTAMP
--- );
-
--- -- Table structure for line_product_time
--- CREATE TABLE IF NOT EXISTS circle_product_time (
---   id serial PRIMARY KEY,
---   enter_time varchar(24),               --入队时间
---   require_qrcode_time varchar(24),      --二维码获取时间
---   require_logistics_time varchar(24),   --物流码获取时间 
---   locate_photo_time varchar(24),        --定位拍照时间
---   locate_send_time varchar(24),         --定位图片发送时间
---   locate_reslut_time varchar(24),       --定位结果获取时间
---   locate_check_photo_time varchar(24),  --定位复合拍照时间
---   locate_check_send_time varchar(24),   --定位复合图片发送时间
---   locate_check_reslut_time varchar(24), --定位复合结果获取时间
---   paint_singnal_time varchar(24),       --打码信号获取时间
---   paint_time varchar(24),               --打码时间
---   ocr_photo_time varchar(24),           --ocr拍照时间
---   ocr_send_time varchar(24),            --ocr图片发送时间
---   ocr_reslut_time varchar(24),          --ocr结果获取时间
---   out_time varchar(24),                 --剔除时间
---   created_time timestamp DEFAULT CURRENT_TIMESTAMP
--- );
-
 -- Table structure for line_product_time
 CREATE TABLE IF NOT EXISTS line_product_time(
    id serial,
@@ -195,13 +135,14 @@ CREATE TABLE IF NOT EXISTS line_product_time(
    batch_num VARCHAR(64),
    formula_name VARCHAR(64),
    is_remove BOOLEAN,
+   qrcode_signal_time timestamp(3),
    qrcode_time timestamp(3),
    logistics_ret_time timestamp(3),
    coding_signal_time timestamp(3),
    ocr_signal_time timestamp(3),
    ocr_image_time timestamp(3),
    ocr_result_time timestamp(3),
-   complete_signal_time timestamp(3),
+   remove_signal_time timestamp(3),
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
@@ -245,6 +186,7 @@ CREATE TABLE IF NOT EXISTS circle_product_time(
    formula_name VARCHAR(64),
    is_remove BOOLEAN,
    qrcode_time timestamp(3),
+   qrcode_signal_time timestamp(3),
    logistics_ret_time timestamp(3),
    issued_rotate_time timestamp(3),
    location_signal_time timestamp(3),
@@ -258,7 +200,7 @@ CREATE TABLE IF NOT EXISTS circle_product_time(
    ocr_signal_time timestamp(3),
    ocr_image_time timestamp(3),
    ocr_result_time timestamp(3),
-   complete_signal_time timestamp(3),
+   remove_signal_time timestamp(3),
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
@@ -306,12 +248,13 @@ CREATE TABLE IF NOT EXISTS cap_product_time(
    batch_num VARCHAR(64),
    formula_name VARCHAR(64),
    is_remove BOOLEAN,
+   qrcode_signal_time timestamp(3),
    qrcode_time timestamp(3),
    logistics_ret_time timestamp(3),
    ocr_signal_time timestamp(3),
    ocr_image_time timestamp(3),
    ocr_result_time timestamp(3),
-   complete_signal_time timestamp(3),
+   remove_signal_time timestamp(3),
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)

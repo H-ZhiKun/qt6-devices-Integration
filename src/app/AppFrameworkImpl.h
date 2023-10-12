@@ -128,6 +128,7 @@ class AppFrameworkImpl final : public AppFramework
     // tcp client end
     BasePLCDevice *plcDev_ = nullptr;
     BaumerManager *baumerManager_ = nullptr;
+    ProductData *productData_ = nullptr;
     std::unordered_map<uint8_t, QObject *> mapStorePainter_;   // 初始化存放所有qml中的painter对象
     std::unordered_map<std::string, uint8_t> mapWindId2Index_; // 存放窗口名到窗口对象序号的映射
   public:

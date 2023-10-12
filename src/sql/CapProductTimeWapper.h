@@ -23,13 +23,14 @@ class CapProductTimeWapper
         mapData.insert("formula_name", ptr->formulaName_.c_str());
         mapData.insert("is_remove", ptr->isRemove_);
 
+        mapData.insert("qrcode_signal_time", ptr->QRCodeSigTime.c_str());
         mapData.insert("qrcode_time", ptr->QRCodeTime.c_str());
         mapData.insert("logistics_ret_time", ptr->logisticsTime.c_str());
 
         mapData.insert("ocr_signal_time", ptr->OCRSigTime.c_str());
         mapData.insert("ocr_image_time", ptr->OCRImageTime.c_str());
         mapData.insert("ocr_result_time", ptr->OCRResultTime.c_str());
-        mapData.insert("complete_signal_time", ptr->completeSigTime.c_str());
+        mapData.insert("remove_signal_time", ptr->removeSigTime.c_str());
         bool res = PgsqlHelper::getSqlHelper().insertData("cap_product_time", mapData);
         return res;
     }
