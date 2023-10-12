@@ -432,7 +432,7 @@ GroupBox {
             result.details.cognexState === "1" ? imagecognex.source = "file:///" + appdir + "/ico/green.png" : imagecognex.source = "file:///" + appdir + "/ico/red.png";
             result.details.permissionState === "1" ? imagepermission.source = "file:///" + appdir + "/ico/green.png" : imagepermission.source = "file:///" + appdir + "/ico/red.png";
             result.details.plcState === "1" ? imageplc.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
-            result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
+            result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageLocate.source = "file:///" + appdir + "/ico/red.png";
             textEquipmentSteps = result.details.textEquipmentSteps;
         }
     }

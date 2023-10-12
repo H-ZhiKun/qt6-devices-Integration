@@ -877,7 +877,7 @@ void AppFrame::AppFrameworkImpl::timerTask()
                         typeALGO = 2;
                     }
                     afterCaputureImage(typeALGO, mat);
-                    LogInfo("product process:image locate get.");
+                    LogInfo("product process:image {} get.", typeALGO);
                     invokeCpp(mapStorePainter_.at(index), "updateImage", Q_ARG(QImage, Utils::matToQImage(mat)));
                 }
             }
