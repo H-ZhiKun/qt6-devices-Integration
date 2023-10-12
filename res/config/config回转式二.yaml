@@ -69,7 +69,7 @@ cognex:
   host: 192.168.60.121
   port: 23
 permission:
-  host: 192.168.123.100
+  host: 192.168.123.90
   port: 2000
 baumer:
   interface: 
