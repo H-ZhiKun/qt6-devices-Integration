@@ -4,7 +4,7 @@
 
 struct CapInfo
 {
-    bool sigCoding = false; // 40080.8 打码信号
+    // bool sigCoding = false; // 40080.8 打码信号
     bool sigCognex = false; // 40080.9 读码信号
     bool sigOCR = false;    // 40080.10 OCR信号
     bool sigRemove = false; // 40080.11 剔除信号

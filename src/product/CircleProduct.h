@@ -1,8 +1,8 @@
 #pragma once
 #include "BaseProduct.h"
-#include "Logger.h"
 #include "CircleProductDataWapper.h"
 #include "CircleProductTimeWapper.h"
+#include "Logger.h"
 #include "Utils.h"
 #include <memory>
 #include <mutex>
@@ -26,4 +26,5 @@ class CircleProduct : public BaseProduct
     uint16_t OffsetLocateCheck = 6;
     uint16_t OffsetCoding = 9;
     uint16_t OffsetOCR = 14;
+    // uint32_t
 };

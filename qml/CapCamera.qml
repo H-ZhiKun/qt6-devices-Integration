@@ -19,116 +19,13 @@ GroupBox {
         radius: 10
         color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
     }
-    Rectangle {
-        id: frameLocatinCamera
-        x: 47
-        y: 21
-        width: 290
-        height: 290
-        radius: 5
-
-        // title: "定位相机"
-        Rectangle {
-            id: rectLocatinCamera
-            width: parent.width - 10
-            height: parent.height - 10
-            anchors.centerIn: parent
-            color: "#f7f7f7"
-            radius: 5
-        }
-
-        DropShadow {
-            anchors.fill: rectLocatinCamera
-            radius: 8.0
-            samples: 16
-            color: "#dd000000"
-            source: rectLocatinCamera
-        }
-
-        ImagePainter {
-            id: locationCamera
-            objectName: "Location"
-            anchors.fill: parent
-            anchors.margins: 8
-            //anchors.topMargin: 20
-        }
-
-        Text {
-            x: 40
-            y: -20
-            text: "定位相机"
-            font.pointSize: 10
-        }
-
-        Image {
-            id: imageLocate
-            x: 10
-            y: -25
-            width: 28
-            height: 26
-            mipmap: true
-            fillMode: Image.PreserveAspectFit
-            source: "file:///" + appdir + "/ico/red.png"
-        }
-    }
-
-    Rectangle {
-        id: frame1
-        x: 47
-        y: 335
-        width: 290
-        height: 290
-        radius: 5
-        // title: "定位复核相机"
-        Rectangle {
-            id: rectframe1
-            width: parent.width - 10
-
-            height: parent.height - 10
-            anchors.centerIn: parent
-            color: "#f7f7f7"
-            radius: 5
-        }
-
-        DropShadow {
-            anchors.fill: rectframe1
-            radius: 8.0
-            samples: 16
-            color: "#dd000000"
-            source: rectframe1
-        }
-
-        ImagePainter {
-            id: locateCheckCamera
-            objectName: "LocateCheck"
-            anchors.fill: parent
-            anchors.margins: 8
-            //anchors.topMargin: 35
-        }
-        Text {
-            x: 40
-            y: -20
-            text: "定位复核相机"
-            font.pointSize: 10
-        }
-        Image {
-            id: imageLocateCheck
-            x: 10
-            y: -23
-            width: 28
-            height: 26
-            mipmap: true
-            fillMode: Image.PreserveAspectFit
-            source: "file:///" + appdir + "/ico/red.png"
-        }
-    }
 
     Rectangle {
         id: frame2
-        x: 425
-        y: 21
-        width: 290
-        height: 290
+        x: 22
+        y: 95
+        width: 450
+        height: 450
         radius: 5
         // title: "打码复核相机"
         Rectangle {
@@ -146,10 +43,12 @@ GroupBox {
             samples: 16
             color: "#dd000000"
             source: rectframe2
+            anchors.rightMargin: 0
+            anchors.bottomMargin: 0
         }
 
         ImagePainter {
-            id: codeCheckCamera
+            id: ocr
             objectName: "OCR"
             anchors.fill: parent
             anchors.margins: 8
@@ -164,7 +63,7 @@ GroupBox {
         }
 
         Image {
-            id: imageCodeCheck
+            id: imageLocate
             x: 10
             y: -25
             width: 28
@@ -176,74 +75,9 @@ GroupBox {
     }
 
     GroupBox {
-        id: formulaData
-        x: 798
-        y: 119
-        width: 255
-        height: 103
-        font.pointSize: 12
-        background: Rectangle {
-            anchors.fill: parent
-            anchors.topMargin: 35
-            border.color: "gray"
-            border.width: 1
-            radius: 10
-            color: Qt.rgba(245 / 255, 248 / 255, 245 / 255, 1)
-        }
-        Image {
-            x: -10
-            y: -45
-            width: 20
-            height: 20
-            mipmap: true
-            source: "file:///" + appdir + "/ico/peifang.png"
-        }
-
-        Text {
-            x: 0
-            y: 0
-            text: "当前配方名字："
-            font.pointSize: 11
-        }
-
-        Text {
-            x: 0
-            y: 30
-            text: "当前配方速度："
-            font.pointSize: 11
-        }
-
-        Text {
-            id: curFormulaName
-            x: 100
-            y: 0
-            width: 280
-            text: master.formulaName
-            font.pointSize: 11
-            clip: true
-        }
-
-        Text {
-            id: curFormulaSpeed
-            x: 100
-            y: 30
-            text: master.formulaSpeed
-            font.pointSize: 11
-        }
-
-        Text {
-            x: 184
-            y: 30
-            text: "瓶/小时"
-            font.pointSize: 11
-        }
-        title: "   配方信息"
-    }
-
-    GroupBox {
         id: countData
-        x: 798
-        y: 272
+        x: 771
+        y: 228
         width: 255
         height: 303
         font.pointSize: 12
@@ -407,7 +241,7 @@ GroupBox {
             icon.color: "#ddfb0a0a"
             icon.height: 35
             onClicked: {
-                appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.ZeroClearing, "");
+                appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.StrightZeroClearing, "");
             }
         }
         title: "   计数信息"
@@ -425,117 +259,29 @@ GroupBox {
     }
 
     Text {
-        x: 425
-        y: 336
-        text: qsTr("生产状态：")
-        font.pointSize: 13
-    }
-
-    Text {
-        id: textPrepare
-        x: 515
-        y: 352
-        text: qsTr("准备")
-        color: textProduceState === 0 ? "green" : "gray"
-        font.pointSize: 11
-    }
-
-    Text {
-        id: textRun
-        x: 572
-        y: 352
-        text: qsTr("运行")
-        color: textProduceState === 1 ? "green" : "gray"
-        font.pointSize: 11
-    }
-
-    Text {
-        id: textPause
-        x: 629
-        y: 352
-        text: qsTr("暂停")
-        color: textProduceState === 2 ? "green" : "gray"
-        font.pointSize: 11
-    }
-
-    Text {
-        id: textStop
-        x: 686
-        y: 352
-        text: qsTr("终止")
-        color: textProduceState === 3 ? "red" : "gray"
-        font.pointSize: 11
-    }
-
-    Text {
-        x: 425
-        y: 413
+        x: 782
+        y: 144
         text: qsTr("设备步骤：")
         font.pointSize: 13
     }
 
     Text {
         id: equipmentSteps
-        x: 515
-        y: 414
+        x: 872
+        y: 145
         text: textEquipmentSteps
         font.pointSize: 11
     }
 
-    Image {
-        id: producePrepare
-        x: 515
-        y: 322
-        width: 30
-        height: 30
-        property int state: 0
-        mipmap: true
-        source: "file:///" + appdir + "/ico/zhunbeizhong.png"
-        fillMode: Image.PreserveAspectFit
-    }
-
-    Image {
-        id: produceRun
-        x: 572
-        y: 322
-        width: 30
-        height: 30
-        mipmap: true
-        source: "file:///" + appdir + "/ico/yunxing.png"
-        fillMode: Image.PreserveAspectFit
-    }
-
-    Image {
-        id: producePause
-        x: 629
-        y: 322
-        width: 30
-        height: 30
-        mipmap: true
-        source: "file:///" + appdir + "/ico/zanting.png"
-        fillMode: Image.PreserveAspectFit
-    }
-
-    Image {
-        id: produceStop
-        x: 686
-        y: 322
-        width: 30
-        height: 30
-        mipmap: true
-        source: textProduceState === 3 ? "file:///" + appdir + "/ico/tingzhi.png" : "file:///" + appdir + "/ico/zhongzhiblack.png"
-        fillMode: Image.PreserveAspectFit
-    }
-
     // Button {
     //     id: button
-    //     x: 399
-    //     y: 455
+    //     x: 549
+    //     y: 367
     //     width: 111
     //     height: 37
     //     text: qsTr("相机参数设置")
     //     onClicked: {
-    //         var component = Qt.createComponent("CameraParam.qml");
+    //         var component = Qt.createComponent("StrightCameraParam.qml");
     //         var window = component.createObject(cameraPage);
     //         window.show();
     //     }
@@ -543,9 +289,9 @@ GroupBox {
 
     Button {
         id: button1
-        x: 402
-        y: 571
-        width: 108
+        x: 548
+        y: 483
+        width: 112
         height: 38
         text: qsTr("保存图像")
         onClicked: {
@@ -565,8 +311,8 @@ GroupBox {
 
     Button {
         id: button2
-        x: 398
-        y: 512
+        x: 548
+        y: 424
         width: 112
         height: 32
         text: qsTr("点动模式")
@@ -575,10 +321,12 @@ GroupBox {
             pointMode = !pointMode;
             var json = {};
             if (pointMode) {
-                json["point_b_12992_00"] = "1";
+                json["point_di_0001"] = "1";
+                autoPointMode = 1;
                 text = "点动中";
             } else {
-                json["point_b_12992_00"] = "0";
+                json["point_di_0001"] = "2";
+                autoPointMode = 2;
                 text = "点动模式";
             }
             var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.WritePLC, JSON.stringify(json));
@@ -587,8 +335,8 @@ GroupBox {
 
     Text {
         id: textPrepare1
-        x: 611
-        y: 455
+        x: 585
+        y: 160
         width: 38
         height: 19
         text: qsTr("PLC:")
@@ -597,8 +345,8 @@ GroupBox {
 
     Text {
         id: textPrepare2
-        x: 563
-        y: 494
+        x: 537
+        y: 199
         width: 94
         height: 19
         text: qsTr("激光打码机:")
@@ -607,8 +355,8 @@ GroupBox {
 
     Text {
         id: textPrepare3
-        x: 564
-        y: 538
+        x: 538
+        y: 243
         width: 90
         height: 19
         text: qsTr("普什服务器:")
@@ -617,8 +365,8 @@ GroupBox {
 
     Text {
         id: textPrepare4
-        x: 591
-        y: 581
+        x: 565
+        y: 286
         width: 63
         height: 19
         text: qsTr("扫码机:")
@@ -627,8 +375,8 @@ GroupBox {
 
     Image {
         id: imageplc
-        x: 664
-        y: 452
+        x: 638
+        y: 157
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
@@ -637,8 +385,8 @@ GroupBox {
 
     Image {
         id: imagedomino
-        x: 664
-        y: 491
+        x: 638
+        y: 196
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
@@ -647,8 +395,8 @@ GroupBox {
 
     Image {
         id: imagepermission
-        x: 664
-        y: 538
+        x: 638
+        y: 243
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
@@ -657,8 +405,8 @@ GroupBox {
 
     Image {
         id: imagecognex
-        x: 664
-        y: 577
+        x: 638
+        y: 282
         width: 28
         height: 26
         fillMode: Image.PreserveAspectFit
@@ -677,17 +425,14 @@ GroupBox {
     }
 
     function refreshItemState() {
-        var jsRet = appMetaFlash.qmlCallExpected(MainWindow.ExpectedFunction.RefreshMainPage, "");
+        var jsRet = appMetaFlash.qmlCallExpected(StrightMainWindow.ExpectedFunction.RefreshStrightMainPage, "");
         var result = JSON.parse(jsRet);
         if (result.ok) {
             result.details.dominoState === "1" ? imagedomino.source = "file:///" + appdir + "/ico/green.png" : imagedomino.source = "file:///" + appdir + "/ico/red.png";
             result.details.cognexState === "1" ? imagecognex.source = "file:///" + appdir + "/ico/green.png" : imagecognex.source = "file:///" + appdir + "/ico/red.png";
             result.details.permissionState === "1" ? imagepermission.source = "file:///" + appdir + "/ico/green.png" : imagepermission.source = "file:///" + appdir + "/ico/red.png";
             result.details.plcState === "1" ? imageplc.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
-            result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageLocate.source = "file:///" + appdir + "/ico/red.png";
-            result.details.image1 === "1" ? imageCodeCheck.source = "file:///" + appdir + "/ico/green.png" : imageCodeCheck.source = "file:///" + appdir + "/ico/red.png";
-            result.details.image2 === "1" ? imageLocateCheck.source = "file:///" + appdir + "/ico/green.png" : imageLocateCheck.source = "file:///" + appdir + "/ico/red.png";
-            textCountPauseWaste = result.details.textProduceState;
+            result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
             textEquipmentSteps = result.details.textEquipmentSteps;
         }
     }

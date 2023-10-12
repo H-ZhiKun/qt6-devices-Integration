@@ -66,7 +66,7 @@ domino:
   host: 127.0.0.1
   port: 20001                     
 cognex:
-  host: 192.168.80.121
+  host: 192.168.60.121
   port: 23
 permission:
   host: 192.168.123.100

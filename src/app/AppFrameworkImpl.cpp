@@ -62,12 +62,18 @@ AppFrame::AppFrameworkImpl::AppFrameworkImpl()
     registerExpectation(ExpectedFunction::ReadPLC, std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
     registerExpectation(ExpectedFunction::WritePLC,
                         std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::RefreshMainPage, std::bind(&AppFrameworkImpl::refreshMainPage, this));
-    registerExpectation(ExpectedFunction::RefreshPowerPage, std::bind(&AppFrameworkImpl::refreshPowerPage, this));
-    registerExpectation(ExpectedFunction::RefreshElecData,
-                        std::bind(&AppFrameworkImpl::refreshElecData, this)); // 注册直线式电能表数据
+    registerExpectation(ExpectedFunction::RefreshMainPage,
+                        std::bind(&AppFrameworkImpl::refreshMainPage, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::RefreshPowerPage,
+                        std::bind(&AppFrameworkImpl::refreshPowerPage, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::RefreshElecData, std::bind(&AppFrameworkImpl::refreshElecData, this,
+                                                                     std::placeholders::_1)); // 注册直线式电能表数据
     registerExpectation(ExpectedFunction::RefreshStrightMainPage,
-                        std::bind(&AppFrameworkImpl::refreshStrightMainPage, this));
+                        std::bind(&AppFrameworkImpl::refreshStrightMainPage, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::ZeroClearing,
+                        std::bind(&AppFrameworkImpl::zeroClearing, this, std::placeholders::_1));
+    registerExpectation(ExpectedFunction::StrightZeroClearing,
+                        std::bind(&AppFrameworkImpl::strightZeroClearing, this, std::placeholders::_1));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -408,7 +414,7 @@ std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
     }
     return Utils::makeResponse(ret);
 }
-std::string AppFrame::AppFrameworkImpl::refreshElecData()
+std::string AppFrame::AppFrameworkImpl::refreshElecData(const std::string &str)
 {
     bool ret = true;
     Json::Value jsElecVal;
@@ -436,7 +442,7 @@ std::string AppFrame::AppFrameworkImpl::refreshElecData()
     return result;
 }
 
-std::string AppFrame::AppFrameworkImpl::refreshMainPage()
+std::string AppFrame::AppFrameworkImpl::refreshMainPage(const std::string &str)
 {
     bool ret = true;
     Json::Value jsMainVal;
@@ -493,7 +499,7 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage()
     return result;
 }
 
-std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage()
+std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage(const std::string &str)
 {
     bool ret = true;
     Json::Value jsMainVal;
@@ -542,7 +548,7 @@ std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage()
     return result;
 }
 
-std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
+std::string AppFrame::AppFrameworkImpl::refreshPowerPage(const std::string &str)
 {
     Json::Value jsPowerVal;
     bool ret = true;
@@ -561,6 +567,18 @@ std::string AppFrame::AppFrameworkImpl::refreshPowerPage()
     jsPowerVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
     std::string result = Utils::makeResponse(ret, std::move(jsPowerVal));
     return result;
+}
+
+std::string AppFrame::AppFrameworkImpl::zeroClearing(const std::string &str)
+{
+    plcDev_->writeDevice("b", "12992", "1", "1");
+    return std::string();
+}
+
+std::string AppFrame::AppFrameworkImpl::strightZeroClearing(const std::string &str)
+{
+    plcDev_->writeDevice("b", "0005", "8", "1");
+    return std::string();
 }
 
 void AppFrame::AppFrameworkImpl::loadConfig()
@@ -671,6 +689,7 @@ void AppFrame::AppFrameworkImpl::initPLC()
     }
     else if (strType == "cap")
     {
+        plcDev_ = new CapDevice;
     }
     plcDev_->init(config_);
     QObject::connect(plcDev_, &BasePLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
@@ -779,6 +798,7 @@ void AppFrame::AppFrameworkImpl::initProduct()
     }
     else if (strType == "cap")
     {
+        product_ = new CapProduct();
     }
 }
 

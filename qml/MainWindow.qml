@@ -33,7 +33,9 @@ Window {
         RefreshMainPage,  //17 刷新主页面数据
         RefreshPowerPage,  //18 刷新电能数据
         RefreshElecData, //19 刷新直线式电能数据
-        RefreshStrightMainPage
+        RefreshStrightMainPage,
+        ZeroClearing,
+        StrightZeroClearing
     }
 
     Login {
