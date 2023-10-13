@@ -21,7 +21,7 @@ class Permission : public TCPClient
     std::string strCodeNull = "FFFFNULL\r\n";   // 激光码空返回
     std::string strSysEor1 = "FFFFSysEor1\r\n"; // 表示生产品出现连续NG等异常情况
     std::string strHead = "FFFF";               // 协议头
-    std::string strTail = "\r\n";               // 协议尾
+    std::string strTail = "\\r\\n";             // 协议尾
 };
 
 #endif // Permission_H
