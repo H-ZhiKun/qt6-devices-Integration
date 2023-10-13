@@ -165,8 +165,7 @@ CREATE TABLE IF NOT EXISTS line_product_data(
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
-)PARTITION BY RANGE (created_date);
-CREATE INDEX idx_line_product_data ON line_product_data (created_time);
+);
 
 CREATE TABLE line_product_time_2023_09 PARTITION OF line_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
 CREATE TABLE line_product_data_2023_09 PARTITION OF line_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
@@ -185,8 +184,8 @@ CREATE TABLE IF NOT EXISTS circle_product_time(
    batch_num VARCHAR(64),
    formula_name VARCHAR(64),
    is_remove BOOLEAN,
-   qrcode_time timestamp(3),
    qrcode_signal_time timestamp(3),
+   qrcode_time timestamp(3),
    logistics_ret_time timestamp(3),
    issued_rotate_time timestamp(3),
    location_signal_time timestamp(3),
@@ -204,8 +203,7 @@ CREATE TABLE IF NOT EXISTS circle_product_time(
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
-)PARTITION BY RANGE (created_date);
-CREATE INDEX idx_circle_product_time ON circle_product_time (created_time);
+);
 
 -- Table structure for circle_product_data
 CREATE TABLE IF NOT EXISTS circle_product_data(
@@ -227,8 +225,7 @@ CREATE TABLE IF NOT EXISTS circle_product_data(
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
-)PARTITION BY RANGE (created_date);
-CREATE INDEX idx_circle_product_data ON circle_product_data (created_time);
+);
 
 CREATE TABLE circle_product_time_2023_09 PARTITION OF circle_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
 CREATE TABLE circle_product_data_2023_09 PARTITION OF circle_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
@@ -258,8 +255,7 @@ CREATE TABLE IF NOT EXISTS cap_product_time(
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
-)PARTITION BY RANGE (created_date);
-CREATE INDEX idx_cap_product_time ON cap_product_time (created_time);
+);
 
 -- Table structure for line_product_data
 CREATE TABLE IF NOT EXISTS cap_product_data(
@@ -277,8 +273,7 @@ CREATE TABLE IF NOT EXISTS cap_product_data(
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
    created_date date DEFAULT CURRENT_DATE,
    PRIMARY KEY (id, created_date)
-)PARTITION BY RANGE (created_date);
-CREATE INDEX idx_cap_product_data ON cap_product_data (created_time);
+);
 
 CREATE TABLE cap_product_time_2023_09 PARTITION OF cap_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
 CREATE TABLE cap_product_data_2023_09 PARTITION OF cap_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
