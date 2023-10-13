@@ -572,12 +572,14 @@ std::string AppFrame::AppFrameworkImpl::refreshPowerPage(const std::string &str)
 std::string AppFrame::AppFrameworkImpl::zeroClearing(const std::string &str)
 {
     plcDev_->writeDevice("b", "12992", "1", "1");
+    countData_->zeroClear();
     return std::string();
 }
 
 std::string AppFrame::AppFrameworkImpl::strightZeroClearing(const std::string &str)
 {
     plcDev_->writeDevice("b", "0005", "8", "1");
+    countData_->zeroClear();
     return std::string();
 }
 
@@ -791,17 +793,17 @@ void AppFrame::AppFrameworkImpl::initProduct()
     if (strType == "circle")
     {
         product_ = new CircleProduct();
-        productData_ = new CircleProductData();
+        countData_ = new CircleProductData();
     }
     else if (strType == "line")
     {
         product_ = new LineProduct();
-        productData_ = new LineProductData();
+        countData_ = new LineProductData();
     }
     else if (strType == "cap")
     {
         product_ = new CapProduct();
-        productData_ = new CapProductData();
+        countData_ = new CapProductData();
     }
 }
 
@@ -823,10 +825,10 @@ void AppFrame::AppFrameworkImpl::memoryClean()
         delete product_;
         product_ = nullptr;
     }
-    if (productData_)
+    if (countData_)
     {
-        delete productData_;
-        productData_ = nullptr;
+        delete countData_;
+        countData_ = nullptr;
     }
     if (plcDev_ != nullptr)
     {
