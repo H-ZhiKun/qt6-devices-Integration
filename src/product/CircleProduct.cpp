@@ -29,7 +29,10 @@ void CircleProduct::createProduct(uint32_t pdNum, const std::string &batchNum, c
 std::shared_ptr<ProductItem> CircleProduct::deleteProduct()
 {
     auto ptr = BaseProduct::deleteProduct();
-    CircleProductTimeWapper::insert(ptr);
-    CircleProductDataWapper::insert(ptr);
+    if (ptr->bottleNum_ > 0)
+    {
+        CircleProductTimeWapper::insert(ptr);
+        CircleProductDataWapper::insert(ptr);
+    }
     return ptr;
 }
