@@ -27,7 +27,7 @@ void Permission::dealing(std::vector<unsigned char> buffer)
         else
         {
             code1 = result;
-            LogInfo("product process: recieve peimisson success: code = {}", result);
+            LogInfo("product process: recieve peimisson other data: code = {}", result);
         }
     }
     else
