@@ -26,3 +26,11 @@ std::shared_ptr<ProductItem> LineProduct::deleteProduct()
     }
     return ptr;
 }
+
+LineCount::LineCount()
+{
+    countData["countAll"] = 0;
+    countData["countPass"] = 0;
+    countData["countWaste"] = 0;
+    countData["countCodeWaste"] = 0; // 喷码废品数
+}

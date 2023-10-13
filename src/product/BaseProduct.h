@@ -32,15 +32,41 @@ struct OcrRes
     uint16_t rightbottomy;
 };
 
-class ProductData
+class Count
 {
   public:
-    ProductData() = default;
-    ~ProductData() = default;
-    virtual void zeroClear() = 0;
-    uint32_t countAll = 0;   // 进瓶数
-    uint32_t countPass = 0;  // 合格品数
-    uint32_t countWaste = 0; // 废品总数
+    Count() = default;
+    ~Count() = default;
+    virtual void zeroClear()
+    {
+        for (auto iter = countData.begin(); iter != countData.end(); iter++)
+        {
+            iter->second = 0;
+        }
+    };
+    virtual void zeroClear(const std::string countItem)
+    {
+        auto item = countData.find(countItem);
+        if (item != countData.end())
+        {
+            item->second = 0;
+        }
+    };
+    virtual std::unordered_map<std::string, uint32_t>& dataRead()
+    {
+        return countData;
+    };
+    virtual void dataAdd(const std::string countItem)
+    {
+        auto item = countData.find(countItem);
+        if (item != countData.end())
+        {
+            item->second++;
+        }
+    };
+
+  protected:
+    std::unordered_map<std::string, uint32_t> countData;
 };
 
 struct ProductItem

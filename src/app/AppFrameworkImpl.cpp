@@ -446,6 +446,7 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage(const std::string &str)
 {
     bool ret = true;
     Json::Value jsMainVal;
+    // 状态显示信息
     jsMainVal["image0"] = "0";
     jsMainVal["image1"] = "0";
     jsMainVal["image2"] = "0";
@@ -454,7 +455,14 @@ std::string AppFrame::AppFrameworkImpl::refreshMainPage(const std::string &str)
     jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
     jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
     jsMainVal["textProduceState"] = plcDev_->readDevice("n", "12612");
-
+    // 计数信息
+    std::unordered_map<std::string, uint32_t> circleCount_ = countData_->dataRead();
+    jsMainVal["count_all"] = circleCount_["countAll"];
+    jsMainVal["count_pass"] = circleCount_["countPass"];
+    jsMainVal["count_waste"] = circleCount_["countWaste"];
+    jsMainVal["count_locate_waste"] = circleCount_["countLocateWaste"];
+    jsMainVal["count_code_waste"] = circleCount_["countCodeWaste"];
+    jsMainVal["count_pause_waste"] = circleCount_["countPauseWaste"];
     std::string textEquipmentSteps = plcDev_->readDevice("n", "12613");
     switch (std::atoi(textEquipmentSteps.c_str()))
     {
@@ -508,6 +516,12 @@ std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage(const std::string
     jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
     jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
     jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
+    // 计数信息
+    std::unordered_map<std::string, uint32_t> circleCount_ = countData_->dataRead();
+    jsMainVal["count_all"] = circleCount_["countAll"];
+    jsMainVal["count_pass"] = circleCount_["countPass"];
+    jsMainVal["count_waste"] = circleCount_["countWaste"];
+    jsMainVal["count_code_waste"] = circleCount_["countCodeWaste"];
     std::string textEquipmentSteps = plcDev_->readDevice("di", "0006");
     switch (std::atoi(textEquipmentSteps.c_str()))
     {
@@ -571,7 +585,7 @@ std::string AppFrame::AppFrameworkImpl::refreshPowerPage(const std::string &str)
 
 std::string AppFrame::AppFrameworkImpl::zeroClearing(const std::string &str)
 {
-    plcDev_->writeDevice("b", "12992", "1", "1");
+    // plcDev_->writeDevice("b", "12992", "1", "1");
     countData_->zeroClear();
     return std::string();
 }
@@ -793,17 +807,17 @@ void AppFrame::AppFrameworkImpl::initProduct()
     if (strType == "circle")
     {
         product_ = new CircleProduct();
-        countData_ = new CircleProductData();
+        countData_ = new CircleCount();
     }
     else if (strType == "line")
     {
         product_ = new LineProduct();
-        countData_ = new LineProductData();
+        countData_ = new LineCount();
     }
     else if (strType == "cap")
     {
         product_ = new CapProduct();
-        countData_ = new CapProductData();
+        countData_ = new CapCount();
     }
 }
 

@@ -24,21 +24,9 @@ class CircleProduct : public BaseProduct
     uint16_t OffsetOCR = 14;
 };
 
-class CircleProductData : public ProductData
+class CircleCount : public Count
 {
   public:
-    CircleProductData() = default;
-    ~CircleProductData() = default;
-    virtual void zeroClear()
-    {
-        countAll = 0;
-        countPass = 0;
-        countWaste = 0;
-        countLocateWaste = 0;
-        countCodeWaste = 0;
-        countPauseWaste = 0;
-    };
-    uint32_t countLocateWaste = 0; // 定位废品数
-    uint32_t countCodeWaste = 0;   // 喷码废品数
-    uint32_t countPauseWaste = 0;  // 暂停/终止废品数
+    CircleCount();
+    ~CircleCount() = default;
 };

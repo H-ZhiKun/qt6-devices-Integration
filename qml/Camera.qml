@@ -689,6 +689,12 @@ GroupBox {
             result.details.image2 === "1" ? imageLocateCheck.source = "file:///" + appdir + "/ico/green.png" : imageLocateCheck.source = "file:///" + appdir + "/ico/red.png";
             textCountPauseWaste = result.details.textProduceState;
             textEquipmentSteps = result.details.textEquipmentSteps;
+            textCountAll = result.details.count_all;
+            textCountPass = result.details.count_pass;
+            textCountWaste = result.details.count_waste;
+            textCountLocateWaste = result.details.count_locate_waste;
+            textCountCodeWaste = result.details.count_code_waste;
+            textCountPauseWaste = result.details.count_pause_waste;
         }
     }
     Connections {

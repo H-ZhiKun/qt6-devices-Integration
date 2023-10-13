@@ -434,6 +434,10 @@ GroupBox {
             result.details.plcState === "1" ? imageplc.source = "file:///" + appdir + "/ico/green.png" : imageplc.source = "file:///" + appdir + "/ico/red.png";
             result.details.image0 === "1" ? imageLocate.source = "file:///" + appdir + "/ico/green.png" : imageLocate.source = "file:///" + appdir + "/ico/red.png";
             textEquipmentSteps = result.details.textEquipmentSteps;
+            textCountAll = result.details.count_all;
+            textCountPass = result.details.count_pass;
+            textCountWaste = result.details.count_waste;
+            textCountCodeWaste = result.details.count_code_waste;
         }
     }
     Connections {

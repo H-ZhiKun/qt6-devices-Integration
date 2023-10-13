@@ -18,17 +18,10 @@ class LineProduct : public BaseProduct
     uint32_t customNum_ = 0;
 };
 
-class LineProductData : public ProductData
+class LineCount : public Count
 {
   public:
-    LineProductData() = default;
-    ~LineProductData() = default;
-    virtual void zeroClear()
-    {
-        countAll = 0;
-        countPass = 0;
-        countWaste = 0;
-        countCodeWaste = 0;
-    };
+    LineCount();
+    ~LineCount() = default;
     uint32_t countCodeWaste = 0; // 喷码废品数
 };
