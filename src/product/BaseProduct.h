@@ -105,16 +105,11 @@ class BaseProduct : public AppFrame::NonCopyable
         std::lock_guard lock(mtxProduct_);
         auto pd = std::make_shared<ProductItem>(pdNum, pdType_, batchNum, formulaName);
         qProduct_.push_front(pd);
-        ++cursorQRSignal_;
-        ++cursorLocationSignal_;
-        ++cursorCheckSignal_;
-        ++cursorCodingSignal_;
-        ++cursorOCRSignal_;
-        ++cursorRemoveSignal_;
-        ++cursorQRCode_;
-        ++cursorLocation_;
-        ++cursorCheck_;
-        ++cursorOCR_;
+        if (qProduct_.size() > 17)
+        {
+            qProduct_.pop_back();
+        }
+        effectiveCursor(pdNum);
     }
     virtual std::shared_ptr<ProductItem> deleteProduct()
     {
@@ -280,6 +275,49 @@ class BaseProduct : public AppFrame::NonCopyable
     }
 
   protected:
+    void effectiveCursor(const uint32_t &bottleNumber)
+    {
+        if (cursorQRSignal_ > -1 || bottleNumber > 0)
+        {
+            ++cursorQRSignal_;
+        }
+        if (cursorLocationSignal_ > -1 || bottleNumber > 0)
+        {
+            ++cursorLocationSignal_;
+        }
+        if (cursorCheckSignal_ > -1 || bottleNumber > 0)
+        {
+            ++cursorCheckSignal_;
+        }
+        if (cursorCodingSignal_ > -1 || bottleNumber > 0)
+        {
+            ++cursorCodingSignal_;
+        }
+        if (cursorOCRSignal_ > -1 || bottleNumber > 0)
+        {
+            ++cursorOCRSignal_;
+        }
+        if (cursorRemoveSignal_ > -1 || bottleNumber > 0)
+        {
+            ++cursorRemoveSignal_;
+        }
+        if (cursorQRCode_ > -1 || bottleNumber > 0)
+        {
+            ++cursorQRCode_;
+        }
+        if (cursorLocation_ > -1 || bottleNumber > 0)
+        {
+            ++cursorLocation_;
+        }
+        if (cursorCheck_ > -1 || bottleNumber > 0)
+        {
+            ++cursorCheck_;
+        }
+        if (cursorOCR_ > -1 || bottleNumber > 0)
+        {
+            ++cursorOCR_;
+        }
+    }
     void moveCursor(int16_t &cursor)
     {
         while (true)
