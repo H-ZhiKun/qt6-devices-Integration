@@ -3,6 +3,7 @@
 #include "RegistersWapper.h"
 struct FIFOInfo
 {
+    bool bhaveBottle = 0;            // 412642_0 是否有瓶
     uint16_t numQRCode = 0;          // 412643 二维码读取工位小瓶编号
     uint16_t numPosition = 0;        // 412644 定位拍照工位小瓶编号
     uint16_t numVerifyPos = 0;       // 412645 定位确认拍照工位小瓶编号

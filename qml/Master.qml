@@ -568,8 +568,7 @@ Rectangle {
         // 阀门
         Item {
             id: valvePageTab
-            StrightValvePage {
-                //ValvePage {
+            ValvePage {
                 id: volveItem
                 x: 190
                 y: 30
@@ -578,8 +577,7 @@ Rectangle {
         // 电机
         Item {
             id: powerPageTab
-            // PowerPage {
-            StrightPowerPage {
+            PowerPage {
                 id: powerItem
                 x: 190
                 y: 30
