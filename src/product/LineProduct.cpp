@@ -19,7 +19,10 @@ void LineProduct::createProduct(uint32_t pdNum, const std::string &batchNum, con
 std::shared_ptr<ProductItem> LineProduct::deleteProduct()
 {
     auto ptr = BaseProduct::deleteProduct();
-    LineProductTimeWapper::insert(ptr);
-    LineProductDataWapper::insert(ptr);
+    if (ptr->bottleNum_ > 0)
+    {
+        LineProductTimeWapper::insert(ptr);
+        LineProductDataWapper::insert(ptr);
+    }
     return ptr;
 }

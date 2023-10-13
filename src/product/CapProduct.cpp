@@ -18,7 +18,10 @@ std::shared_ptr<ProductItem> CapProduct::deleteProduct()
 {
     LogInfo("CapProduct Complete");
     auto ptr = BaseProduct::deleteProduct();
-    CapProductTimeWapper::insert(ptr);
-    CapProductDataWapper::insert(ptr);
+    if (ptr->bottleNum_ > 0)
+    {
+        CapProductTimeWapper::insert(ptr);
+        CapProductDataWapper::insert(ptr);
+    }
     return ptr;
 }
