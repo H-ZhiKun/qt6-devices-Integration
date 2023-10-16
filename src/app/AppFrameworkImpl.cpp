@@ -990,7 +990,8 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
                 }
                 locateCheck->issuedLocateCheckTime = Utils::getCurrentTime(true);
             }
-            if (printer && !printer->logistics1.empty() && printer->CheckResult == "1")
+            // if (printer && !printer->logistics1.empty() && printer->CheckResult == "1") 测试代码，复核算法未开启
+            if (printer && !printer->logistics1.empty())
             {
                 invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
                           Q_ARG(std::string, printer->logistics2));
@@ -1089,7 +1090,7 @@ void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const c
         default:
             break;
         }
-        LogInfo("product process:send to algo:number={},model={}.", bottomNum, type);
+        LogInfo("product process:send to algo:number={},model={},path={}.", bottomNum, type, filePath);
         if (bottomNum > 0)
         {
             std::string sendJson;

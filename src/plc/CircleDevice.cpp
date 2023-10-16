@@ -49,7 +49,7 @@ void CircleDevice::parsingRealtimeInfo(const uint16_t *realtimeInfo, uint16_t si
     std::bitset<16> bits = std::bitset<16>(realtimeInfo[0]);
     if (realtimeInfo[1] != fifoInfo_.numQRCode)
     {
-        if (bits[0] == true && bits[0] != fifoInfo_.bhaveBottle)
+        if (bits[0] == true)
         {
             emit signalQR(realtimeInfo[1]);
         }
@@ -58,7 +58,7 @@ void CircleDevice::parsingRealtimeInfo(const uint16_t *realtimeInfo, uint16_t si
             emit signalQR(0);
         }
     }
-    fifoInfo_.bhaveBottle = bits[0];
+
     fifoInfo_.numQRCode = realtimeInfo[1];
     fifoInfo_.numPosition = realtimeInfo[2];
     fifoInfo_.numVerifyPos = realtimeInfo[3];

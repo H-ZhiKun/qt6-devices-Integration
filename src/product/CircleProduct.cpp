@@ -20,6 +20,10 @@ void CircleProduct::createProduct(uint32_t pdNum, const std::string &batchNum, c
     {
         signalCheck();
     }
+    if (qProduct_.size() > OffsetCoding && qProduct_[OffsetCoding]->bottleNum_ > 0)
+    {
+        signalCoding();
+    }
     if (qProduct_.size() > OffsetOCR && qProduct_[OffsetOCR]->bottleNum_ > 0)
     {
         signalOCR();

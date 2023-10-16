@@ -21,13 +21,14 @@ void Permission::dealing(std::vector<unsigned char> buffer)
         if (code.length() == 24)
         {
             LogInfo("product process: recieve peimisson success: code = {}", result);
-            code1 = result.substr(0, 12);
-            code2 = result.substr(12);
+            code1 = code.substr(0, 12);
+            code2 = code.substr(12);
         }
         else
         {
             code1 = result;
             LogInfo("product process: recieve peimisson other data: code = {}", result);
+            return;
         }
     }
     else
@@ -35,6 +36,7 @@ void Permission::dealing(std::vector<unsigned char> buffer)
         // 处理没有逗号的情况
         code1 = result;
         LogError("product process: recieve peimisson error: code = {}", result);
+        return;
     }
     emit codeRight(number, code1, code2);
 }

@@ -31,6 +31,7 @@ class CircleProductDataWapper
         mapData["location_result"] = ptr->LocationResult.c_str();
         mapData["check_result"] = ptr->CheckResult.c_str();
         mapData["ocr_result"] = ptr->OCRResult.c_str();
+        LogInfo("locate check get num: {}", ptr->bottleNum_);
         bool res = PgsqlHelper::getSqlHelper().insertData("circle_product_data", mapData);
         return res;
     }

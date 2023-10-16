@@ -198,7 +198,7 @@ class BaseProduct : public AppFrame::NonCopyable
     virtual uint32_t updateQRCode(const std::string &code)
     {
         if (cursorQRCode_ == -1)
-            return;
+            return 0;
         std::lock_guard lock(mtxProduct_);
         auto ptr = qProduct_[cursorQRCode_];
         ptr->QRCode = code;
@@ -259,6 +259,7 @@ class BaseProduct : public AppFrame::NonCopyable
         ptr->CheckImage = mat;
         ptr->CheckPath = path;
         ptr->CheckImageTime = Utils::getCurrentTime(true);
+        LogInfo("locate check set num: {}", ptr->bottleNum_);
         moveCursor(cursorCheck_);
         return ptr->bottleNum_;
     }
