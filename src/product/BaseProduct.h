@@ -146,38 +146,50 @@ class BaseProduct : public AppFrame::NonCopyable
     }
     virtual void signalQR()
     {
+        if (cursorQRSignal_ == -1)
+            return;
         std::lock_guard lock(mtxProduct_);
         qProduct_[cursorQRSignal_]->QRCodeSigTime = Utils::getCurrentTime(true);
         moveCursor(cursorQRSignal_);
     }
     virtual void signalLocation()
     {
+        if (cursorLocationSignal_ == -1)
+            return;
         std::lock_guard lock(mtxProduct_);
         qProduct_[cursorLocationSignal_]->LocationSigTime = Utils::getCurrentTime(true);
         moveCursor(cursorLocationSignal_);
     }
     virtual void signalCheck()
     {
+        if (cursorCheck_ == -1)
+            return;
         std::lock_guard lock(mtxProduct_);
         qProduct_[cursorCheck_]->CheckSigTime = Utils::getCurrentTime(true);
         moveCursor(cursorCheck_);
     }
     virtual std::shared_ptr<ProductItem> signalCoding()
     {
+        if (cursorCodingSignal_ == -1)
+            return nullptr;
         std::lock_guard lock(mtxProduct_);
         auto ptr = qProduct_[cursorCodingSignal_];
         ptr->codingSigTime = Utils::getCurrentTime(true);
-        moveCursor(cursorCheck_);
+        moveCursor(cursorCodingSignal_);
         return ptr;
     }
     virtual void signalOCR()
     {
+        if (cursorOCRSignal_ == -1)
+            return;
         std::lock_guard lock(mtxProduct_);
         qProduct_[cursorOCRSignal_]->OCRSigTime = Utils::getCurrentTime(true);
         moveCursor(cursorOCRSignal_);
     }
     virtual void signalRemove()
     {
+        if (cursorRemoveSignal_ == -1)
+            return;
         std::lock_guard lock(mtxProduct_);
         qProduct_[cursorRemoveSignal_]->removeSigTime = Utils::getCurrentTime(true);
         moveCursor(cursorRemoveSignal_);
@@ -185,6 +197,8 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual uint32_t updateQRCode(const std::string &code)
     {
+        if (cursorQRCode_ == -1)
+            return;
         std::lock_guard lock(mtxProduct_);
         auto ptr = qProduct_[cursorQRCode_];
         ptr->QRCode = code;
@@ -210,6 +224,8 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual uint32_t updateLocation(const cv::Mat &mat, const std::string &path)
     {
+        if (cursorLocation_ == -1)
+            return 0;
         std::lock_guard lock(mtxProduct_);
         auto ptr = qProduct_[cursorLocation_];
         ptr->LocationImage = mat;
@@ -236,6 +252,8 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual uint32_t updateCheck(const cv::Mat &mat, const std::string &path)
     {
+        if (cursorCheck_ == -1)
+            return 0;
         std::lock_guard lock(mtxProduct_);
         auto ptr = qProduct_[cursorCheck_];
         ptr->CheckImage = mat;
@@ -262,6 +280,8 @@ class BaseProduct : public AppFrame::NonCopyable
 
     virtual uint32_t updateOCR(const cv::Mat &mat, const std::string &path)
     {
+        if (cursorOCR_ == -1)
+            return 0;
         std::lock_guard lock(mtxProduct_);
         auto ptr = qProduct_[cursorOCR_];
         ptr->OCRImage = mat;
