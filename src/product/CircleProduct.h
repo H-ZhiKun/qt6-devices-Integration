@@ -24,7 +24,7 @@ class CircleProduct : public BaseProduct
     uint16_t OffsetOCR = 14;
 };
 
-class CircleCount : public Count
+class CircleCount : public ProductBaseCount
 {
   public:
     CircleCount();

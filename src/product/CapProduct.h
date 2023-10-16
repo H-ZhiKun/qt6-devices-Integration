@@ -19,7 +19,7 @@ class CapProduct : public BaseProduct
     uint32_t customNum_ = 0;
 };
 
-class CapCount : public Count
+class CapCount : public ProductBaseCount
 {
   public:
     CapCount();

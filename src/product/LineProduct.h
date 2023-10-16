@@ -18,7 +18,7 @@ class LineProduct : public BaseProduct
     uint32_t customNum_ = 0;
 };
 
-class LineCount : public Count
+class LineCount : public ProductBaseCount
 {
   public:
     LineCount();

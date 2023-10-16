@@ -955,6 +955,7 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
         if (product_->getType() == TypeProduct::TypeCircle)
         {
             product_->createProduct(number);
+            countData_->dataAdd("countAll");
             // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
 
             // 电机旋转工位=5 下发定位在旋转前=5
@@ -1006,6 +1007,7 @@ void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
         else
         {
             product_->createProduct(number);
+            countData_->dataAdd("countAll");
             product_->signalQR();
         }
     });
@@ -1107,6 +1109,8 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
         jsValue = Utils::stringToJson(jsValue["box"].asString());
         if (jsValue.empty())
         {
+            countData_->dataAdd("countCodeWaste");
+            countData_->dataAdd("countWaste");
             return;
         }
         std::string result;
@@ -1129,6 +1133,16 @@ void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
             ocrRes.push_back(std::move(resItem));
         }
         auto ptrOcr = product_->updateOCRResult(bottomNum, result);
+        // 根据剔瓶信息决定计数信息
+        if (ptrOcr->isRemove_)
+        {
+            countData_->dataAdd("countPass");
+        }
+        else
+        {
+            countData_->dataAdd("countCodeWaste");
+            countData_->dataAdd("countWaste");
+        }
         cv::Mat mat = ptrOcr->OCRImage;
         if (mat.empty())
         {
@@ -1197,6 +1211,6 @@ void AppFrame::AppFrameworkImpl::processCheck(const std::string &jsonData)
     Utils::asyncTask([this, jsonData] {
         Json::Value jsValue = Utils::stringToJson(jsonData);
         uint32_t bottomNum = jsValue["bottomNum"].asUInt();
-        auto ptrBottle = product_->updateCheckResult(bottomNum, "0");
+        auto ptrBottle = product_->updateCheckResult(bottomNum, "1");
     });
 }

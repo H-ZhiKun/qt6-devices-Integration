@@ -32,12 +32,12 @@ struct OcrRes
     uint16_t rightbottomy;
 };
 
-class Count
+class ProductBaseCount
 {
   public:
-    Count() = default;
-    ~Count() = default;
-    virtual void zeroClear()
+    ProductBaseCount() = default;
+    ~ProductBaseCount() = default;
+    virtual void zeroClear() // 清零
     {
         for (auto iter = countData.begin(); iter != countData.end(); iter++)
         {
@@ -52,11 +52,11 @@ class Count
             item->second = 0;
         }
     };
-    virtual std::unordered_map<std::string, uint32_t>& dataRead()
+    virtual std::unordered_map<std::string, uint32_t> &dataRead() // 返回所有计数信息
     {
         return countData;
     };
-    virtual void dataAdd(const std::string countItem)
+    virtual void dataAdd(const std::string countItem) // 计数信息+1
     {
         auto item = countData.find(countItem);
         if (item != countData.end())

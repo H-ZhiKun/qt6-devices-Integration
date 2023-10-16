@@ -42,7 +42,7 @@ CircleCount::CircleCount()
     countData["countAll"] = 0;   // 进瓶数
     countData["countPass"] = 0;  // 合格品数
     countData["countWaste"] = 0; // 废品总数
-    countData["countAll"] = 0;
-    countData["countAll"] = 0;
-    countData["countAll"] = 0;
+    countData["countLocateWaste"] = 0;
+    countData["countCodeWaste"] = 0;
+    countData["countPauseWaste"] = 0;
 }
