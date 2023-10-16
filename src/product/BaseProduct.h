@@ -198,7 +198,7 @@ class BaseProduct : public AppFrame::NonCopyable
     virtual uint32_t updateQRCode(const std::string &code)
     {
         if (cursorQRCode_ == -1)
-            return;
+            return 0;
         std::lock_guard lock(mtxProduct_);
         auto ptr = qProduct_[cursorQRCode_];
         ptr->QRCode = code;
