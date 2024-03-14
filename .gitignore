@@ -34,11 +34,3 @@
 
 
 # 忽略build目录
-build
-Debug
-Release
-.vscode
-.cache
-.clang-format
-image
-third_party/bin/config.yaml
