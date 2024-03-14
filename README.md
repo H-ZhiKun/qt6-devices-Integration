@@ -1,6 +1,6 @@
 # Device Integration Project
 
-This is a C++ project for device integration, primarily used for managing and controlling various devices such as Cognex vision systems, Domino printers, PLC devices, Baumer cameras, etc. Additionally, the project includes an HTTP API manager for handling interactions with HTTP APIs and a set of tools for interacting with a Postgresql database.
+This is a plugin-based framework based on Qt6 for managing control systems for automation equipment and processes. The framework includes QML interaction, PostgreSQL data services, network communication, PLC device management, camera devices, QR code devices, laser printers, and more.
 
 ## Build and Run
 
