@@ -1,7 +1,6 @@
 #ifndef HTTPCLIENT_H
 #define HTTPCLIENT_H
 
-#include "Logger.h"
 #include <QByteArray>
 #include <QEventLoop>
 #include <QNetworkAccessManager>

@@ -1,8 +1,5 @@
 #pragma once
 #include "AppFramework.h"
-#include "Logger.h"
-#include "Utils.h"
-#include "json/json.h"
 #include <QCoreApplication>
 #include <QObject>
 #include <QString>
@@ -10,7 +7,6 @@
 
 namespace AppFrame
 {
-
 enum class PageIndex
 {
     PageMain = 0,
@@ -19,11 +15,17 @@ enum class PageIndex
     PageValve,
     PagePower,
     PageAlarm,
-    PageCamera,
+    PageHome,
     PageFormula,
-    PageUser
+    PageUser,
+    PageLog,
+    PageDebug,
+    PageElectric,
+    PageBottom,
+    PageAlgorithm,
+    PageStatistics,
+    PageNull = 100
 };
-
 class AppMetaFlash : public QObject
 {
     Q_OBJECT
@@ -35,9 +37,15 @@ class AppMetaFlash : public QObject
     void pageValveChange(const QString &value);
     void pagePowerChange(const QString &value);
     void pageAlarmChange(const QString &value);
-    void pageCameraChange(const QString &value);
+    void pageHomeChange(const QString &value);
     void pageFormulaChange(const QString &value);
     void pageUserChange(const QString &value);
+    void pageLogChange(const QString &value);
+    void pageDebugChange(const QString &value);
+    void pageBottomChange(const QString &value);
+    void pageElectricChange(const QString &value);
+    void pageAlgorithmChange(const QString &value);
+    void pageStatisticsChange(const QString &value);
 
   public:
     static inline AppMetaFlash &instance()
@@ -48,7 +56,7 @@ class AppMetaFlash : public QObject
     virtual ~AppMetaFlash()
     {
     }
-    const char *invokeRuntimeRoutine = "runtimeRoutine";
+    virtual PageIndex getPageIndex(const std::string &);
   public slots:
     // qml 调用c++接口区域
     QString qmlCallExpected(const ExpectedFunction &functionType, const QString &jsValue);
@@ -63,13 +71,14 @@ class AppMetaFlash : public QObject
     void runtimeRoutine(PageIndex itemKey, const QString &itemValue);
 
   private:
-    explicit AppMetaFlash(QObject *parent = nullptr) : QObject(parent)
-    {
-    }
+    explicit AppMetaFlash(QObject *parent = nullptr);
     // qml (5) Q_PROPERTY 中 属性类型 属性名称 必须一致
     AppMetaFlash(const AppMetaFlash &) = delete;
     AppMetaFlash &operator=(const AppMetaFlash &) = delete;
-    AppMetaFlash(AppMetaFlash &&) noexcept(true) = default;
-    AppMetaFlash &operator=(AppMetaFlash &&) noexcept(true) = default;
+    std::unordered_map<std::string, PageIndex> mapPageName_;
 };
+inline AppMetaFlash &appMetaFlash()
+{
+    return AppMetaFlash::instance();
+}
 } // namespace AppFrame

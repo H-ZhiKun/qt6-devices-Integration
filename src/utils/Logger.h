@@ -1,9 +1,10 @@
 #pragma once
-#include "fmt/format.h"
-#include "spdlog/sinks/daily_file_sink.h"
-#include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
+#include <fmt/format.h>
+#include <spdlog/sinks/daily_file_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+
 class SourceLocation
 {
   public:
@@ -265,6 +266,10 @@ class CLogger final
     // {
     //     _logger->set_level(level);
     // }
+    inline static bool isEnable()
+    {
+        return bEnable_.load(std::memory_order_acquire);
+    }
 
     void initLogger(std::string_view fileName, size_t level, size_t maxFileSize, size_t maxFiles,
                     std::string_view pattern = GetDefaultLogPattern())
@@ -283,12 +288,14 @@ class CLogger final
 
         spdlog::set_default_logger(_logger);
     }
+    inline static std::atomic<bool> bEnable_ = true;
 
   private:
     CLogger() = default;
 
     ~CLogger()
     {
+        bEnable_.store(false, std::memory_order_release);
         spdlog::drop_all();
     }
 
@@ -312,7 +319,10 @@ template <typename... Args> struct LogDebug
 {
     constexpr LogDebug(fmt::format_string<Args...> fmt, Args &&...args, SourceLocation location = {})
     {
-        spdlog::log(GetLogSourceLocation(location), spdlog::level::debug, fmt, std::forward<Args>(args)...);
+        if (CLogger::isEnable())
+        {
+            spdlog::log(GetLogSourceLocation(location), spdlog::level::debug, fmt, std::forward<Args>(args)...);
+        }
     }
 };
 
@@ -323,7 +333,10 @@ template <typename... Args> struct LogInfo
 {
     constexpr LogInfo(fmt::format_string<Args...> fmt, Args &&...args, SourceLocation location = {})
     {
-        spdlog::log(GetLogSourceLocation(location), spdlog::level::info, fmt, std::forward<Args>(args)...);
+        if (CLogger::isEnable())
+        {
+            spdlog::log(GetLogSourceLocation(location), spdlog::level::info, fmt, std::forward<Args>(args)...);
+        }
     }
 };
 
@@ -334,7 +347,10 @@ template <typename... Args> struct LogWarn
 {
     constexpr LogWarn(fmt::format_string<Args...> fmt, Args &&...args, SourceLocation location = {})
     {
-        spdlog::log(GetLogSourceLocation(location), spdlog::level::warn, fmt, std::forward<Args>(args)...);
+        if (CLogger::isEnable())
+        {
+            spdlog::log(GetLogSourceLocation(location), spdlog::level::warn, fmt, std::forward<Args>(args)...);
+        }
     }
 };
 
@@ -345,8 +361,11 @@ template <typename... Args> struct LogError
 {
     constexpr LogError(fmt::format_string<Args...> fmt, Args &&...args, SourceLocation location = {})
     {
-        spdlog::log(GetLogSourceLocation(location), spdlog::level::err, fmt, std::forward<Args>(args)...);
-        spdlog::flush_on(spdlog::level::trace);
+        if (CLogger::isEnable())
+        {
+            spdlog::log(GetLogSourceLocation(location), spdlog::level::err, fmt, std::forward<Args>(args)...);
+            spdlog::flush_on(spdlog::level::trace);
+        }
     }
 };
 
@@ -357,7 +376,10 @@ template <typename... Args> struct LogCritical
 {
     constexpr LogCritical(fmt::format_string<Args...> fmt, Args &&...args, SourceLocation location = {})
     {
-        spdlog::log(GetLogSourceLocation(location), spdlog::level::critical, fmt, std::forward<Args>(args)...);
+        if (CLogger::isEnable())
+        {
+            spdlog::log(GetLogSourceLocation(location), spdlog::level::critical, fmt, std::forward<Args>(args)...);
+        }
     }
 };
 

@@ -1,9 +1,6 @@
 #pragma once
 #include "NonCopyable.h"
 #include <atomic>
-#include <cassert>
-#include <memory>
-#include <type_traits>
 
 template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
 {

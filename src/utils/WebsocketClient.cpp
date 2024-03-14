@@ -1,6 +1,6 @@
 #include "WebsocketClient.h"
 #include "Logger.h"
-#include "json/json.h"
+#include <json/json.h>
 
 WebsocketClient::WebsocketClient(QObject *parent) : QObject(parent)
 {
@@ -123,7 +123,12 @@ void WebsocketClient::onError(QAbstractSocket::SocketError errCode)
 void WebsocketClient::reconnect()
 {
     client_->open(QString(url_.c_str()));
-    LogInfo("WebsocketClient reconnect to url:{}", url_);
+    qDebug() << "WebsocketClient reconnect to url: " << url_;
+}
+
+bool WebsocketClient::getConnect()
+{
+    return bConnected_;
 }
 
 void WebsocketClient::ping()

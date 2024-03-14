@@ -2,6 +2,8 @@
 #include "AlertWapper.h"
 #include <QDebug>
 #include <bitset>
+#include <cstdint>
+
 CircleDevice::CircleDevice(QObject *parent) : BasePLCDevice(parent)
 {
     devType = DeviceType::CircleDevice;
@@ -9,66 +11,151 @@ CircleDevice::CircleDevice(QObject *parent) : BasePLCDevice(parent)
 
 CircleDevice::~CircleDevice()
 {
+    closeProductionLine();
 }
 
-void CircleDevice::parsingReadInfo(const uint16_t *readInfo, uint16_t size)
+bool CircleDevice::afterInit()
 {
-    std::map<std::string, std::string> mapRealAlertInfo;
-    // 12289 ~ 12310
-    const uint16_t baseAddress = readBeginAddress_ + 1; // 预先计算起始地址
-
-    for (uint16_t i = 0; i < 22; i++)
+    cacheAddress_ = 12289;
+    caches_.resize(824);
+    std::vector<uint8_t> vecInit(1);
+    // 清零计数
+    writeBitValue(0, 12992, 5, 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    writeBitValue(0, 12992, 5, 0);
+    if (!client_->readBytes(0, 12643, vecInit))
+        return false;
+    updateCaches(12643, vecInit);
+    auto readDInts = readArray<uint32_t>(12643, 1);
+    if (readDInts.size() > 0)
     {
-        if (readInfo[i] > 0)
+        prudctInNumber_ = readDInts[0];
+        return true;
+    }
+    return false;
+}
+
+void CircleDevice::updateRealTimeInfo()
+{
+    std::vector<uint8_t> tempId(1);
+    std::vector<uint8_t> tempFull(824);
+    auto lastAlertTime = std::chrono::high_resolution_clock::now();
+    auto lastHeartTime = std::chrono::high_resolution_clock::now();
+    while (updateHolder_.load(std::memory_order_acquire))
+    {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> durationAlert = currentTime - lastAlertTime;
+        std::chrono::duration<double, std::milli> durationHeart = currentTime - lastHeartTime;
+        if (client_ != nullptr && client_->readBytes(0, 12643, tempId))
         {
-            std::bitset<16> temp(readInfo[i]);
-
-            for (uint8_t j = 0; j < 16; j++)
+            updateCaches(12643, tempId);
+            parsingPLCIDInfo();
+        }
+        if (durationAlert.count() > 1000.0f)
+        {
+            if (client_ != nullptr && client_->readBytes(0, 12289, tempFull))
             {
-                if (temp.test(j))
-                {
-                    // 计算 key
-                    const std::string key = fmt::format("4{}_{}", baseAddress + i, j);
-                    // std::cout << "PLC Address = " << key << std::endl;
+                updateCaches(12289, tempFull);
+                parsingAlertInfo();
+                parsingStatusInfo();
+            }
+            lastAlertTime = currentTime;
+        }
+        else if (durationHeart.count() > 3000.0f)
+        {
+            lastHeartTime = currentTime;
+            heartbeat();
+        }
+        auto timeCost = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> consumption = timeCost - currentTime;
+        if (consumption.count() > 50)
+            qDebug() << "current plc RTT = " << consumption.count() << " milliseconds";
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+}
 
-                    auto finder = regWapper_.mapAlertInfo.find(key);
-                    if (finder != regWapper_.mapAlertInfo.end())
+void CircleDevice::heartbeat()
+{
+    writeBitValue(0, 12992, 6, bHeartbeat_);
+    bHeartbeat_ = (bHeartbeat_ + 1) % 2;
+}
+
+void CircleDevice::parsingAlertInfo()
+{
+    auto readWords = readArray<uint16_t>(12289, 23);
+    if (readWords.size() > 0)
+    {
+        std::map<std::string, std::string> mapCurrentAlert;
+        for (uint16_t i = 0; i < readWords.size(); i++)
+        {
+            if (readWords[i] > 0)
+            {
+                std::bitset<16> temp(readWords[i]);
+
+                for (uint8_t j = 0; j < 16; j++)
+                {
+                    if (temp.test(j))
                     {
-                        mapRealAlertInfo[key] = finder->second;
+                        // 计算 key
+                        const std::string key = fmt::format("0_{}_{}", 12289 + i, j);
+
+                        auto finder = mapAlertStore_.find(key);
+                        if (finder != mapAlertStore_.end())
+                        {
+                            qDebug() << "parsingAlertInfo key = " << key;
+                            mapCurrentAlert[key] = finder->second;
+                        }
+                        else
+                        {
+                            qDebug() << "parsingAlertInfo key failed = " << key;
+                        }
                     }
                 }
             }
         }
+        AlertWapper::updateRealtimeAlert(mapCurrentAlert, mapRecordAlert_);
     }
-
-    AlertWapper::updateRealtimeAlert(mapRealAlertInfo);
 }
 
-void CircleDevice::parsingRealtimeInfo(const uint16_t *realtimeInfo, uint16_t size)
+void CircleDevice::parsingStatusInfo()
 {
-    std::bitset<16> bits = std::bitset<16>(realtimeInfo[0]);
-    if (realtimeInfo[1] != fifoInfo_.numQRCode)
+    auto readWords = readArray<uint16_t>(12612, 2);
+    if (readWords.size() > 0)
     {
-        if (bits[0] == true)
+        if (readWords[0] != plcStates_)
         {
-            emit signalQR(realtimeInfo[1]);
+            plcStates_ = readWords[0];
+            emit signalStatus(plcStates_);
         }
-        else
+        if (readWords[1] != plcSteps_)
         {
-            emit signalQR(0);
+            // emit signalSteps(steps); 暂时没有用到此信号的触发
+            plcSteps_ = readWords[1];
         }
     }
-
-    fifoInfo_.numQRCode = realtimeInfo[1];
-    fifoInfo_.numPosition = realtimeInfo[2];
-    fifoInfo_.numVerifyPos = realtimeInfo[3];
-    fifoInfo_.numCoding = realtimeInfo[4];
-    fifoInfo_.numVerifyCoding = realtimeInfo[5];
-    fifoInfo_.signalMove = realtimeInfo[12];
 }
 
-void CircleDevice::updateReadInfo()
+void CircleDevice::parsingPLCIDInfo()
 {
-    AlertWapper::modifyAllStatus();
-    BasePLCDevice::updateReadInfo();
+    auto readWords = readArray<uint16_t>(12643, 1);
+    if (readWords.size() > 0)
+    {
+        if (readWords[0] != prudctInNumber_)
+        {
+            if (readWords[0] > prudctInNumber_)
+            {
+                emit signalProductIn(readWords[0] - prudctInNumber_);
+            }
+            else
+            {
+                emit signalProductIn(readWords[0] - 0);
+            }
+            prudctInNumber_ = readWords[0];
+        }
+    }
+}
+
+void CircleDevice::closeProductionLine()
+{
+    writeBitValue(0, 12992, 2, 0);
 }

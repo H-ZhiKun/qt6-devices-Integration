@@ -1,32 +1,15 @@
 #pragma once
 #include "BaseProduct.h"
-#include "CircleProductDataWapper.h"
-#include "CircleProductTimeWapper.h"
-#include "Logger.h"
-#include "Utils.h"
-#include <memory>
-#include <mutex>
-#include <vector>
+
 class CircleProduct : public BaseProduct
 {
   public:
     explicit CircleProduct();
     virtual ~CircleProduct() = default;
-    virtual void createProduct(uint32_t pdNum, const std::string &batchNum = "",
-                               const std::string &formulaName = "") override;
-    virtual std::shared_ptr<ProductItem> deleteProduct() override;
+    virtual void init(const YAML::Node &config = YAML::Node()) override;
 
-  private:
-    uint16_t OffsetQRCode = 0;
-    uint16_t OffsetLocate = 3;
-    uint16_t OffsetCheck = 6;
-    uint16_t OffsetCoding = 9;
-    uint16_t OffsetOCR = 14;
-};
-
-class CircleCount : public ProductBaseCount
-{
-  public:
-    CircleCount();
-    ~CircleCount() = default;
+  protected:
+    virtual std::string storeRotatingQueue(std::shared_ptr<ProductItem>) override; // 存储旋转下发队列
+    virtual std::string storePrintQueue(std::shared_ptr<ProductItem>) override;
+    virtual std::string storeRemoveQueue(std::shared_ptr<ProductItem>) override;
 };

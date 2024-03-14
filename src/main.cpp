@@ -1,17 +1,12 @@
 #ifdef _DEBUG
-#include "vld/vld.h"
+#include <vld/vld.h>
 #endif
 #include "AppFramework.h"
-#include "AppMetaFlash.h"
-#include "ImagePainter.h"
-#include "Logger.h"
-#include "string.h"
+#include "AppTest.h"
 #include <QGuiApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
+#include <QIcon>
 #include <QQuickStyle>
 #include <QSharedMemory>
-#include <iostream>
 using namespace AppFrame;
 
 int main(int argc, char *argv[])
@@ -36,18 +31,10 @@ int main(int argc, char *argv[])
     }
 
     QQmlApplicationEngine engine;
-    // 注册MyObject类
-    qmlRegisterType<AppMetaFlash>("AppFrame", 1, 0, "AppMetaFlash");
-    qmlRegisterType<ImagePainter>("AppFrame", 1, 0, "ImagePainter");
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app, []() { QCoreApplication::exit(-1); },
         Qt::AutoConnection);
-
-    engine.rootContext()->setContextProperty("appMetaFlash", &AppMetaFlash::instance());
-    engine.rootContext()->setContextProperty("appdir", qApp->applicationDirPath()); // 获取当前路径
-    engine.loadFromModule("DeviceIntegration", "MainWindow");
-    app.setWindowIcon(QIcon("file:///" + qApp->applicationDirPath() + "/ico/logo.ico")); // 添加图标
-
+    app.setWindowIcon(QIcon("file:///" + qApp->applicationDirPath() + "/ico/logo4.ico")); // 添加图标
     appFramework().run(&engine);
     return app.exec();
 }

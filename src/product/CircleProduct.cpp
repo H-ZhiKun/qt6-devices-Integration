@@ -1,52 +1,79 @@
 #include "CircleProduct.h"
+#include "AppTest.h"
+#include "BaseProduct.h"
+#include <Logger.h>
+#include <string>
 
 CircleProduct::CircleProduct()
 {
     pdType_ = TypeProduct::TypeCircle;
 }
 
-void CircleProduct::createProduct(uint32_t pdNum, const std::string &batchNum, const std::string &formulaName)
+void CircleProduct::init(const YAML::Node &config)
 {
-    BaseProduct::createProduct(pdNum, batchNum, formulaName);
-    if (qProduct_.size() > OffsetQRCode && qProduct_[OffsetQRCode]->bottleNum_ > 0)
+    std::string strSubType = config["product"]["sub_type"].as<std::string>();
+    if (strSubType == "antiClockWise")
     {
-        signalQR();
+        subType_ = SubType::AntiClockWise;
     }
-    if (qProduct_.size() > OffsetLocate && qProduct_[OffsetLocate]->bottleNum_ > 0)
+    else
     {
-        signalLocation();
+        subType_ = SubType::ClockWise;
     }
-    if (qProduct_.size() > OffsetCheck && qProduct_[OffsetCheck]->bottleNum_ > 0)
-    {
-        signalCheck();
-    }
-    if (qProduct_.size() > OffsetCoding && qProduct_[OffsetCoding]->bottleNum_ > 0)
-    {
-        signalCoding();
-    }
-    if (qProduct_.size() > OffsetOCR && qProduct_[OffsetOCR]->bottleNum_ > 0)
-    {
-        signalOCR();
-    }
+    roundOffset_ = config["product"]["round_offset"].as<int>();
+    squareOffset_ = config["product"]["square_offset"].as<int>();
+    BaseProduct::init(config);
 }
 
-std::shared_ptr<ProductItem> CircleProduct::deleteProduct()
+std::string CircleProduct::storeRotatingQueue(std::shared_ptr<ProductItem> product)
 {
-    auto ptr = BaseProduct::deleteProduct();
-    if (ptr->bottleNum_ > 0)
-    {
-        CircleProductTimeWapper::insert(ptr);
-        CircleProductDataWapper::insert(ptr);
-    }
-    return ptr;
+    // number从0开始
+    auto pos = rotatingIndex_ % rotatingQueueLength_;
+    ++rotatingIndex_;
+    auto tempFloat = std::stof(product->getValue<std::string>(ProductItemKey::location_result));
+    auto rotateValue = tempFloat * 100.0f;
+    rotatingQueue_[pos] = rotateValue;
+    return fmt::format("[{},{}]", pos, rotateValue);
 }
 
-CircleCount::CircleCount()
+std::string CircleProduct::storePrintQueue(std::shared_ptr<ProductItem> product)
 {
-    countData["countAll"] = 0;   // 进瓶数
-    countData["countPass"] = 0;  // 合格品数
-    countData["countWaste"] = 0; // 废品总数
-    countData["countLocateWaste"] = 0;
-    countData["countCodeWaste"] = 0;
-    countData["countPauseWaste"] = 0;
+    auto pos = printIndex_ % printQueueLength_;
+    ++printIndex_;
+    auto result = product->getValue<std::string>(ProductItemKey::check_result);
+    auto code = product->getValue<std::string>(ProductItemKey::logistics);
+    if (result == "1" && code.size() == 24)
+    {
+        printQueue_[pos] = true;
+    }
+    else
+    {
+        printQueue_[pos] = false;
+    }
+    return fmt::format("[{},{}]", pos, printQueue_[pos]);
+}
+
+std::string CircleProduct::storeRemoveQueue(std::shared_ptr<ProductItem> product)
+{
+    auto pos = removeIndex_ % removeQueueLength_;
+    ++removeIndex_;
+#ifdef APP_TEST
+    removeQueue_[pos] = false;
+    return fmt::format("[{},{}]", pos, false);
+#endif
+    std::string qrcode = product->getValue<std::string>(ProductItemKey::qr_code);
+    std::string checkResult = product->getValue<std::string>(ProductItemKey::check_result);
+    std::string logistics = product->getValue<std::string>(ProductItemKey::logistics);
+    std::string ocrResult = product->getValue<std::string>(ProductItemKey::ocr_result);
+    if (product->isRemove() || qrcode == "no read" || logistics.size() != 24 || checkResult != "1" ||
+        logistics != ocrResult)
+    {
+        product->setRemove();
+        removeQueue_[pos] = true;
+    }
+    else
+    {
+        removeQueue_[pos] = false;
+    }
+    return fmt::format("[{},{}]", pos, removeQueue_[pos]);
 }

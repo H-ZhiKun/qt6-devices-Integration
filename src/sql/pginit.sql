@@ -11,15 +11,6 @@ CREATE TABLE IF NOT EXISTS configs (
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table structure for system_op_logs
-CREATE TABLE IF NOT EXISTS operation_logs (
-  id serial PRIMARY KEY,
-  username varchar(10) NOT NULL,
-  description varchar(50) NOT NULL,
-  created_time timestamp DEFAULT CURRENT_TIMESTAMP,
-  updated_time timestamp DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Table structure for system_user
 CREATE TABLE IF NOT EXISTS users (
   id serial PRIMARY KEY,
@@ -29,14 +20,15 @@ CREATE TABLE IF NOT EXISTS users (
   data_permission boolean,
   alarm_permission boolean,
   formula_permission boolean,
-  sensor_permission boolean,
-  valve_permission boolean,
-  power_permission boolean,
+  debug_permission boolean,
   log_permission boolean,
   user_manage_permission boolean,
+  auto_login boolean,
   created_time timestamp DEFAULT CURRENT_TIMESTAMP,
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
+INSERT INTO users (alarm_permission, auto_login, camera_permission, data_permission, formula_permission, log_permission, password, debug_permission, user_manage_permission, username) VALUES (true,true,true,true,true,true,'Il88AZH/C+ZHqBV1LEQ5Eg==
+',true,true,'admin');
 
 -- Table structure for everyday_data
 CREATE TABLE IF NOT EXISTS everyday_data (
@@ -57,18 +49,19 @@ CREATE TABLE IF NOT EXISTS everyday_data (
 -- Table structure for elec_data
 CREATE TABLE IF NOT EXISTS electric_data (
   id serial PRIMARY KEY,
-  positive_active_energy real,
-  reverse_active_energy real,
   a_phase_voltage real,
   b_phase_voltage real,
   c_phase_voltage real,
-  temperature real,
-  total_active_power real,
-  total_apparent_power real,
-  total_active_energy real,
   a_direction_current real,
   b_direction_current real,
   c_direction_current real,
+  total_active_power real,
+  total_apparent_power real,
+  total_active_energy real,
+  positive_active_energy real,
+  reverse_active_energy real,
+  combined_active_energy real,
+  temperature real,
   humidity real,
   created_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
@@ -96,13 +89,27 @@ CREATE TABLE IF NOT EXISTS camera_config (
 -- Table structure for formula_data
 CREATE TABLE IF NOT EXISTS formula_data (
   id serial PRIMARY KEY,
-  name varchar(64),
+  name varchar(64) NOT NULL UNIQUE,
   code_x_position varchar(16),
   code_y_position varchar(16),
   impurity_locate varchar(16),
   speed_produce varchar(16),
   acceleration_produce varchar(16),
   deceleration_produce varchar(16),
+  material_diameter varchar(16),
+  bottle_type varchar(16),
+  auto_load boolean DEFAULT FALSE,
+  created_time timestamp DEFAULT CURRENT_TIMESTAMP,
+  updated_time timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table structure for operate_log
+CREATE TABLE IF NOT EXISTS operate_log (
+  id serial PRIMARY KEY,
+  operate_name varchar(64),
+  operate_page varchar(16),
+  operate_function varchar(64),
+  detail varchar(64),
   created_time timestamp DEFAULT CURRENT_TIMESTAMP,
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
@@ -127,248 +134,69 @@ CREATE TABLE IF NOT EXISTS plc_register_rw (
   updated_time timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table structure for line_product_time
-CREATE TABLE IF NOT EXISTS line_product_time(
-   id serial,
-   type_pd VARCHAR(64),
-   bottle_num VARCHAR(64),
-   batch_num VARCHAR(64),
-   formula_name VARCHAR(64),
-   is_remove BOOLEAN,
-   qrcode_signal_time timestamp(3),
-   qrcode_time timestamp(3),
-   logistics_ret_time timestamp(3),
-   coding_signal_time timestamp(3),
-   ocr_signal_time timestamp(3),
-   ocr_image_time timestamp(3),
-   ocr_result_time timestamp(3),
-   remove_signal_time timestamp(3),
-   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE,
-   PRIMARY KEY (id, created_date)
-)PARTITION BY RANGE (created_date);
-CREATE INDEX idx_line_product_time ON line_product_time (created_time);
-
--- Table structure for line_product_data
-CREATE TABLE IF NOT EXISTS line_product_data(
-   id serial,
-   type_pd VARCHAR(64),
-   bottle_num VARCHAR(64),
-   batch_num VARCHAR(64),
-   formula_name VARCHAR(64),
-   is_remove BOOLEAN,
-   qrcode_result VARCHAR(256),
-   logistics_true_value_1 VARCHAR(256),
-   logistics_true_value_2 VARCHAR(256),
-   ocr_image_path VARCHAR(256),
-   ocr_result VARCHAR(256),
-   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE,
-   PRIMARY KEY (id, created_date)
-);
-
-CREATE TABLE line_product_time_2023_09 PARTITION OF line_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE line_product_data_2023_09 PARTITION OF line_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE line_product_time_2023_10 PARTITION OF line_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-CREATE TABLE line_product_data_2023_10 PARTITION OF line_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-CREATE TABLE line_product_time_2023_11 PARTITION OF line_product_time FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
-CREATE TABLE line_product_data_2023_11 PARTITION OF line_product_data FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
-CREATE TABLE line_product_time_2023_12 PARTITION OF line_product_time FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
-CREATE TABLE line_product_data_2023_12 PARTITION OF line_product_data FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
-
--- Table structure for circle_product_time
-CREATE TABLE IF NOT EXISTS circle_product_time(
-   id serial,
-   type_pd VARCHAR(64),
-   bottle_num VARCHAR(64),
-   batch_num VARCHAR(64),
-   formula_name VARCHAR(64),
-   is_remove BOOLEAN,
-   qrcode_signal_time timestamp(3),
-   qrcode_time timestamp(3),
-   logistics_ret_time timestamp(3),
-   issued_rotate_time timestamp(3),
-   location_signal_time timestamp(3),
-   location_image_time timestamp(3),
-   location_result_time timestamp(3),
-   issued_locateCheck_time timestamp(3),
-   check_signal_time timestamp(3),
-   check_image_time timestamp(3),
-   check_result_time timestamp(3),
-   coding_signal_time timestamp(3),
-   ocr_signal_time timestamp(3),
-   ocr_image_time timestamp(3),
-   ocr_result_time timestamp(3),
-   remove_signal_time timestamp(3),
-   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE,
-   PRIMARY KEY (id, created_date)
-);
-
 -- Table structure for circle_product_data
-CREATE TABLE IF NOT EXISTS circle_product_data(
+CREATE TABLE IF NOT EXISTS product_data(
    id serial,
-   type_pd VARCHAR(64),
    bottle_num VARCHAR(64),
-   batch_num VARCHAR(64),
    formula_name VARCHAR(64),
    is_remove BOOLEAN,
-   qrcode_result VARCHAR(256),
-   logistics_true_value_1 VARCHAR(256),
-   logistics_true_value_2 VARCHAR(256),
-   location_image_path VARCHAR(256),
-   check_image_path VARCHAR(256),
-   ocr_image_path VARCHAR(256),
+   is_ocr_equal_code BOOLEAN DEFAULT FALSE,
+   qr_code VARCHAR(256),
+   logistics VARCHAR(256),
+   location_path VARCHAR(8),
+   check_path VARCHAR(8),
+   ocr_path VARCHAR(8),
    location_result VARCHAR(64),
    check_result VARCHAR(64),
-   ocr_result VARCHAR(256),
+   ocr_result VARCHAR(64),
+   rotating_values VARCHAR(32),
+   coding_values VARCHAR(32),
+   remove_values VARCHAR(32),
    created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE,
-   PRIMARY KEY (id, created_date)
+   PRIMARY KEY (id)
 );
+-- 添加索引
+CREATE INDEX idx_check_result ON product_data (check_result);
+CREATE INDEX idx_ocr_result ON product_data (ocr_result);
+CREATE INDEX idx_logistics ON product_data (logistics);
+CREATE INDEX idx_qr_code ON product_data (qr_code);
+CREATE INDEX idx_location_path ON product_data (location_path);
+CREATE INDEX idx_check_path ON product_data (check_path);
+CREATE INDEX idx_ocr_path ON product_data (ocr_path);
+CREATE INDEX idx_created_time ON product_data (created_time);
+CREATE INDEX idx_is_ocr_equal_code ON product_data (is_ocr_equal_code);
 
-CREATE TABLE circle_product_time_2023_09 PARTITION OF circle_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE circle_product_data_2023_09 PARTITION OF circle_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE circle_product_time_2023_10 PARTITION OF circle_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-CREATE TABLE circle_product_data_2023_10 PARTITION OF circle_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-CREATE TABLE circle_product_time_2023_11 PARTITION OF circle_product_time FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
-CREATE TABLE circle_product_data_2023_11 PARTITION OF circle_product_data FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
-CREATE TABLE circle_product_time_2023_12 PARTITION OF circle_product_time FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
-CREATE TABLE circle_product_data_2023_12 PARTITION OF circle_product_data FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
-
-
--- Table structure for cap_product_time
-CREATE TABLE IF NOT EXISTS cap_product_time(
-   id serial,
-   type_pd VARCHAR(64),
-   bottle_num VARCHAR(64),
-   batch_num VARCHAR(64),
-   formula_name VARCHAR(64),
-   is_remove BOOLEAN,
-   qrcode_signal_time timestamp(3),
-   qrcode_time timestamp(3),
-   logistics_ret_time timestamp(3),
-   ocr_signal_time timestamp(3),
-   ocr_image_time timestamp(3),
-   ocr_result_time timestamp(3),
-   remove_signal_time timestamp(3),
-   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE,
-   PRIMARY KEY (id, created_date)
+-- Table structure for algorithm_config
+CREATE TABLE IF NOT EXISTS algorithm_config(
+  id serial,
+  qrcode_angle VARCHAR(64),
+  location_angle VARCHAR(64),
+  location_check_angle VARCHAR(64),
+  code_check_angle VARCHAR(64),
+  updated_time timestamp DEFAULT CURRENT_TIMESTAMP,
+  created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
 );
+INSERT INTO algorithm_config (qrcode_angle, location_angle, location_check_angle, code_check_angle)
+VALUES('137', '185', '285', '193');
 
--- Table structure for line_product_data
-CREATE TABLE IF NOT EXISTS cap_product_data(
-   id serial,
-   type_pd VARCHAR(64),
-   bottle_num VARCHAR(64),
-   batch_num VARCHAR(64),
-   formula_name VARCHAR(64),
-   is_remove BOOLEAN,
-   qrcode_result VARCHAR(256),
-   logistics_true_value_1 VARCHAR(256),
-   logistics_true_value_2 VARCHAR(256),
-   ocr_image_path VARCHAR(256),
-   ocr_result VARCHAR(256),
-   created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
-   created_date date DEFAULT CURRENT_DATE,
-   PRIMARY KEY (id, created_date)
+CREATE TABLE IF NOT EXISTS statistics(
+  id serial,
+  test_man VARCHAR(64),
+  speed VARCHAR(12),
+  bottom_num VARCHAR(12),
+  bottom_distance VARCHAR(4),
+  qrcode_data VARCHAR(128),
+  print_data VARCHAR(128),
+  ocr_data VARCHAR(128),
+  rotate_stable VARCHAR(128),
+  circle VARCHAR(128),
+  star VARCHAR(128),
+  tangle_data VARCHAR(128),
+  check_data VARCHAR(128),
+  remove_data VARCHAR(128),
+  updated_time timestamp DEFAULT CURRENT_TIMESTAMP,
+  created_time timestamp(3) DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
 );
-
-CREATE TABLE cap_product_time_2023_09 PARTITION OF cap_product_time FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE cap_product_data_2023_09 PARTITION OF cap_product_data FOR VALUES FROM ('2023-09-01') TO ('2023-10-01');
-CREATE TABLE cap_product_time_2023_10 PARTITION OF cap_product_time FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-CREATE TABLE cap_product_data_2023_10 PARTITION OF cap_product_data FOR VALUES FROM ('2023-10-01') TO ('2023-11-01');
-CREATE TABLE cap_product_time_2023_11 PARTITION OF cap_product_time FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
-CREATE TABLE cap_product_data_2023_11 PARTITION OF cap_product_data FOR VALUES FROM ('2023-11-01') TO ('2023-12-01');
-CREATE TABLE cap_product_time_2023_12 PARTITION OF cap_product_time FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
-CREATE TABLE cap_product_data_2023_12 PARTITION OF cap_product_data FOR VALUES FROM ('2023-12-01') TO ('2024-01-01');
-
-
---分区表创建函数
--- CREATE OR REPLACE FUNCTION create_partition()
--- RETURNS VOID AS $$
--- DECLARE
---     partition_date DATE := date_trunc('month', CURRENT_DATE)::DATE;
---     circle_product_time_table_name TEXT := format('circle_product_time_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
---     circle_product_data_table_name TEXT := format('circle_product_data_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
---     line_product_time_table_name TEXT := format('line_product_time_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
---     line_product_data_table_name TEXT := format('line_product_data_%s_%s', EXTRACT(YEAR FROM partition_date)::TEXT, LPAD(EXTRACT(MONTH FROM partition_date)::TEXT, 2));
--- BEGIN
---     EXECUTE format(
---         'CREATE TABLE IF NOT EXISTS %I PARTITION OF circle_product_time FOR VALUES FROM (%L) TO (%L)',
---         circle_product_time_table_name,
---         partition_date,
---         (partition_date + INTERVAL '1 month')::DATE
---     );
---     EXECUTE format(
---         'CREATE TABLE IF NOT EXISTS %I PARTITION OF circle_product_data FOR VALUES FROM (%L) TO (%L)',
---         circle_product_data_table_name,
---         partition_date,
---         (partition_date + INTERVAL '1 month')::DATE
---     );
---     EXECUTE format(
---         'CREATE TABLE IF NOT EXISTS %I PARTITION OF line_product_time FOR VALUES FROM (%L) TO (%L)',
---         line_product_time_table_name,
---         partition_date,
---         (partition_date + INTERVAL '1 month')::DATE
---     );
---     EXECUTE format(
---         'CREATE TABLE IF NOT EXISTS %I PARTITION OF line_product_data FOR VALUES FROM (%L) TO (%L)',
---         line_product_data_table_name,
---         partition_date,
---         (partition_date + INTERVAL '1 month')::DATE
---     );
--- END;
--- $$ LANGUAGE plpgsql;
-
--- --创建pgagent定时job，时间间隔1分钟执行
--- DO $$
--- DECLARE
---     jid integer;
---     scid integer;
--- BEGIN
--- -- Creating a new job
--- INSERT INTO pgagent.pga_job(
---     jobjclid, jobname, jobdesc, jobhostagent, jobenabled
--- ) VALUES (
---     1::integer, 'pgagent_'::text, ''::text, ''::text, true
--- ) RETURNING jobid INTO jid;
-
--- -- Steps
--- -- Inserting a step (jobid: NULL)
--- INSERT INTO pgagent.pga_jobstep (
---     jstjobid, jstname, jstenabled, jstkind,
---     jstconnstr, jstdbname, jstonerror,
---     jstcode, jstdesc
--- ) VALUES (
---     jid, 'step1'::text, true, 's'::character(1),
---     ''::text, 'integration'::name, 'i'::character(1),
---     'SELECT create_partition();'::text, ''::text
--- ) ;
-
--- -- Schedules
--- -- Inserting a schedule
--- INSERT INTO pgagent.pga_schedule(
---     jscjobid, jscname, jscdesc, jscenabled,
---     jscstart, jscend,    jscminutes, jschours, jscweekdays, jscmonthdays, jscmonths
--- ) VALUES (
---     jid, 'schedule'::text, ''::text, true,
---     '2023-10-08 12:43:39 +08:00'::timestamp with time zone, '2099-11-26T12:43:40+08:00'::timestamp with time zone,
---     -- Minutes
---     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
---     -- Hours
---     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
---     -- Week days
---     ARRAY[true,true,true,true,true,true,true]::boolean[],
---     -- Month days
---     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]::boolean[],
---     -- Months
---     ARRAY[true,true,true,true,true,true,true,true,true,true,true,true]::boolean[]
--- ) RETURNING jscid INTO scid;
--- END
--- $$;
-
-
-
-
+COMMENT ON COLUMN statistics.ocr_data IS 'If it is straight line, it represents OCR data; if it is  cap, it represents neissi data';

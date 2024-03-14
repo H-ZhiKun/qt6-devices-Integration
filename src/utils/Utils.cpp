@@ -1,6 +1,15 @@
 #include "Utils.h"
 #include "ConcurrentTaskQueue.h"
 #include "Logger.h"
+#include <QImage>
+#include <QPainter>
+#include <cryptopp/aes.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/modes.h>
+#include <cryptopp/osrng.h>
+#include <fstream>
 #include <regex>
 #include <zlib.h>
 
@@ -201,7 +210,12 @@ bool Utils::removeOutdatedFiles(const std::string &currentTime, const std::strin
 
 void Utils::asyncTask(std::function<void(void)> &&task)
 {
-    ConcurrentTaskQueue::getInstance().runTaskInQueue(task);
+    if (ConcurrentTaskQueue::isInvalid())
+        ConcurrentTaskQueue::getInstance().runTaskInQueue(task);
+    else
+    {
+        LogWarn("ConcurrentTaskQueue is destroyed!");
+    }
 }
 
 void Utils::appExit(int exitCode)
@@ -319,10 +333,10 @@ std::string Utils::imgToBase64(const QImage &img)
     return imageData.toBase64().data();
 }
 
-std::string Utils::encrytByAES(const std::string &plain)
+std::string Utils::encryptByAES(const std::string &plain)
 {
-    std::string key("kungege!n!j!@m!");
-    std::string iv("d@nzongshus!hua");
+    std::string key("d~e!t@u#f1u2s3i");
+    std::string iv("s~o!f@t#w1a2r3e");
     std::string cipher;
     try
     {
@@ -342,10 +356,10 @@ std::string Utils::encrytByAES(const std::string &plain)
     return encoded;
 }
 
-std::string Utils::decrytByAES(const std::string &encode)
+std::string Utils::decryptByAES(const std::string &encode)
 {
-    std::string key("kungege!n!j!@m!");
-    std::string iv("d@nzongshus!hua");
+    std::string key("d~e!t@u#f1u2s3i");
+    std::string iv("s~o!f@t#w1a2r3e");
     std::string encodeByte;
     CryptoPP::StringSource(encode, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(encodeByte)));
 
@@ -369,7 +383,8 @@ std::string Utils::decrytByAES(const std::string &encode)
 cv::Mat Utils::qImageToMat(QImage &qim)
 {
     cv::Mat mat;
-    switch (qim.format())
+    auto format = qim.format();
+    switch (format)
     {
     case QImage::Format_RGB888:
         mat = cv::Mat(qim.height(), qim.width(), CV_8UC3, (void *)qim.constBits(), qim.bytesPerLine()).clone();
@@ -378,6 +393,8 @@ cv::Mat Utils::qImageToMat(QImage &qim)
     case QImage::Format_ARGB32_Premultiplied:
         mat = cv::Mat(qim.height(), qim.width(), CV_8UC4, (void *)qim.constBits(), qim.bytesPerLine()).clone();
         cv::cvtColor(mat, mat, cv::COLOR_BGRA2BGR); // 将ARGB转换为BGR
+        break;
+    default:
         break;
     }
     return mat;
@@ -397,8 +414,7 @@ std::vector<std::string> Utils::splitString(const std::string &input, const std:
     return tokens;
 }
 
-void Utils::makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, const std::string &imageName,
-                                 const std::string &modelName, const std::string &savePath, std::string &jsonBody,
+void Utils::makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, std::string &jsonBody,
                                  QByteArray &byteArray)
 {
     // 将图像转换为QByteArray
@@ -409,21 +425,21 @@ void Utils::makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottom
     cv::imencode(".jpg", algoImage, buffer, compress_params);
     byteArray = QByteArray(reinterpret_cast<const char *>(buffer.data()), buffer.size());
     Json::Value jsVal;
-    jsVal["imageName"] = imageName;
     jsVal["imageWidth"] = std::to_string(algoImage.cols);
     jsVal["imageHeight"] = std::to_string(algoImage.rows);
     jsVal["bottomNum"] = bottomNum;
     jsonBody = jsonToString(jsVal);
-    saveImageToFile(byteArray, savePath);
 }
 
-void Utils::saveImageToFile(const QByteArray &byteArray, const std::string &filePath)
+void Utils::saveImageToLocal(const QImage &image, const QString &filePath)
 {
-    QFile file(filePath.c_str());
-    if (file.open(QIODevice::WriteOnly))
+    if (image.isNull())
     {
-        file.write(byteArray);
-        file.close();
+        return;
+    }
+    if (!image.save(filePath))
+    {
+        LogWarn("save image error: {}", filePath.toStdString());
     }
 }
 
@@ -444,4 +460,68 @@ std::string Utils::compressMatToZlib(const cv::Mat &inputMat)
 
     std::string compressedData(reinterpret_cast<char *>(&destBuffer[0]), destLen);
     return compressedData;
+}
+
+void Utils::closeComputer(std::string seconed)
+{
+    seconed = "shutdown /s /t " + seconed;
+    system(seconed.c_str());
+}
+
+void Utils::drawImgText(QImage &img, const std::string &text, const std::string &area)
+{
+    QPainter pp(&img);
+    QFont font = pp.font();
+    font.setPixelSize(50); // 改变字体大小
+    font.setFamily("Microsoft YaHei");
+    pp.setFont(font);
+    pp.setPen(QPen(Qt::green, 5));
+    pp.setBrush(QBrush(Qt::green));
+    pp.drawText(QPointF(20, 50), text.c_str());
+    auto areaList = stringToJson(area);
+    if (areaList.isArray())
+    {
+        pp.setBrush(QBrush(Qt::NoBrush));
+        for (const auto &item : areaList)
+        {
+            std::string leftTop = item["leftTop"].asString();
+            std::string rightTop = item["rightTop"].asString();
+            std::string rightBottom = item["rightBottom"].asString();
+            std::string leftBottom = item["leftBottom"].asString();
+            // 解析字符串中的整数
+            int leftTopX, leftTopY, rightTopX, rightTopY, rightBottomX, rightBottomY, leftBottomX, leftBottomY;
+            sscanf(leftTop.c_str(), "[%d, %d]", &leftTopX, &leftTopY);
+            sscanf(rightTop.c_str(), "[%d, %d]", &rightTopX, &rightTopY);
+            sscanf(rightBottom.c_str(), "[%d, %d]", &rightBottomX, &rightBottomY);
+            sscanf(leftBottom.c_str(), "[%d, %d]", &leftBottomX, &leftBottomY);
+            QPointF leftTopPoint(leftTopX, leftTopY);
+            QPointF leftBottomPoint(leftBottomX, leftBottomY);
+            QPointF rightTopPoint(rightTopX, rightTopY);
+            QPointF rightBottomPoint(rightBottomX, rightBottomY);
+            QVector<QPointF> points;
+            points << leftTopPoint << rightTopPoint << rightBottomPoint << leftBottomPoint;
+            pp.drawPolygon(points);
+        }
+    }
+}
+
+std::string Utils::transferDataFromSql(std::string src)
+{
+    if (src.empty())
+    {
+        return "";
+    }
+    size_t pos = src.find('T');
+    if (pos != std::string::npos)
+    {
+        src.replace(pos, 1, " ");
+    }
+
+    // 去除末尾的毫秒部分
+    pos = src.find('.');
+    if (pos != std::string::npos)
+    {
+        src.erase(pos);
+    }
+    return src;
 }

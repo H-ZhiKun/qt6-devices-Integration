@@ -2,7 +2,6 @@
 #include "Logger.h"
 #include "NonCopyable.h"
 #include "PgsqlConnectionPool.h"
-#include "json/json.h"
 #include <QDebug>
 #include <QFile>
 #include <QJsonDocument>
@@ -12,6 +11,8 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
+#include <json/json.h>
+
 class PgsqlHelper : public AppFrame::NonCopyable
 {
   public:
@@ -73,6 +74,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         }
 
         sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ");";
+        LogInfo("insert data: {}", sqlQuery.toStdString());
         QList<QVariantMap> sels;
         if (!executeSql(sels, std::move(sqlQuery), std::move(vals)))
         {
@@ -84,36 +86,50 @@ class PgsqlHelper : public AppFrame::NonCopyable
 
     bool insertMultipleData(const std::string &tableName, const QList<QVariantMap> &dataList)
     {
-        if (dataList.size() == 0)
+        if (dataList.isEmpty())
         {
-            LogError("{} insert data empty.", tableName);
+            LogError("{} insert data is empty.", tableName);
             return false;
         }
 
+        const QVariantMap &sampleData = dataList.first();
+        QStringList keys = sampleData.keys();
+        if (keys.isEmpty())
+        {
+            LogError("{} sample data has no keys.", tableName);
+            return false;
+        }
+
+        // Construct the SQL query
         QString sqlQuery = "INSERT INTO " + QString::fromStdString(tableName) + " (";
-        QString placeholders;
-        QStringList keys;
-        QVariantList vals;
-        const QVariantMap &data = dataList.first();
-        for (const QString &key : data.keys())
-        {
-            keys << key;
-            placeholders += "?,";
-            vals.append(data[key]);
-        }
         sqlQuery += keys.join(", ") + ") VALUES ";
-        for (int i = 0; i < dataList.size(); ++i)
+        QStringList valuePlaceholders;
+        QVariantList vals;
+        for (const QVariantMap &data : dataList)
         {
-            placeholders += "(" + placeholders.left(placeholders.length() - 1) + "),";
+            QStringList rowValues;
+
+            for (const QString &key : keys)
+            {
+                rowValues.append("?");
+                vals.append(data.value(key));
+            }
+
+            valuePlaceholders.append("(" + rowValues.join(", ") + ")");
         }
 
-        sqlQuery += placeholders.left(placeholders.length() - 1); // Remove the trailing comma
-        QList<QVariantMap> sels;
-        if (!executeSql(sels, std::move(sqlQuery), std::move(vals), true))
+        sqlQuery += valuePlaceholders.join(", ");
+        sqlQuery += ";";
+        qDebug() << "Insert SQL: " << sqlQuery;
+
+        // Execute the SQL query
+        QList<QVariantMap> result;
         {
-            LogError("{} Failed to insert data.", tableName);
+            if (!executeSql(result, std::move(sqlQuery), std::move(vals), false))
+                LogError("{} Failed to insert data.", tableName);
             return false;
         }
+
         return true;
     }
 
@@ -137,10 +153,12 @@ class PgsqlHelper : public AppFrame::NonCopyable
             keys << key;
             vals.append(data[key]);
         }
+        keys << "updated_time";
+        vals.append(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz"));
         sqlQuery += keys.join(" = ?, ");
         sqlQuery += " = ?";
         sqlQuery += QString(" WHERE ") + condition.c_str();
-
+        qDebug() << "sql update" << sqlQuery;
         QList<QVariantMap> sels;
         if (!executeSql(sels, std::move(sqlQuery), std::move(vals)))
         {
@@ -233,6 +251,31 @@ class PgsqlHelper : public AppFrame::NonCopyable
             jsValue.append(jsItems);
         }
         return jsValue;
+    }
+
+    int selectCount(const std::string &tableName, const std::string &&condition = "")
+    {
+        // 构建查询数据的SQL语句
+        QString sql = QString("SELECT COUNT(*) FROM ") + tableName.c_str();
+        int resNum{0};
+        if (!condition.empty())
+        {
+            sql += " WHERE " + condition;
+        }
+        QList<QVariantMap> sels;
+        if (!executeSql(sels, std::move(sql)))
+        {
+            LogError("Failed to select data: {}", tableName);
+            return resNum;
+        }
+        for (const auto &items : sels)
+        {
+            for (const auto &key : items.keys())
+            {
+                resNum = items[key].toInt();
+            }
+        }
+        return resNum;
     }
 
     Json::Value selectDataPaged(const std::string &tableName, const int pageSize, const int pageNumber,

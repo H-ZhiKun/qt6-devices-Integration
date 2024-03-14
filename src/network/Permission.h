@@ -7,13 +7,13 @@ class Permission : public TCPClient
     Q_OBJECT
   public:
     explicit Permission(QObject *parent = nullptr);
-    virtual ~Permission() noexcept;
+    virtual ~Permission();
     virtual void dealing(std::vector<unsigned char> buffer) override;
     virtual void pingBehavior() override;
   public slots:
     void sendQRCode(const uint32_t num, const std::string &code);
   signals:
-    void codeRight(const std::string &num, const std::string &code1, const std::string &code2);
+    void codeRight(uint32_t num, const std::string &code);
 
   private:
     std::string strCodeError = "FFFFEor1\r\n";  // 激光码返回错误信息

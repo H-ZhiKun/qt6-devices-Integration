@@ -67,13 +67,16 @@ void TCPClient::connectToServer(const QString &host, quint16 port)
     }
 }
 
-void TCPClient::sendData(const QByteArray &data)
+bool TCPClient::sendData(const QByteArray &data)
 {
+    bool ret = false;
     if (bconnect_ && tcpSocket && tcpSocket->state() == QAbstractSocket::ConnectedState)
     {
         tcpSocket->write(data);
         tcpSocket->flush();
+        ret = true;
     }
+    return ret;
 }
 
 void TCPClient::pingEnable(bool bEnable)
@@ -107,24 +110,25 @@ void TCPClient::reconnect()
     if (tcpSocket && tcpSocket->state() == QAbstractSocket::UnconnectedState)
     {
         // 断开连接后重新连接到服务器
-        LogInfo("reconnect to ip={},port={}", serverHost.toStdString(), serverPort);
+        qDebug() << "reconnect to ip= " << serverHost << ",port=" << serverPort;
         connectToServer();
     }
 }
 
 void TCPClient::onConnected()
 {
+    bconnect_ = true;
     LogInfo("Connected to ip = {}, port={}", serverHost.toStdString(), serverPort);
     // 连接成功后停止重连计时器
     if (reconnectTimer)
         reconnectTimer->stop();
     pingEnable(true);
-    bconnect_ = true;
+    sendOnceWhenConnected();
 }
 
 void TCPClient::onDisconnected()
 {
-    LogError("Disconnected from {}", serverHost.toStdString());
+    // LogError("Disconnected from {}", serverHost.toStdString());
     bconnect_ = false;
     // 断开连接后启动重连计时器
     if (reconnectTimer)

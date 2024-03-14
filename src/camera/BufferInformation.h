@@ -1,11 +1,8 @@
 /* Copyright 2019-2020 Baumer Optronic */
 #ifndef _BUFFER_INFORMATION_
 #define _BUFFER_INFORMATION_
-#include "bgapi2_genicam/bgapi2_genicam.hpp"
-#include <list>
-#include <mutex>
+#include <bgapi2_genicam/bgapi2_genicam.hpp>
 #include <string>
-#include <vector>
 
 // structure which holds additional information
 // transferred together with the camera buffer

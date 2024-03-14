@@ -1,26 +1,20 @@
 #pragma once
 #include "BasePLCDevice.h"
-#include "RegistersWapper.h"
-
-struct CapInfo
-{
-    // bool sigCoding = false; // 40080.8 打码信号
-    bool sigCognex = false; // 40080.9 读码信号
-    bool sigOCR = false;    // 40080.10 OCR信号
-    bool sigRemove = false; // 40080.11 剔除信号
-};
 
 class CapDevice : public BasePLCDevice
 {
     Q_OBJECT
   public:
     explicit CapDevice(QObject *parent = nullptr);
+    virtual uint32_t getPlcCount(PLCCount) override;
     virtual ~CapDevice();
 
   protected:
-    virtual void parsingReadInfo(const uint16_t *alertGroup, uint16_t size) override;
-    virtual void parsingRealtimeInfo(const uint16_t *alertGroup, uint16_t size) override;
-
-  private:
-    CapInfo capInfo_;
+    virtual bool afterInit() override;
+    virtual void heartbeat() override;
+    virtual void closeProductionLine() override;
+    virtual void updateRealTimeInfo() override;
+    virtual void parsingAlertInfo() override;
+    virtual void parsingStatusInfo() override;
+    virtual void parsingPLCIDInfo() override;
 };

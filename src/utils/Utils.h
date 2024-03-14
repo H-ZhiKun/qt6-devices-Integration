@@ -1,25 +1,17 @@
 #pragma once
-#include "cryptopp/aes.h"
-#include "cryptopp/base64.h"
-#include "cryptopp/cryptlib.h"
-#include "cryptopp/filters.h"
-#include "cryptopp/modes.h"
-#include "cryptopp/osrng.h"
 #include <QBuffer>
 #include <QByteArray>
 #include <QDataStream>
 #include <QDir>
 #include <QImage>
 #include <chrono>
-#include <ctime>
 #include <filesystem>
-#include <fstream>
-#include <iomanip>
 #include <json/json.h>
 #include <opencv2/opencv.hpp>
-#include <sstream>
+#include <qimage.h>
 #include <string>
 #include <vector>
+
 class Utils
 {
   public:
@@ -127,13 +119,13 @@ class Utils
      * @param {string} &plain 需要加密的字符串
      * @return {string} 返回加密的字符串
      */
-    static std::string encrytByAES(const std::string &plain);
+    static std::string encryptByAES(const std::string &plain);
     /**
      * @description: 使用aes给字符串解密
      * @param {string} &encode 需要解密的字符串
      * @return {string} 返回解密的字符串
      */
-    static std::string decrytByAES(const std::string &encode);
+    static std::string decryptByAES(const std::string &encode);
 
     template <typename T> static T anyFromString(const std::string &str)
     {
@@ -142,11 +134,14 @@ class Utils
         ss >> value;
         return value;
     }
-    static void saveImageToFile(const QByteArray &byteArray, const std::string &filePath);
+    static void saveImageToLocal(const QImage &image, const QString &filePath);
     static cv::Mat qImageToMat(QImage &qim);
     static std::vector<std::string> splitString(const std::string &input, const std::string &delimiter);
-    static void makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, const std::string &imageName,
-                                     const std::string &modelName, const std::string &savePath, std::string &jsonBody,
+    static void makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, std::string &jsonBody,
                                      QByteArray &byteArray);
     static std::string compressMatToZlib(const cv::Mat &inputMat);
+    static void closeComputer(std::string seconed);
+    static void drawImgText(QImage &img, const std::string &text,
+                            const std::string &area); // 图像添加文字
+    static std::string transferDataFromSql(std::string);
 };

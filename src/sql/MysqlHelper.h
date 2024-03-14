@@ -1,15 +1,17 @@
 #pragma once
 #include "Logger.h"
-#include "MysqlConnectionPool.h"
 #include "NonCopyable.h"
-#include "json/json.h"
+#include <MysqlConnectionPool.h>
 #include <QJsonDocument>
 #include <QSqlDriver>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QVariant>
+#include <json/json.h>
 #include <list>
+
+
 class MysqlHelper : public AppFrame::NonCopyable
 {
   public:
@@ -487,7 +489,7 @@ class MysqlHelper : public AppFrame::NonCopyable
   private:
     MysqlHelper()
     {
-        pool_ = new MysqlConnectionPool(20, 5000);
+        // pool_ = new MysqlConnectionPool(20, 5000);
     }
     QString connectionName_;
     DBConnectionPool *pool_;

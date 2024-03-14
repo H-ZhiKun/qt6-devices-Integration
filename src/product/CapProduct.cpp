@@ -1,5 +1,6 @@
-#pragma once
 #include "CapProduct.h"
+#include "AppTest.h"
+#include <Logger.h>
 
 CapProduct::CapProduct()
 {
@@ -10,28 +11,27 @@ CapProduct::~CapProduct()
 {
 }
 
-void CapProduct::createProduct(uint32_t pdNum, const std::string &batchNum, const std::string &formulaName)
+std::string CapProduct::storeRemoveQueue(std::shared_ptr<ProductItem> product)
 {
-}
+    auto pos = removeIndex_ % removeQueueLength_;
+    ++removeIndex_;
+#ifdef APP_TEST
+    // removeQueue_[pos] = (pos % 2) == 0 ? false : true;
+    removeQueue_[pos] = false;
+    return fmt::format("[{},{}]", pos, removeQueue_[pos]);
+#endif
+    std::string qrcode = product->getValue<std::string>(ProductItemKey::qr_code);
+    std::string logistics = product->getValue<std::string>(ProductItemKey::logistics);
+    std::string ocrResult = product->getValue<std::string>(ProductItemKey::ocr_result);
 
-std::shared_ptr<ProductItem> CapProduct::deleteProduct()
-{
-    LogInfo("CapProduct Complete");
-    auto ptr = BaseProduct::deleteProduct();
-    if (ptr->bottleNum_ > 0)
+    if (product->isRemove() || qrcode == "no read" || logistics.size() != 24 || ocrResult != logistics)
     {
-        CapProductTimeWapper::insert(ptr);
-        CapProductDataWapper::insert(ptr);
+        product->setRemove();
+        removeQueue_[pos] = true;
     }
-    return ptr;
-}
-
-CapCount::CapCount()
-{
-    countData["countAll"] = 0;   // 进瓶数
-    countData["countPass"] = 0;  // 合格品数
-    countData["countWaste"] = 0; // 废品总数
-    countData["countLocateWaste"] = 0;
-    countData["countCodeWaste"] = 0;
-    countData["countPauseWaste"] = 0;
+    else
+    {
+        removeQueue_[pos] = false;
+    }
+    return fmt::format("[{},{}]", pos, removeQueue_[pos]);
 }

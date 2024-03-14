@@ -1,36 +1,47 @@
-#pragma once
 #include "LineProduct.h"
-
+#include "AppTest.h"
+#include <Logger.h>
 LineProduct::LineProduct()
 {
     pdType_ = TypeProduct::TypeLine;
 }
 
-LineProduct::~LineProduct()
+std::string LineProduct::storePrintQueue(std::shared_ptr<ProductItem> product)
 {
-}
-
-void LineProduct::createProduct(uint32_t pdNum, const std::string &batchNum, const std::string &formulaName)
-{
-    ++customNum_;
-    BaseProduct::createProduct(customNum_, batchNum, formulaName);
-}
-
-std::shared_ptr<ProductItem> LineProduct::deleteProduct()
-{
-    auto ptr = BaseProduct::deleteProduct();
-    if (ptr->bottleNum_ > 0)
+    auto pos = printIndex_ % printQueueLength_;
+    ++printIndex_;
+    auto code = product->getValue<std::string>(ProductItemKey::logistics);
+    if (code.size() == 24)
     {
-        LineProductTimeWapper::insert(ptr);
-        LineProductDataWapper::insert(ptr);
+        printQueue_[pos] = true;
     }
-    return ptr;
+    else
+    {
+        printQueue_[pos] = false;
+    }
+    return fmt::format("[{},{}]", pos, printQueue_[pos]);
 }
 
-LineCount::LineCount()
+std::string LineProduct::storeRemoveQueue(std::shared_ptr<ProductItem> product)
 {
-    countData["countAll"] = 0;
-    countData["countPass"] = 0;
-    countData["countWaste"] = 0;
-    countData["countCodeWaste"] = 0; // 喷码废品数
+    auto pos = removeIndex_ % removeQueueLength_;
+    ++removeIndex_;
+#ifdef APP_TEST
+    // removeQueue_[pos] = (pos % 2) == 0 ? false : true;
+    removeQueue_[pos] = true;
+    return fmt::format("[{},{}]", pos, removeQueue_[pos]);
+#endif
+    std::string qrcode = product->getValue<std::string>(ProductItemKey::qr_code);
+    std::string logistics = product->getValue<std::string>(ProductItemKey::logistics);
+    std::string ocrResult = product->getValue<std::string>(ProductItemKey::ocr_result);
+    if (product->isRemove() || qrcode == "no read" || logistics.size() != 24 || ocrResult != logistics)
+    {
+        product->setRemove();
+        removeQueue_[pos] = true;
+    }
+    else
+    {
+        removeQueue_[pos] = false;
+    }
+    return fmt::format("[{},{}]", pos, removeQueue_[pos]);
 }

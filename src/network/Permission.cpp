@@ -1,6 +1,8 @@
 #include "Permission.h"
 #include "Logger.h"
-#include <QDebug>
+#include "QString"
+#include "Utils.h"
+
 Permission::Permission(QObject *parent) : TCPClient(parent)
 {
 }
@@ -11,40 +13,35 @@ Permission::~Permission()
 
 void Permission::dealing(std::vector<unsigned char> buffer)
 {
-    std::string result(buffer.begin() + 4, buffer.end() - 2);
-    size_t commaPos = result.find_first_of(',');
-    std::string code, number, code1, code2;
-    if (commaPos != std::string::npos)
+    std::string result(buffer.begin(), buffer.end());
+    LogInfo("Permission::dealing : {}", result);
+    auto vRecvData = Utils::splitString(result, "\r\n");
+    for (const auto &info : vRecvData)
     {
-        number = result.substr(0, commaPos);
-        code = result.substr(commaPos + 1); // 添加1来跳过逗号
-        if (code.length() == 24)
+        auto vResult = Utils::splitString(info, ",");
+        if (vResult.size() == 5)
         {
-            LogInfo("product process: recieve peimisson success: code = {}", result);
-            code1 = code.substr(0, 12);
-            code2 = code.substr(12);
-        }
-        else
-        {
-            code1 = result;
-            LogInfo("product process: recieve peimisson other data: code = {}", result);
             return;
         }
+        size_t commaPos = info.find_first_of(',');
+        std::string code;
+        uint32_t number = 0;
+        if (commaPos != std::string::npos)
+        {
+            QString strNumber = QString().fromStdString(info.substr(0, commaPos));
+            number = strNumber.replace("FFFF", "").toInt();
+            code = info.substr(commaPos + 1); // 添加1来跳过逗号
+            emit codeRight(number, code);
+            LogInfo("Permission::add count : {}: {}, info: {}, result: {}", number, code, info, result);
+        }
     }
-    else
-    {
-        // 处理没有逗号的情况
-        code1 = result;
-        LogError("product process: recieve peimisson error: code = {}", result);
-        return;
-    }
-    emit codeRight(number, code1, code2);
 }
+
 void Permission::sendQRCode(const uint32_t num, const std::string &code)
 {
     std::string cmd = strHead + std::to_string(num) + "," + code + strTail;
     QByteArray byteArray = QByteArray(cmd.c_str(), static_cast<int>(cmd.size()));
-    qDebug() << "send data: " << byteArray;
+    LogInfo("sendQRCode: {}", byteArray.toStdString());
     sendData(byteArray);
 }
 void Permission::pingBehavior()

@@ -1,5 +1,7 @@
 #include "HttpClient.h"
+#include "Logger.h"
 #include <QHttpMultiPart>
+
 
 HttpClient::HttpClient(QObject *parent) : QObject(parent), m_manager(new QNetworkAccessManager(this))
 {

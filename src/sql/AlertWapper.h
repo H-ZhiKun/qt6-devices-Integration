@@ -1,10 +1,11 @@
 #pragma once
 #include "PgsqlHelper.h"
 #include "Utils.h"
-#include "json/json.h"
 #include <QDebug>
+#include <json/json.h>
 #include <map>
 #include <string>
+
 class AlertWapper
 {
 #define TABLE_ALARM_DATA "alarm_data"
@@ -28,7 +29,7 @@ class AlertWapper
             QVariantMap mapData;
             mapData.insert("register_address", key.c_str());
             mapData.insert("content", value.c_str());
-            mapData.insert("state", 1);
+            mapData.insert("state", true);
             sqlList.append(mapData);
         }
         PgsqlHelper::getSqlHelper().insertMultipleData("alarm_data", sqlList);
@@ -40,8 +41,8 @@ class AlertWapper
         QVariantMap mapData;
         for (auto &[key, value] : mapModify)
         {
-            mapData["state"] = 0;
-            std::string condition = fmt::format("`register_address` = '{}'", key);
+            mapData["state"] = false;
+            std::string condition = fmt::format("register_address = '{}' and state = true", key);
             PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, mapData, std::move(condition));
         }
     }
@@ -49,33 +50,36 @@ class AlertWapper
     static void modifyAllStatus()
     {
         QVariantMap mapData;
-        mapData["state"] = 0;
+        mapData["state"] = false;
         std::string condition = "state = TRUE";
         PgsqlHelper::getSqlHelper().updateData(TABLE_ALARM_DATA, mapData, std::move(condition));
     }
-    static void updateRealtimeAlert(std::map<std::string, std::string> &mapAlert)
+    static void updateRealtimeAlert(std::map<std::string, std::string> &current,
+                                    std::map<std::string, std::string> &record)
     {
-        std::map<std::string, std::string> mapCurrent = mapAlert;
-        static std::map<std::string, std::string> mapLast;
-
-        // 使用迭代器遍历而不是自增循环
-        for (auto lastIter = mapLast.begin(); lastIter != mapLast.end();)
+        if (current.empty() && record.empty())
         {
-            auto curIter = mapCurrent.find(lastIter->first);
-            if (curIter != mapCurrent.end())
+            return;
+        }
+        auto temp = current;
+        auto recIter = record.begin();
+        while (recIter != record.end())
+        {
+            auto curIter = current.find(recIter->first);
+            if (curIter != current.end())
             {
-                curIter = mapCurrent.erase(curIter);
-                lastIter = mapLast.erase(lastIter);
+                curIter = current.erase(curIter);
+                recIter = record.erase(recIter);
             }
             else
             {
-                ++lastIter;
+                ++recIter;
             }
         }
-
-        insertAlert(mapCurrent);
-        modifyAlert(mapLast);
-        mapLast.swap(mapAlert);
+        insertAlert(current);
+        modifyAlert(record);
+        record = temp;
+        current.clear();
     }
 
     static int alertNum()
@@ -89,5 +93,31 @@ class AlertWapper
     {
         return PgsqlHelper::getSqlHelper().selectDataPaged(TABLE_ALARM_DATA, pageSize, pageNumber, std::move(condition),
                                                            std::move(orderBy));
+    }
+
+    static std::string selectAlarmingData()
+    {
+        Json::Value jsval =
+            PgsqlHelper::getSqlHelper().selectData(TABLE_ALARM_DATA, "state = true", "created_time desc");
+        std::string str = "";
+        if (jsval.empty())
+        {
+            return str;
+        }
+        else
+        {
+            int i = 0;
+            for (Json::Value &js : jsval)
+            {
+                i++;
+                str += Utils::jsonToString(js["content"]);
+                str += "\n";
+                if (i == 3)
+                {
+                    break;
+                }
+            }
+        }
+        return str;
     }
 };

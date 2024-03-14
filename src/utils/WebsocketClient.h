@@ -16,6 +16,7 @@ class WebsocketClient : public QObject
 
     void connectToServer(const std::string &url);
     void sendData(const std::string &jsonData, const QByteArray &imageBinaryData);
+    bool getConnect();
 
   signals:
     void messageReceived(const std::string &jsonObject);

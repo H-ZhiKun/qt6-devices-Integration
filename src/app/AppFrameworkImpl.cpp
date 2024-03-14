@@ -1,26 +1,32 @@
 #include "AppFrameworkImpl.h"
-#include "AlertWapper.h"
 #include "AppFramework.h"
 #include "AppMetaFlash.h"
+#include "AppPlcExtension.h"
+#include "AppProductExtension.h"
+#include "AppQmlExtension.h"
+#include "AppSourceExtension.h"
+#include "AppStatisticsExtension.h"
+#include "AppTest.h"
+#include "BaseStatistics.h"
+#include "CameraManager.h"
+#include "CapDevice.h"
+#include "CapProduct.h"
+#include "CapStatistics.h"
 #include "CircleDevice.h"
 #include "CircleProduct.h"
-#include "DBConnectionPool.h"
-#include "Domino.h"
-#include "FormulaWapper.h"
+#include "Cognex.h"
+#include "ImagePainter.h"
 #include "LineDevice.h"
 #include "LineProduct.h"
-#include "MysqlConnectionPool.h"
-#include "UserWapper.h"
+#include "LineStatistics.h"
+#include "Logger.h"
+#include "Permission.h"
+#include "PgsqlHelper.h"
+#include "PrinterDevice.h"
 #include "Utils.h"
-#include <QBuffer>
-#include <QCoreApplication>
-#include <QDebug>
-#include <QImage>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QObject>
-#include <QThread>
-#include <algorithm>
+#include "WebManager.h"
+#include <memory>
+
 using namespace AppFrame;
 
 AppFramework &AppFramework::instance()
@@ -30,50 +36,6 @@ AppFramework &AppFramework::instance()
 
 AppFrame::AppFrameworkImpl::AppFrameworkImpl()
 {
-    QObject::connect(qApp, &QCoreApplication::aboutToQuit, [this]() { memoryClean(); });
-    registerExpectation(ExpectedFunction::DominoConnect,
-                        std::bind(&AppFrameworkImpl::dominoConnect, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::DeleteFormula,
-                        std::bind(&AppFrameworkImpl::deleteFormula, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::SelectFormula,
-                        std::bind(&AppFrameworkImpl::selectFormula, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::ModifyFormula,
-                        std::bind(&AppFrameworkImpl::modifyFormula, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::InsertFormula,
-                        std::bind(&AppFrameworkImpl::insertFormula, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::GetCameraParam,
-                        std::bind(&AppFrameworkImpl::getCameraParam, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::SetCameraParam,
-                        std::bind(&AppFrameworkImpl::setCameraParam, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::InsertUser,
-                        std::bind(&AppFrameworkImpl::insertUser, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::SelectUserID,
-                        std::bind(&AppFrameworkImpl::selectUserID, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::SelectUser,
-                        std::bind(&AppFrameworkImpl::selectUser, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::DeleteUser,
-                        std::bind(&AppFrameworkImpl::deleteUser, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::ModifyUser,
-                        std::bind(&AppFrameworkImpl::modifyUser, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::SelectAlert,
-                        std::bind(&AppFrameworkImpl::selectAlert, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::CollectImage,
-                        std::bind(&AppFrameworkImpl::collectImage, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::ReadPLC, std::bind(&AppFrameworkImpl::readPLC, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::WritePLC,
-                        std::bind(&AppFrameworkImpl::writePLC, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::RefreshMainPage,
-                        std::bind(&AppFrameworkImpl::refreshMainPage, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::RefreshPowerPage,
-                        std::bind(&AppFrameworkImpl::refreshPowerPage, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::RefreshElecData, std::bind(&AppFrameworkImpl::refreshElecData, this,
-                                                                     std::placeholders::_1)); // 注册直线式电能表数据
-    registerExpectation(ExpectedFunction::RefreshStrightMainPage,
-                        std::bind(&AppFrameworkImpl::refreshStrightMainPage, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::ZeroClearing,
-                        std::bind(&AppFrameworkImpl::zeroClearing, this, std::placeholders::_1));
-    registerExpectation(ExpectedFunction::StrightZeroClearing,
-                        std::bind(&AppFrameworkImpl::strightZeroClearing, this, std::placeholders::_1));
 }
 
 AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
@@ -82,528 +44,90 @@ AppFrame::AppFrameworkImpl::~AppFrameworkImpl() noexcept
 
 int AppFrame::AppFrameworkImpl::run(QQmlApplicationEngine *engine)
 {
-    // 加载配置文件
-    loadConfig();
-    initLogger();
-    initFile();
-    storeImagePainter(engine);
-    initSqlHelper();
-    initProduct();
-    initNetworkClient();
-    initBaumerManager();
-    initPLC();
-    // runtime task
-    timerTask();
-    bInitComplete = true;
+    // 软件开启前的初始化 顺序不可修改
+    loadConfig();    // 1 加载配置文件
+    initLogger();    // 2 初始化日志模块
+    initSqlHelper(); // 3 数据库初始化
+    LogInfo("init start SqlHelper");
+    initNetworkClient(); // 4 网络客户端初始化
+    initStatistics();
+    LogInfo("init start NetworkClient");
+    initCameraManager(); // 5 相机初始化
+    LogInfo("init start CameraManager");
+    initPLC(); // 6 PLC初始化
+    LogInfo("init start PLC");
+    initProduct(); // 7 产品初始化
+    LogInfo("init start Product");
+    initExpectation(); // 8 初始化qml扩展调用模块
+    LogInfo("init start Expectation");
+    engineLoad(engine); // 9 qml界面加载
+    LogInfo("init start qml");
+    afterInit(); // 初始化完成之后行为
     return 0;
+}
+
+QQmlApplicationEngine *AppFrame::AppFrameworkImpl::getEngine()
+{
+    return engine_;
 }
 
 std::string AppFrame::AppFrameworkImpl::expected(const ExpectedFunction &expectedType, const std::string &jsValue)
 {
-    std::string strRet = Utils::makeResponse(false, "function not find");
-    if (bInitComplete == false)
+    // 使用 find 查找迭代器
+    auto it = mapExpectedFunction_.find(expectedType);
+
+    // 如果找到，直接调用对应函数
+    if (it != mapExpectedFunction_.end())
     {
-        return strRet;
+        return it->second(jsValue);
     }
-    if (mapExpectedFunction_.find(expectedType) != mapExpectedFunction_.end())
-    {
-        strRet = mapExpectedFunction_[expectedType](jsValue);
-    }
-    return strRet;
+
+    // 否则返回默认的错误信息
+    return Utils::makeResponse(false, "function not found");
 }
 
 bool AppFrame::AppFrameworkImpl::registerExpectation(const ExpectedFunction &expectedType,
                                                      std::function<std::string(const std::string &)> &&api)
 {
-    bool ret = false;
-    if (mapExpectedFunction_.find(expectedType) == mapExpectedFunction_.end())
-    {
-        mapExpectedFunction_[expectedType] = api;
-        ret = true;
-    }
-    return ret;
+    // 使用结构化绑定和emplace优化插入
+    auto [it, inserted] = mapExpectedFunction_.emplace(expectedType, std::move(api));
+    // 返回插入是否成功
+    return inserted;
 }
 
-void AppFrame::AppFrameworkImpl::storeImagePainter(QQmlApplicationEngine *engine)
+void AppFrame::AppFrameworkImpl::initExpectation()
 {
-    uint8_t windId = 0;
-    for (const auto &item : config_["baumer"]["camera"])
-    {
-        const std::string &title = item["display_window"].as<std::string>();
-        mapWindId2Index_[title] = windId;
-        auto obj = engine->rootObjects().first()->findChild<QObject *>(title.c_str());
-        mapStorePainter_[windId] = static_cast<QObject *>(obj);
-        ++windId;
-    }
+    registerExpectation(ExpectedFunction::DeleteSqlData, &AppQmlExtension::deleteSqlData);
+    registerExpectation(ExpectedFunction::SelectSqlData, &AppQmlExtension::selectSqlData);
+    registerExpectation(ExpectedFunction::ModifySqlData, &AppQmlExtension::modifySqlData);
+    registerExpectation(ExpectedFunction::InsertSqlData, &AppQmlExtension::insertSqlData);
+    registerExpectation(ExpectedFunction::ReadPLC, &AppQmlExtension::readPLC);
+    registerExpectation(ExpectedFunction::WritePLC, &AppQmlExtension::writePLC);
+    registerExpectation(ExpectedFunction::RefreshMainPage, &AppQmlExtension::refreshMainPage);
+    registerExpectation(ExpectedFunction::RefreshPowerPage, &AppQmlExtension::refreshPowerPage);
+    registerExpectation(ExpectedFunction::ZeroClearing, &AppQmlExtension::zeroClearing);
+    registerExpectation(ExpectedFunction::AutoLogin, &AppQmlExtension::autoLogin);
+    registerExpectation(ExpectedFunction::ProduceReset, AppQmlExtension::produceReset);
+    registerExpectation(ExpectedFunction::SelectProduct, &AppQmlExtension::selectProduct);
+    registerExpectation(ExpectedFunction::AutoLoad, &AppQmlExtension::autoLoad);
+    registerExpectation(ExpectedFunction::InitPageData, &AppQmlExtension::initPageData);
+    registerExpectation(ExpectedFunction::PowerOff, &AppQmlExtension::powerOff);
+    registerExpectation(ExpectedFunction::GetPLCCount, &AppQmlExtension::getPLCCount);
+    registerExpectation(ExpectedFunction::GetDataReport, &AppQmlExtension::getDataReport);
 }
 
-std::string AppFrame::AppFrameworkImpl::dominoConnect(const std::string &value)
+void AppFrame::AppFrameworkImpl::quitProgram()
 {
-    bool ret = false;
-    Json::Value jsTemp = Utils::stringToJson(value);
-    std::string ip = jsTemp["ip"].asString();
-    uint16_t port = jsTemp["port"].asUInt();
-    if (!ip.empty() && port > 0)
-        ret = invokeCpp(domino_, domino_->invokeConnectToServer, ip, port);
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::deleteFormula(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsTemp = Utils::stringToJson(value);
-    std::string name = jsTemp["name"].asString();
-    if (!name.empty())
-        ret = FormulaWapper::deleteFormula(name.c_str());
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::modifyFormula(const std::string &value)
-{
-    bool ret = false;
-    ret = FormulaWapper::modifyFormula(value.c_str());
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::insertFormula(const std::string &value)
-{
-    bool ret = false;
-    ret = FormulaWapper::insertFormula(value.c_str());
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::selectFormula(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsTemp = Utils::stringToJson(value);
-    std::string name = jsTemp["name"].asString();
-    QString jsRet;
-    if (!name.empty())
-    {
-        jsRet = FormulaWapper::selectOneFormula(name.c_str());
-        if (!jsRet.isEmpty())
-        {
-            ret = true;
-        }
-    }
-    return Utils::makeResponse(ret, std::move(Utils::stringToJson(jsRet.toStdString())));
-}
-
-void AppFrame::AppFrameworkImpl::updateUserData()
-{
-    Json::Value jsUserlaVal = UserWapper::selectAllUser();
-    for (const Json::Value &jsonSingleValue : jsUserlaVal)
-    {
-        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-                  Q_ARG(PageIndex, PageIndex::PageUser), Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
-    }
-}
-
-std::string AppFrame::AppFrameworkImpl::getCameraParam(const std::string &value)
-{
-    bool ret = false;
-    auto params = Utils::stringToJson(value);
-    std::string winName = params["display_window"].asString();
-    Json::Value jsVal = baumerManager_->getCamera(mapWindId2Index_.at(winName));
-    std::string des;
-    if (jsVal.isNull())
-    {
-        des = "camera init failed";
-    }
-    else
-    {
-        ret = true;
-    }
-    return Utils::makeResponse(ret, std::move(jsVal), std::move(des));
-}
-
-std::string AppFrame::AppFrameworkImpl::setCameraParam(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsParams = Utils::stringToJson(value);
-    std::string des;
-    if (!jsParams.isNull())
-    {
-        std::string winName = jsParams["display_window"].asString();
-        ret = baumerManager_->setCamera(mapWindId2Index_.at(winName), jsParams, des);
-    }
-    return Utils::makeResponse(ret, {}, std::move(des));
-}
-
-std::string AppFrame::AppFrameworkImpl::insertUser(const std::string &value)
-{
-    bool ret = false;
-    ret = UserWapper::insertUser(value.c_str());
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::selectUserID(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsParams;
-    std::string jsRet = UserWapper::selectUserID(value.c_str()).toStdString();
-    if (!jsRet.empty())
-    {
-        ret = true;
-        jsParams["id"] = jsRet;
-    }
-    return Utils::makeResponse(ret, std::move(jsParams));
-}
-
-std::string AppFrame::AppFrameworkImpl::selectUser(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsTemp = Utils::stringToJson(value);
-    std::string name = jsTemp["name"].asString();
-    QString jsRet;
-    if (!name.empty())
-    {
-        jsRet = UserWapper::selectUser(name.c_str());
-        if (!jsRet.isEmpty())
-        {
-            ret = true;
-        }
-    }
-    return Utils::makeResponse(ret, std::move(Utils::stringToJson(jsRet.toStdString())));
-}
-
-std::string AppFrame::AppFrameworkImpl::deleteUser(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsParams = Utils::stringToJson(value);
-    std::string id = jsParams["id"].asString();
-    if (!id.empty())
-    {
-        ret = UserWapper::deleteUser(id.c_str());
-    }
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::modifyUser(const std::string &value)
-{
-    bool ret = false;
-    ret = UserWapper::modifyUser(value.c_str());
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::selectAlert(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsParams = Utils::stringToJson(value);
-    Json::Value jsAlertVal =
-        AlertWapper::selectAlertDataPaged(jsParams["pageSize"].asInt(), jsParams["pageNumber"].asInt(), "", "id desc");
-    int num = AlertWapper::alertNum();
-    if (!jsAlertVal.empty() && num != 0)
-    {
-        ret = true;
-    }
-    Json::Value jsRet;
-    jsRet["num"] = num;
-    for (Json::Value &jsonSingleValue : jsAlertVal)
-    {
-        std::string datetimeStr = jsonSingleValue["created_time"].asString();
-        // 替换T为空格
-        size_t pos = datetimeStr.find('T');
-        if (pos != std::string::npos)
-        {
-            datetimeStr.replace(pos, 1, " ");
-        }
-
-        // 去除末尾的毫秒部分
-        pos = datetimeStr.find('.');
-        if (pos != std::string::npos)
-        {
-            datetimeStr.erase(pos);
-        }
-        jsonSingleValue["created_time"] = datetimeStr;
-        if (!jsonSingleValue["updated_time"].empty())
-        {
-            std::string datetimeStrUp = jsonSingleValue["updated_time"].asString();
-            // 替换T为空格
-            size_t posUp = datetimeStrUp.find('T');
-            if (posUp != std::string::npos)
-            {
-                datetimeStrUp.replace(posUp, 1, " ");
-            }
-
-            // 去除末尾的毫秒部分
-            posUp = datetimeStrUp.find('.');
-            if (posUp != std::string::npos)
-            {
-                datetimeStrUp.erase(posUp);
-            }
-            jsonSingleValue["updated_time"] = datetimeStrUp;
-        }
-
-        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-                  Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
-    }
-    return Utils::makeResponse(ret, std::move(jsRet));
-}
-
-std::string AppFrame::AppFrameworkImpl::collectImage(const std::string &)
-{
-    bool ret = false;
-    saveImageFlag.store(true, std::memory_order_release);
-    ret = true;
-    return Utils::makeResponse(ret);
-}
-
-std::string AppFrame::AppFrameworkImpl::readPLC(const std::string &value)
-{
-    bool ret = false;
-    Json::Value jsParams = Utils::stringToJson(value);
-    Json::Value res;
-    for (const auto &key : jsParams.getMemberNames())
-    {
-        std::string temp;
-        auto vKeys = Utils::splitString(key, "_");
-        if (vKeys.size() == 3)
-        {
-            temp = plcDev_->readDevice(vKeys[1], vKeys[2]);
-        }
-        else if (vKeys.size() == 4)
-        {
-            temp = plcDev_->readDevice(vKeys[1], vKeys[2], vKeys[3]);
-        }
-        else
-        {
-            continue;
-        }
-        if (!temp.empty())
-        {
-            res[key] = temp;
-            ret = true;
-        }
-    }
-    return Utils::makeResponse(ret, std::move(res));
-}
-
-std::string AppFrame::AppFrameworkImpl::writePLC(const std::string &value)
-{
-    // 例：key:M071_b_12288_14  count=4   value  "1"或"0"
-    // 例：key:M071_r_12288  count=3   value    "0.76"
-    bool ret = false;
-    LogInfo("write to plc: {}", value);
-    Json::Value jsParams = Utils::stringToJson(value);
-    for (const auto &key : jsParams.getMemberNames())
-    {
-        std::string temp;
-        const std::string &curValue = jsParams[key].asString();
-        auto vKeys = Utils::splitString(key, "_");
-        if (vKeys.size() == 3)
-        {
-            ret = plcDev_->writeDevice(vKeys[1], vKeys[2], "0", curValue);
-            if (ret == false)
-            {
-                LogWarn("write data faile! address: {}", value);
-            }
-        }
-        else if (vKeys.size() == 4)
-        {
-            ret = plcDev_->writeDevice(vKeys[1], vKeys[2], vKeys[3], curValue);
-            if (ret == false)
-            {
-                LogWarn("write data faile! address: {}", value);
-            }
-        }
-        else
-        {
-            continue;
-        }
-    }
-    return Utils::makeResponse(ret);
-}
-std::string AppFrame::AppFrameworkImpl::refreshElecData(const std::string &str)
-{
-    bool ret = true;
-    Json::Value jsElecVal;
-    jsElecVal["a_phase_voltage"] = plcDev_->readDevice("di", "0043");        // 电能表A相电压
-    jsElecVal["b_phase_voltage"] = plcDev_->readDevice("di", "0045");        // 电能表B相电压
-    jsElecVal["c_phase_voltage"] = plcDev_->readDevice("di", "0047");        // 电能表C相电压
-    jsElecVal["a_direction_current"] = plcDev_->readDevice("di", "0049");    // 电能表A相电流
-    jsElecVal["b_direction_current"] = plcDev_->readDevice("di", "0051");    // 电能表B相电流
-    jsElecVal["c_direction_current"] = plcDev_->readDevice("di", "0053");    // 电能表C相电流
-    jsElecVal["total_active_power"] = plcDev_->readDevice("di", "0055");     // 电能表总有功功率
-    jsElecVal["total_apparent_power"] = plcDev_->readDevice("di", "0057");   // 电能表总视在功率
-    jsElecVal["combined_active_energy"] = plcDev_->readDevice("di", "0059"); // 电能表组合有功总电能
-    jsElecVal["positive_active_energy"] = plcDev_->readDevice("di", "0061"); // 电能表正向有功电能
-    jsElecVal["reverse_active_energy"] = plcDev_->readDevice("di", "0063");  // 电能表反向有功电能
-    jsElecVal["temperature"] = plcDev_->readDevice("di", "0065");            // 设备温度
-    jsElecVal["humidity"] = plcDev_->readDevice("di", "0067");               // 设备湿度
-
-    jsElecVal["textCountAll"] = plcDev_->readDevice("di", "0009");           // 进料数量
-    jsElecVal["textCountInspection"] = plcDev_->readDevice("di", "0011");    // 检测数量
-    jsElecVal["textCountEliminate"] = plcDev_->readDevice("di", "0013");     // 总剔除数量
-    jsElecVal["textCountLogisticscode"] = plcDev_->readDevice("di", "0015"); // 物流码剔除数量
-    jsElecVal["text_produce_state"] = plcDev_->readDevice("di", "0006");     // 下位机状态信息
-
-    std::string result = Utils::makeResponse(ret, std::move(jsElecVal));
-    return result;
-}
-
-std::string AppFrame::AppFrameworkImpl::refreshMainPage(const std::string &str)
-{
-    bool ret = true;
-    Json::Value jsMainVal;
-    // 状态显示信息
-    jsMainVal["image0"] = "0";
-    jsMainVal["image1"] = "0";
-    jsMainVal["image2"] = "0";
-    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
-    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
-    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
-    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
-    jsMainVal["textProduceState"] = plcDev_->readDevice("n", "12612");
-    // 计数信息
-    std::unordered_map<std::string, uint32_t> circleCount_ = countData_->dataRead();
-    jsMainVal["count_all"] = circleCount_["countAll"];
-    jsMainVal["count_pass"] = circleCount_["countPass"];
-    jsMainVal["count_waste"] = circleCount_["countWaste"];
-    jsMainVal["count_locate_waste"] = circleCount_["countLocateWaste"];
-    jsMainVal["count_code_waste"] = circleCount_["countCodeWaste"];
-    jsMainVal["count_pause_waste"] = circleCount_["countPauseWaste"];
-    std::string textEquipmentSteps = plcDev_->readDevice("n", "12613");
-    switch (std::atoi(textEquipmentSteps.c_str()))
-    {
-    case 0:
-        jsMainVal["textEquipmentSteps"] = "未启动";
-        break;
-
-    case 1:
-        jsMainVal["textEquipmentSteps"] = "条件检查";
-        break;
-
-    case 2:
-        jsMainVal["textEquipmentSteps"] = "启动各轴";
-        break;
-
-    case 4:
-        jsMainVal["textEquipmentSteps"] = "自动运行";
-        break;
-
-    case 5:
-        jsMainVal["textEquipmentSteps"] = "暂停";
-        break;
-
-    case 8:
-        jsMainVal["textEquipmentSteps"] = "点动运行";
-        break;
-
-    case 9:
-        jsMainVal["textEquipmentSteps"] = "点动暂停";
-        break;
-
-    default:
-        jsMainVal["textEquipmentSteps"] = "未获取到信息";
-        break;
-    }
-    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
-    for (uint8_t i = 0; i < cameraState.size(); i++)
-    {
-        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
-    }
-    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
-    return result;
-}
-
-std::string AppFrame::AppFrameworkImpl::refreshStrightMainPage(const std::string &str)
-{
-    bool ret = true;
-    Json::Value jsMainVal;
-    jsMainVal["image0"] = "0";
-    jsMainVal["dominoState"] = std::to_string(domino_->getConnect());
-    jsMainVal["cognexState"] = std::to_string(cognex_->getConnect());
-    jsMainVal["permissionState"] = std::to_string(permission_->getConnect());
-    jsMainVal["plcState"] = std::to_string(plcDev_->getConnect());
-    // 计数信息
-    std::unordered_map<std::string, uint32_t> circleCount_ = countData_->dataRead();
-    jsMainVal["count_all"] = circleCount_["countAll"];
-    jsMainVal["count_pass"] = circleCount_["countPass"];
-    jsMainVal["count_waste"] = circleCount_["countWaste"];
-    jsMainVal["count_code_waste"] = circleCount_["countCodeWaste"];
-    std::string textEquipmentSteps = plcDev_->readDevice("di", "0006");
-    switch (std::atoi(textEquipmentSteps.c_str()))
-    {
-    case 0:
-        jsMainVal["textEquipmentSteps"] = "未开启";
-        break;
-
-    case 1:
-        jsMainVal["textEquipmentSteps"] = "待启动";
-        break;
-
-    case 2:
-        jsMainVal["textEquipmentSteps"] = "运行中";
-        break;
-
-    case 3:
-        jsMainVal["textEquipmentSteps"] = "急停中";
-        break;
-
-    case 4:
-        jsMainVal["textEquipmentSteps"] = "终止";
-        break;
-
-    case 5:
-        jsMainVal["textEquipmentSteps"] = "暂停";
-        break;
-
-    default:
-        jsMainVal["textEquipmentSteps"] = "未获取到信息";
-        break;
-    }
-    std::vector<uint8_t> cameraState = baumerManager_->cameraState();
-    for (uint8_t i = 0; i < cameraState.size(); i++)
-    {
-        jsMainVal["image" + std::to_string(cameraState[i])] = "1";
-    }
-    std::string result = Utils::makeResponse(ret, std::move(jsMainVal));
-    return result;
-}
-
-std::string AppFrame::AppFrameworkImpl::refreshPowerPage(const std::string &str)
-{
-    Json::Value jsPowerVal;
-    bool ret = true;
-    jsPowerVal["positive_active_energy"] = plcDev_->readDevice("r", "12586"); // 正向有功电能
-    jsPowerVal["reverse_active_energy"] = plcDev_->readDevice("r", "12588");  // 反向有功电能
-    jsPowerVal["a_phase_voltage"] = plcDev_->readDevice("r", "12590");        // A相电压
-    jsPowerVal["b_phase_voltage"] = plcDev_->readDevice("r", "12592");        // B相电压
-    jsPowerVal["c_phase_voltage"] = plcDev_->readDevice("r", "12594");        // C相电压
-    jsPowerVal["temperature"] = plcDev_->readDevice("r", "12608");            // 温度
-    jsPowerVal["total_active_power"] = plcDev_->readDevice("r", "12602");     // 总有功功率
-    jsPowerVal["total_apparent_power"] = plcDev_->readDevice("r", "12604");   // 总视在功率
-    jsPowerVal["total_active_energy"] = plcDev_->readDevice("r", "12606");    // 总有功电能
-    jsPowerVal["a_direction_current"] = plcDev_->readDevice("r", "12596");    // A向电流
-    jsPowerVal["b_direction_current"] = plcDev_->readDevice("r", "12598");    // B向电流
-    jsPowerVal["c_direction_current"] = plcDev_->readDevice("r", "12600");    // C向电流
-    jsPowerVal["humidity"] = plcDev_->readDevice("r", "12610");               // 湿度
-    std::string result = Utils::makeResponse(ret, std::move(jsPowerVal));
-    return result;
-}
-
-std::string AppFrame::AppFrameworkImpl::zeroClearing(const std::string &str)
-{
-    // plcDev_->writeDevice("b", "12992", "1", "1");
-    countData_->zeroClear();
-    return std::string();
-}
-
-std::string AppFrame::AppFrameworkImpl::strightZeroClearing(const std::string &str)
-{
-    plcDev_->writeDevice("b", "0005", "8", "1");
-    countData_->zeroClear();
-    return std::string();
+    // 程序关闭
+    QCoreApplication::quit();
 }
 
 void AppFrame::AppFrameworkImpl::loadConfig()
 {
-    strAppPath_ = qApp->applicationDirPath().toStdString();
     try
     {
         std::string filePath = qApp->applicationDirPath().toStdString() + "/config.yaml";
-        config_ = std::move(YAML::LoadFile(filePath));
+        config_ = YAML::LoadFile(filePath);
     }
     catch (const YAML::Exception &e)
     {
@@ -611,35 +135,16 @@ void AppFrame::AppFrameworkImpl::loadConfig()
     }
 }
 
-void AppFrame::AppFrameworkImpl::saveConfig()
-{
-    return; // 不启用配置保存
-    try
-    {
-        baumerManager_->saveConfig(config_);
-        std::string filePath = strAppPath_ + "/config.yaml";
-        // 保存修改后的配置回文件
-        std::ofstream fout(filePath);
-        fout << config_;
-        fout.close();
-        LogInfo("saveConfig success.");
-    }
-    catch (const YAML::Exception &e)
-    {
-        LogError("Error save YAML: {}", e.what());
-    }
-}
-
 void AppFrame::AppFrameworkImpl::initLogger()
 {
     // 初始化日志记录器
-    std::string logPath =
-        strAppPath_ + std::string("/logs/") + config_["app"]["log"]["log_file_name"].as<std::string>();
+    std::string logPath = qApp->applicationDirPath().toStdString() + std::string("/logs/") +
+                          config_["app"]["log"]["log_file_name"].as<std::string>();
     size_t logLevel = config_["app"]["log"]["log_level"].as<size_t>();
     size_t logFileCount = config_["app"]["log"]["log_file_count"].as<size_t>();
     size_t logFileSize = Utils::anyFromString<size_t>(config_["app"]["log"]["log_file_size"].as<std::string>());
     CLogger::GetLogger().initLogger(logPath, logLevel, logFileSize, logFileCount);
-    LogInfo("AppFrame Run");
+    // appTest().test_s7Client();
 }
 
 void AppFrame::AppFrameworkImpl::initSqlHelper()
@@ -652,566 +157,211 @@ void AppFrame::AppFrameworkImpl::initSqlHelper()
     if (!PgsqlHelper::getSqlHelper().initSqlHelper(host, port, dbName, user, pwd))
     {
         LogInfo("sqlhelper init failed.");
-        memoryClean();
         Utils::appExit(-1);
     }
-    LogInfo("sqlhelper init success.");
-    updateFormulaData(); // 放在异步处理中会丢失
-    updateUserData();
 }
 
 void AppFrame::AppFrameworkImpl::initNetworkClient()
 {
-    std::string dominoIp = config_["domino"]["host"].as<std::string>();
-    uint16_t dominoPort = config_["domino"]["port"].as<uint16_t>();
+    std::string strType = config_["product"]["type"].as<std::string>();
     std::string cognexIp = config_["cognex"]["host"].as<std::string>();
     uint16_t cognexPort = config_["cognex"]["port"].as<uint16_t>();
     std::string permissionIp = config_["permission"]["host"].as<std::string>();
     uint16_t permissionPort = config_["permission"]["port"].as<uint16_t>();
-    domino_ = new Domino();
-    domino_->startClient(dominoIp.c_str(), dominoPort);
-    cognex_ = new Cognex();
-    cognex_->startClient(cognexIp.c_str(), cognexPort);
-    permission_ = new Permission();
-    permission_->startClient(permissionIp.c_str(), permissionPort);
-    webManager_ = new WebManager();
-    webManager_->init(config_);
+    std::string painterIp = config_["painter"]["host"].as<std::string>();
+    uint16_t painterPort = config_["painter"]["port"].as<uint16_t>();
 
-    QObject::connect(webManager_, &WebManager::ocrRecv, [this](const std::string &json) { processOCR(json); });
-    QObject::connect(webManager_, &WebManager::tangleRecv, [this](const std::string &json) { processTangle(json); });
-    QObject::connect(webManager_, &WebManager::tangleCheckRecv,
-                     [this](const std::string &json) { processCheck(json); });
+    registerPlugin<Cognex>(std::make_unique<Cognex>());
+    const auto &cognex = getPlugin<Cognex>();
+    cognex->startClient(cognexIp.c_str(), cognexPort);
+
+    registerPlugin<Permission>(std::make_unique<Permission>());
+    const auto &permission = getPlugin<Permission>();
+    permission->startClient(permissionIp.c_str(), permissionPort);
+
+    registerPlugin<WebManager>(std::make_unique<WebManager>());
+    const auto &webManager = getPlugin<WebManager>();
+    webManager->init(config_);
+
+    registerPlugin<PrinterDevice>(std::make_unique<PrinterDevice>());
+    const auto &printer = getPlugin<PrinterDevice>();
+    if (strType != "cap")
+    {
+        printer->startClient(painterIp.c_str(), painterPort);
+    }
+
+    QObject::connect(printer, &PrinterDevice::printSend,
+                     [this]() { AppStatisticsExtension::afterCountChanged(AppPLCCountType::print_send); });
+    QObject::connect(printer, &PrinterDevice::printComplete,
+                     [this]() { AppStatisticsExtension::afterCountChanged(AppPLCCountType::print_right); });
+
+    QObject::connect(
+        webManager, &WebManager::algoRight,
+        [this](const ALGOType modelType, const uint32_t bottleNum, const std::string result, const std::string area) {
+            AppProductionExtension::afterALGORecv(modelType, bottleNum, result, area);
+        });
 
     // 获取到二维码并发送
-    QObject::connect(cognex_, &Cognex::ReadQRCode, [this](const std::string &value) { afterCognexRecv(value); });
+    QObject::connect(cognex, &Cognex::readQRCode, [this](uint32_t number, const std::string value) {
+        AppProductionExtension::afterCognexRecv(number, value);
+        if (value == "no read")
+        {
+            AppStatisticsExtension::afterCountChanged(AppPLCCountType::code_get);
+        }
+        else
+        {
+            AppStatisticsExtension::afterCountChanged(AppPLCCountType::code_right);
+        }
+    });
     // 获取到物流码并存储
-    QObject::connect(permission_, &Permission::codeRight,
-                     [this](const std::string &num, const std::string &code1, const std::string &code2) {
-                         afterPermissionRecv(num, code1, code2);
-                     });
-    LogInfo("network client start success.");
+    QObject::connect(permission, &Permission::codeRight, [this](uint32_t number, const std::string code) {
+#ifndef APP_TEST
+        AppProductionExtension::afterPermissionRecv(number, code);
+#endif
+        AppStatisticsExtension::afterCountChanged(AppPLCCountType::code_feedback);
+    });
+}
+void AppFrame::AppFrameworkImpl::initStatistics()
+{
+    std::string strType = config_["product"]["type"].as<std::string>();
+    if (strType == "circle")
+    {
+        // registerPlugin<BaseStatistics>(std::make_unique<BaseStatistics>());
+    }
+    else if (strType == "line")
+    {
+        registerPlugin<BaseStatistics>(std::make_unique<LineStatistics>());
+    }
+    else if (strType == "cap")
+    {
+        registerPlugin<BaseStatistics>(std::make_unique<CapStatistics>());
+    }
 }
 
 void AppFrame::AppFrameworkImpl::initPLC()
 {
+
     std::string strType = config_["product"]["type"].as<std::string>();
-    if (strType == "line")
+    using PLCRegistrationFunction = std::function<void()>;
+
+    const std::unordered_map<std::string, PLCRegistrationFunction> plcRegistrationMap = {
+        {"circle", [this]() { registerAndInitPLC<CircleDevice>(); }},
+        {"line", [this]() { registerAndInitPLC<LineDevice>(); }},
+        {"cap", [this]() { registerAndInitPLC<CapDevice>(); }},
+
+    };
+    auto it = plcRegistrationMap.find(strType);
+    if (it != plcRegistrationMap.end())
     {
-        plcDev_ = new LineDevice;
+        it->second();
     }
-    else if (strType == "circle")
+    else
     {
-        plcDev_ = new CircleDevice;
+        LogError("Unsupported product type for PLC initialization");
+        Utils::appExit(-1);
     }
-    else if (strType == "cap")
-    {
-        plcDev_ = new CapDevice;
-    }
-    plcDev_->init(config_);
-    QObject::connect(plcDev_, &BasePLCDevice::signalQR, [this](const uint64_t bottomNum) { whenSiganlQR(bottomNum); });
-    QObject::connect(plcDev_, &BasePLCDevice::signalCoding, [this]() { whenSignalCoding(); });
-    QObject::connect(plcDev_, &BasePLCDevice::signalOCR, [this]() { whenSignaOCR(); });
-    QObject::connect(plcDev_, &BasePLCDevice::signalRemove, [this]() { whenSignaRemove(); });
+
+    const auto &plc = getPlugin<BasePLCDevice>();
+    QObject::connect(plc, &BasePLCDevice::signalStatus,
+                     [this](const uint8_t status) { AppPlcExtension::afterPLCStatesChange(status); });
+    QObject::connect(plc, &BasePLCDevice::signalQR,
+                     [this]() { AppStatisticsExtension::afterCountChanged(AppPLCCountType::code_trigger); });
+    QObject::connect(plc, &BasePLCDevice::signalOCR,
+                     [this]() { AppStatisticsExtension::afterCountChanged(AppPLCCountType::ocr_trigger); });
+    QObject::connect(plc, &BasePLCDevice::signalLocate,
+                     [this]() { AppStatisticsExtension::afterCountChanged(AppPLCCountType::locate_trigger); });
+    QObject::connect(plc, &BasePLCDevice::signalCheck,
+                     [this]() { AppStatisticsExtension::afterCountChanged(AppPLCCountType::check_trigger); });
+
+    QObject::connect(plc, &BasePLCDevice::signalProductIn, [this](const uint16_t count) {
+        AppProductionExtension::afterProductIn(count);
+        AppStatisticsExtension::afterCountChanged(AppPLCCountType::amount);
+    });
+    QObject::connect(plc, &BasePLCDevice::signalProductOut, [this](const uint16_t count) {
+        AppProductionExtension::afterProductOut(count);
+        AppStatisticsExtension::afterCountChanged(AppPLCCountType::remove);
+    });
 }
 
-void AppFrame::AppFrameworkImpl::updateAlertData()
+void AppFrame::AppFrameworkImpl::initCameraManager()
 {
-    Json::Value jsAlertVal = AlertWapper::selectAlertDataPaged(7, 1);
-    for (Json::Value &jsonSingleValue : jsAlertVal)
-    {
-        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-                  Q_ARG(PageIndex, PageIndex::PageAlarm), Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
-    }
-}
-
-void AppFrame::AppFrameworkImpl::updateFormulaData()
-{
-    Json::Value jsFormulaVal = FormulaWapper::selectAllFormula();
-    for (const Json::Value &jsonSingleValue : jsFormulaVal)
-    {
-        invokeCpp(&AppMetaFlash::instance(), AppMetaFlash::instance().invokeRuntimeRoutine,
-                  Q_ARG(PageIndex, PageIndex::PageFormula),
-                  Q_ARG(QString, Utils::jsonToString(jsonSingleValue).c_str()));
-    }
-}
-
-void AppFrame::AppFrameworkImpl::initBaumerManager()
-{
-    baumerManager_ = new BaumerManager();
-    baumerManager_->start(config_);
-}
-
-void AppFrame::AppFrameworkImpl::initFile()
-{
-    QDir qdir;
-    std::string saveImageDir = strAppPath_ + "/Image";
-    if (!qdir.exists(saveImageDir.c_str()))
-    {
-        bool res = qdir.mkdir(saveImageDir.c_str());
-        if (!res)
-        {
-            LogWarn("create saveImageDir dir file!");
-        }
-    }
-    strTanglePath_ = saveImageDir + "/Location/";
-    strOcrPath_ = saveImageDir + "/CodeCheck/";
-    strTangleCheckPath_ = saveImageDir + "/LocateCheck/";
-    strTangleResultPath_ = saveImageDir + "/LocationResult/";
-    strOcrResultPath_ = saveImageDir + "/CodeCheckResult/";
-    strTangleCheckResultPath_ = saveImageDir + "/LocateCheckResult/";
-    if (!qdir.exists(strTanglePath_.c_str()))
-    {
-        bool res = qdir.mkdir(strTanglePath_.c_str());
-        if (!res)
-        {
-            LogWarn("create Location dir file!");
-        }
-    }
-    if (!qdir.exists(strOcrPath_.c_str()))
-    {
-        bool res = qdir.mkdir(strOcrPath_.c_str());
-        if (!res)
-        {
-            LogWarn("create OcrPath dir file!");
-        }
-    }
-    if (!qdir.exists(strTangleCheckPath_.c_str()))
-    {
-        bool res = qdir.mkdir(strTangleCheckPath_.c_str());
-        if (!res)
-        {
-            LogWarn("create LocateCheckCamera dir file!");
-        }
-    }
-    if (!qdir.exists(strTangleResultPath_.c_str()))
-    {
-        bool res = qdir.mkdir(strTangleResultPath_.c_str());
-        if (!res)
-        {
-            LogWarn("create TangleResultPath dir file!");
-        }
-    }
-    if (!qdir.exists(strTangleCheckResultPath_.c_str()))
-    {
-        bool res = qdir.mkdir(strTangleCheckResultPath_.c_str());
-        if (!res)
-        {
-            LogWarn("create TangleCheckResultPath dir file!");
-        }
-    }
+    registerPlugin<CameraManager>(std::make_unique<CameraManager>());
+    const auto &cameraManager = getPlugin<CameraManager>();
+    cameraManager->start(config_);
+    uint16_t image_normal_time = config_["app"]["resource"]["image_normal_time"].as<uint16_t>();
+    uint16_t image_ng_time = config_["app"]["resource"]["image_ng_time"].as<uint16_t>();
+    AppSourceExtension::initFilePath(qApp->applicationDirPath());
+    AppSourceExtension::deleteImage(image_normal_time, image_ng_time, qApp->applicationDirPath());
+    QObject::connect(cameraManager, &CameraManager::caputureImage,
+                     [this](const std::string cameraType, int32_t imgNumber, const cv::Mat image) {
+                         AppProductionExtension::afterCaputureImage(cameraType, imgNumber, image);
+                         if (cameraType == "Location")
+                             AppStatisticsExtension::afterCountChanged(AppPLCCountType::locate_get);
+                         else if (cameraType == "OCR")
+                             AppStatisticsExtension::afterCountChanged(AppPLCCountType::ocr_get);
+                         else if (cameraType == "LocateCheck")
+                             AppStatisticsExtension::afterCountChanged(AppPLCCountType::check_get);
+                     });
 }
 
 void AppFrame::AppFrameworkImpl::initProduct()
 {
     std::string strType = config_["product"]["type"].as<std::string>();
-    if (strType == "circle")
-    {
-        product_ = new CircleProduct();
-        countData_ = new CircleCount();
-    }
-    else if (strType == "line")
-    {
-        product_ = new LineProduct();
-        countData_ = new LineCount();
-    }
-    else if (strType == "cap")
-    {
-        product_ = new CapProduct();
-        countData_ = new CapCount();
-    }
-}
 
-void AppFrame::AppFrameworkImpl::memoryClean()
-{
-    // 退出所有的子线程并回收线程栈资源，堆资源需要后续手动释放
-    saveConfig();
-    bThreadHolder = false;
-    for (auto &ptr : lvFulltimeThread_)
+    using ProductRegistrationFunction = std::function<void()>;
+    const std::unordered_map<std::string, ProductRegistrationFunction> productRegistrationMap = {
+        {"circle", [this]() { registerAndInitProduct<CircleProduct>(config_); }},
+        {"line", [this]() { registerAndInitProduct<LineProduct>(config_); }},
+        {"cap", [this]() { registerAndInitProduct<CapProduct>(config_); }},
+        // 更多其他初始化函数
+    };
+    auto it = productRegistrationMap.find(strType);
+    if (it != productRegistrationMap.end())
     {
-        ptr.join();
+        it->second();
     }
-    mapStorePainter_.clear();
-    lvFulltimeThread_.clear();
-
-    // 对象清理区域
-    if (product_)
+    else
     {
-        delete product_;
-        product_ = nullptr;
-    }
-    if (countData_)
-    {
-        delete countData_;
-        countData_ = nullptr;
-    }
-    if (plcDev_ != nullptr)
-    {
-        delete plcDev_;
-        plcDev_ = nullptr;
-    }
-    if (domino_ != nullptr)
-    {
-        delete domino_;
-        domino_ = nullptr;
-    }
-    if (cognex_ != nullptr)
-    {
-        delete cognex_;
-        cognex_ = nullptr;
-    }
-    if (permission_ != nullptr)
-    {
-        delete permission_;
-        permission_ = nullptr;
-    }
-    if (webManager_ != nullptr)
-    {
-        delete webManager_;
-        webManager_ = nullptr;
-    }
-    if (baumerManager_ != nullptr)
-    {
-        delete baumerManager_;
-        baumerManager_ = nullptr;
+        LogError("Unsupported product type in config");
+        Utils::appExit(-1);
     }
 }
 
-void AppFrame::AppFrameworkImpl::timerTask()
+void AppFrame::AppFrameworkImpl::afterInit()
 {
-    lvFulltimeThread_.push_back(std::thread([this] {
-        while (bThreadHolder) // 线程退出Flag
-        {
-            // 实时捕获摄像头采集
-            for (const auto &[key, index] : mapWindId2Index_)
-            {
-                auto mat = baumerManager_->getCamaeraMat(index);
-                if (!mat.empty())
-                {
-                    uint8_t typeALGO = 0;
-                    if (key == "Location")
-                    {
-                        typeALGO = 0;
-                    }
-                    else if (key == "OCR")
-                    {
-                        typeALGO = 1;
-                    }
-                    else if (key == "LocateCheck")
-                    {
-                        typeALGO = 2;
-                    }
-                    afterCaputureImage(typeALGO, mat);
-                    LogInfo("product process:image {} get.", typeALGO);
-                    invokeCpp(mapStorePainter_.at(index), "updateImage", Q_ARG(QImage, Utils::matToQImage(mat)));
-                }
-            }
-        }
-    }));
+    // AppQmlExtension::produceReset(); // 此时有可能未连接上
 }
 
-void AppFrame::AppFrameworkImpl::sendOneToAlgo()
+void AppFrame::AppFrameworkImpl::engineLoad(QQmlApplicationEngine *engine)
 {
-    std::string jsonData;
-    QByteArray byteArray;
-    Utils::makeJsonAndByteArray(cv::Mat(800, 800, CV_8UC3, cv::Scalar(255, 255, 255)), 0, "init", "tangle",
-                                strTanglePath_, jsonData, byteArray);
-    webManager_->sendToALGO(0, jsonData, byteArray);
-}
+    const std::string strType = config_["product"]["type"].as<std::string>();
 
-void AppFrame::AppFrameworkImpl::drawText(QImage &img, const QString &text)
-{
-    QPainter pp(&img);
-    QFont font = pp.font();
-    font.setPixelSize(50); // 改变字体大小
-    font.setFamily("Microsoft YaHei");
-    pp.setFont(font);
-    pp.setPen(QPen(Qt::red, 5));
-    pp.setBrush(QBrush(Qt::red));
-    pp.drawText(QPointF(20, 50), text);
-}
+    // Define a mapping for product type to title name and module name
+    const std::unordered_map<std::string, std::pair<QString, QString>> productTypeMap = {
+        {"line", {"尖庄100毫升光瓶瓶盖数据采集激光打码检测设备", "MainWindow"}},
+        {"circle", {"尖庄500毫升光瓶瓶盖数据采集激光打码检测设备", "MainWindow"}},
+        {"cap", {"尖庄100毫升光瓶瓶盖在线检测设备", "MainWindow"}}
+        // Add more mappings as needed
+    };
 
-void AppFrame::AppFrameworkImpl::drawOcrRes(QImage &img, OcrRes &ocr)
-{
-    QPainter pp(&img);
-    QFont font = pp.font();
-    font.setPixelSize(50); // 改变字体大小
-    font.setFamily("Microsoft YaHei");
-    pp.setFont(font);
-    pp.setPen(QPen(Qt::red, 5));
-    pp.setBrush(QBrush(Qt::red));
-    pp.drawText(QPointF(20, 50), QString::fromStdString(ocr.result));
-    QPointF lefttop(ocr.lefttopx, ocr.lefttopy);
-    QPointF leftbottom(ocr.leftbottomx, ocr.leftbottomy);
-    QPointF righttop(ocr.righttopx, ocr.righttopy);
-    QPointF rightbottom(ocr.rightbottomx, ocr.rightbottomy);
-    QVector<QPointF> points;
-    points << lefttop << righttop << rightbottom << leftbottom;
-    pp.drawPolygon(points);
-}
+    auto it = productTypeMap.find(strType);
+    if (it != productTypeMap.end())
+    {
+        const auto &[titleName, moduleName] = it->second;
 
-void AppFrame::AppFrameworkImpl::whenSiganlQR(const uint64_t number)
-{
-    Utils::asyncTask([this, number] {
-        if (product_->getType() == TypeProduct::TypeCircle)
-        {
-            product_->createProduct(number);
-            countData_->dataAdd("countAll");
-            // PLC工位从1开始计数，软件工位从0开始计数，以下工位都是软件工位
-
-            // 电机旋转工位=5 下发定位在旋转前=5
-            const auto rotate = product_->getIndexObject(5);
-
-            // 打码工位=9 下发复合定位在打码前=8
-            const auto locateCheck = product_->getIndexObject(8);
-
-            // 打码工位=9 收到进入打码工位信号立刻下发数据到打印机=9
-            const auto printer = product_->getIndexObject(9);
-
-            // 打码复合工位=14 考虑图片接受时延+算法时延=16
-            const auto remove = product_->getIndexObject(16);
-            if (rotate && !rotate->LocationResult.empty())
-            {
-                plcDev_->writeDevice("r", "13002", "", rotate->LocationResult);
-                plcDev_->writeDevice("n", "12993", "", std::to_string(rotate->bottleNum_));
-                rotate->issuedRotateTime = Utils::getCurrentTime(true);
-                LogInfo("product process:write plc:number={},value={}.", rotate->bottleNum_, rotate->LocationResult);
-            }
-            if (locateCheck)
-            {
-                if (locateCheck->logistics1.empty())
-                {
-                    plcDev_->writeDevice("b", "13004", "0", "0");
-                }
-                else
-                {
-                    // plcDev_->writeDataToDevice("b", "13004", "0", locateCheck->locateCheckResult);
-                    plcDev_->writeDevice("b", "13004", "00", "1");
-                    plcDev_->writeDevice("n", "12994", "", std::to_string(locateCheck->bottleNum_));
-                }
-                locateCheck->issuedLocateCheckTime = Utils::getCurrentTime(true);
-            }
-            // if (printer && !printer->logistics1.empty() && printer->CheckResult == "1") 测试代码，复核算法未开启
-            if (printer && !printer->logistics1.empty())
-            {
-                invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, printer->logistics1),
-                          Q_ARG(std::string, printer->logistics2));
-                LogInfo("product process:print:number={},code1={},code2={}.", printer->bottleNum_, printer->logistics1,
-                        printer->logistics2);
-            }
-            if (remove)
-            {
-                plcDev_->writeDevice("b", "13004", "1", remove->isRemove_ ? "1" : "0");
-                product_->signalRemove();
-                product_->deleteProduct();
-            }
-        }
-        else
-        {
-            product_->createProduct(number);
-            countData_->dataAdd("countAll");
-            product_->signalQR();
-        }
-    });
-}
-
-void AppFrame::AppFrameworkImpl::whenSignalCoding()
-{
-    Utils::asyncTask([this] {
-        auto ptrProduct = product_->signalCoding();
-        if (ptrProduct && !ptrProduct->logistics1.empty() && !ptrProduct->logistics2.empty())
-        {
-            invokeCpp(domino_, "dominoPrint", Q_ARG(std::string, ptrProduct->logistics1),
-                      Q_ARG(std::string, ptrProduct->logistics2));
-        }
-    });
-}
-
-void AppFrame::AppFrameworkImpl::whenSignaOCR()
-{
-    Utils::asyncTask([this] { product_->signalOCR(); });
-}
-
-void AppFrame::AppFrameworkImpl::whenSignaRemove()
-{
-    Utils::asyncTask([this] {
-        product_->signalRemove();
-        product_->deleteProduct();
-    });
-}
-
-void AppFrame::AppFrameworkImpl::afterCognexRecv(const std::string &code)
-{
-    Utils::asyncTask([this, code] {
-        uint32_t number = product_->updateQRCode(code);
-        if (code == "No Read" || number == 0)
-        {
-            return;
-        }
-        invokeCpp(permission_, "sendQRCode", Q_ARG(uint32_t, number), Q_ARG(std::string, code));
-    });
-}
-
-void AppFrame::AppFrameworkImpl::afterPermissionRecv(const std::string &num, const std::string &code1,
-                                                     const std::string &code2)
-{
-    uint32_t number = Utils::anyFromString<uint32_t>(num);
-    product_->updateLogistics(number, code1, code2);
-}
-
-void AppFrame::AppFrameworkImpl::afterCaputureImage(const uint8_t &type, const cv::Mat &mat)
-{
-    Utils::asyncTask([this, type, image = mat.clone()] {
-        uint32_t bottomNum = 0;
-        std::string filePath;
-        std::string modelName;
-        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        switch (type)
-        {
-        case 0: {
-            cv::Mat newMat;
-            cv::resize(image, newMat, {800, 800});
-            modelName = "tangle";
-            filePath = strTanglePath_ + currentDateTimeStr.toStdString() + ".jpg";
-            bottomNum = product_->updateLocation(image, filePath);
-            break;
-        }
-        case 1: {
-            modelName = "ocr";
-            filePath = strOcrPath_ + currentDateTimeStr.toStdString() + ".jpg";
-            bottomNum = product_->updateOCR(image, filePath);
-            break;
-        }
-        case 2: {
-            modelName = "tangleCheck";
-            filePath = strTangleCheckPath_ + currentDateTimeStr.toStdString() + ".jpg";
-            bottomNum = product_->updateCheck(image, filePath);
-            break;
-        }
-        default:
-            break;
-        }
-        LogInfo("product process:send to algo:number={},model={},path={}.", bottomNum, type, filePath);
-        if (bottomNum > 0)
-        {
-            std::string sendJson;
-            QByteArray sendBytes;
-            Utils::makeJsonAndByteArray(image, bottomNum, "", modelName, filePath, sendJson, sendBytes);
-            invokeCpp(webManager_, "sendToALGO", Q_ARG(uint8_t, type), Q_ARG(std::string, sendJson),
-                      Q_ARG(QByteArray, sendBytes));
-        }
-    });
-}
-
-void AppFrame::AppFrameworkImpl::processOCR(const std::string &jsonData)
-{
-    Utils::asyncTask([this, jsonData] {
-        Json::Value jsValue = Utils::stringToJson(jsonData);
-        uint32_t bottomNum = jsValue["bottomNum"].asUInt();
-        jsValue = Utils::stringToJson(jsValue["box"].asString());
-        if (jsValue.empty())
-        {
-            countData_->dataAdd("countCodeWaste");
-            countData_->dataAdd("countWaste");
-            return;
-        }
-        std::string result;
-        std::vector<OcrRes> ocrRes;
-        for (const auto &item : jsValue)
-        {
-            result += item["result"].asString();
-            std::string lefttop = item["lefttop"].asString();
-            std::string righttop = item["righttop"].asString();
-            std::string rightbottom = item["rightbottom"].asString();
-            std::string leftbottom = item["leftbottom"].asString();
-            // 解析字符串中的整数
-            int lefttopX, lefttopY, righttopX, righttopY, rightbottomX, rightbottomY, leftbottomX, leftbottomY;
-            sscanf(lefttop.c_str(), "[%d, %d]", &lefttopX, &lefttopY);
-            sscanf(righttop.c_str(), "[%d, %d]", &righttopX, &righttopY);
-            sscanf(rightbottom.c_str(), "[%d, %d]", &rightbottomX, &rightbottomY);
-            sscanf(leftbottom.c_str(), "[%d, %d]", &leftbottomX, &leftbottomY);
-            OcrRes resItem(item["result"].asString(), lefttopX, lefttopY, leftbottomX, leftbottomY, righttopX,
-                           righttopY, leftbottomX, leftbottomY);
-            ocrRes.push_back(std::move(resItem));
-        }
-        auto ptrOcr = product_->updateOCRResult(bottomNum, result);
-        // 根据剔瓶信息决定计数信息
-        if (ptrOcr->isRemove_)
-        {
-            countData_->dataAdd("countPass");
-        }
-        else
-        {
-            countData_->dataAdd("countCodeWaste");
-            countData_->dataAdd("countWaste");
-        }
-        cv::Mat mat = ptrOcr->OCRImage;
-        if (mat.empty())
-        {
-            LogWarn("ocrImage is null");
-            return;
-        }
-        QImage ocrImage = Utils::matToQImage(mat);
-        QPainter painter(&ocrImage);
-        for (auto &resItem : ocrRes)
-        {
-            drawOcrRes(ocrImage, resItem);
-        }
-        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        buffer.open(QIODevice::WriteOnly);
-        ocrImage.save(&buffer, "jpg");
-        Utils::saveImageToFile(byteArray, strTangleResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        invokeCpp(mapStorePainter_.at(mapWindId2Index_.at("OCR")), "updateImage", Q_ARG(QImage, ocrImage));
-    });
-}
-
-void AppFrame::AppFrameworkImpl::processTangle(const std::string &jsonData)
-{
-    Utils::asyncTask([this, jsonData] {
-        Json::Value jsValue = Utils::stringToJson(jsonData);
-        uint32_t bottomNum = jsValue["bottomNum"].asUInt();
-        std::string result;
-        jsValue = Utils::stringToJson(jsValue["box"].asString());
-        for (const auto &item : jsValue)
-        {
-            result = item["result"].asString();
-        }
-        // 接收python 传入保留小数点后两位的角度值  四舍五入为整型
-        float fres = std::atof(result.c_str());
-        int tangleResult = std::round(fres);
-
-        tangleResult = (tangleResult + 98) % 360;
-        auto ptrBottle = product_->updateLocationResult(bottomNum, std::to_string(tangleResult));
-        if (ptrBottle == nullptr)
-        {
-            LogInfo("product process:recv from tangle:number not found.");
-            return;
-        }
-        cv::Mat mat = ptrBottle->LocationImage;
-        if (mat.empty())
-        {
-            LogInfo("product process:recv from tangle:number={},mat is null.", bottomNum);
-            return;
-        }
-        result = "tangle; " + result + "; ";
-        QImage Image = Utils::matToQImage(mat);
-        drawText(Image, result.c_str());
-        QString currentDateTimeStr = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        buffer.open(QIODevice::WriteOnly);
-        Image.save(&buffer, "jpg");
-        Utils::saveImageToFile(byteArray, strOcrResultPath_ + currentDateTimeStr.toStdString() + ".jpg");
-        invokeCpp(mapStorePainter_.at(mapWindId2Index_.at("Location")), "updateImage", Q_ARG(QImage, Image));
-    });
-}
-
-void AppFrame::AppFrameworkImpl::processCheck(const std::string &jsonData)
-{
-    Utils::asyncTask([this, jsonData] {
-        Json::Value jsValue = Utils::stringToJson(jsonData);
-        uint32_t bottomNum = jsValue["bottomNum"].asUInt();
-        auto ptrBottle = product_->updateCheckResult(bottomNum, "1");
-    });
+        // 注册MyObject类
+        qmlRegisterType<ImagePainter>("AppFrame", 1, 0, "ImagePainter");
+        engine->rootContext()->setContextProperty("appMetaFlash", &appMetaFlash());
+        engine->rootContext()->setContextProperty("iconDir",
+                                                  "file:///" + qApp->applicationDirPath() + "/ico/"); // 获取当前路径
+        engine->rootContext()->setContextProperty("pname", titleName);
+        engine->rootContext()->setContextProperty("deviceName", strType.c_str());
+        engine->loadFromModule("DeviceIntegration", moduleName);
+        engine_ = engine;
+    }
+    else
+    {
+        LogError("product type in config error so engine loadFromModule failed");
+        Utils::appExit(-1);
+    }
 }

@@ -35,10 +35,12 @@ class FormulaWapper
         mapData.insert("name", jsonValue["name"].asCString());
         mapData.insert("code_x_position", jsonValue["code_x_position"].asCString());
         mapData.insert("code_y_position", jsonValue["code_y_position"].asCString());
-        mapData.insert("impurity_locate", jsonValue["impurity_locate"].asCString());
+        // mapData.insert("impurity_locate", jsonValue["impurity_locate"].asCString());
         mapData.insert("speed_produce", jsonValue["speed_produce"].asCString());
         mapData.insert("acceleration_produce", jsonValue["acceleration_produce"].asCString());
         mapData.insert("deceleration_produce", jsonValue["deceleration_produce"].asCString());
+        mapData.insert("material_diameter", jsonValue["material_diameter"].asCString());
+        mapData.insert("bottle_type", jsonValue["bottle_type"].asCString());
         bool res = PgsqlHelper::getSqlHelper().insertData("formula_data", mapData);
         return res;
     }
@@ -86,6 +88,17 @@ class FormulaWapper
         else
         {
             qDebug() << "Failed to delete data";
+        }
+        return false;
+    }
+
+    static bool cancelAutoLoad()
+    {
+        QVariantMap mapData;
+        mapData["auto_load"] = false;
+        if (PgsqlHelper::getSqlHelper().updateData("formula_data", mapData, "auto_load = true"))
+        {
+            return true;
         }
         return false;
     }

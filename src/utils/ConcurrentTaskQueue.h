@@ -1,7 +1,6 @@
 #pragma once
 #include "TaskQueue.h"
-#include <list>
-#include <memory>
+#include <cstdint>
 #include <queue>
 #include <string>
 #include <vector>
@@ -9,6 +8,10 @@
 class ConcurrentTaskQueue : public TaskQueue
 {
   public:
+    static bool isInvalid()
+    {
+        return isInvalid_;
+    }
     inline static ConcurrentTaskQueue &getInstance()
     {
         static ConcurrentTaskQueue task;
@@ -36,5 +39,7 @@ class ConcurrentTaskQueue : public TaskQueue
     std::mutex taskMutex_;
     std::condition_variable taskCond_;
     std::atomic_bool stop_;
-    void queueFunc(int queueNum);
+    void queueFunc(const uint16_t queueNum);
+    std::vector<uint8_t> execQueue_;
+    inline static bool isInvalid_ = true;
 };
