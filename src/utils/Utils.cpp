@@ -1,5 +1,4 @@
 #include "Utils.h"
-#include "ConcurrentTaskQueue.h"
 #include "Logger.h"
 #include <QImage>
 #include <QPainter>
@@ -9,6 +8,8 @@
 #include <cryptopp/filters.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/osrng.h>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <regex>
 #include <zlib.h>
@@ -127,16 +128,10 @@ std::string Utils::jsonToString(const Json::Value &jsVal)
 {
     if (jsVal.isNull())
         return {};
-    static Json::Value def = []() {
-        Json::Value def;
-        Json::StreamWriterBuilder::setDefaults(&def);
-        def["emitUTF8"] = true;
-        return def;
-    }();
+    Json::StreamWriterBuilder stream_builder;
+    stream_builder["emitUTF8"] = true;
 
     std::ostringstream stream;
-    Json::StreamWriterBuilder stream_builder;
-    stream_builder.settings_ = def; // Config emitUTF8
     std::unique_ptr<Json::StreamWriter> writer(stream_builder.newStreamWriter());
     writer->write(jsVal, &stream);
     return stream.str();
@@ -208,16 +203,6 @@ bool Utils::removeOutdatedFiles(const std::string &currentTime, const std::strin
     return false;
 }
 
-void Utils::asyncTask(std::function<void(void)> &&task)
-{
-    if (ConcurrentTaskQueue::isInvalid())
-        ConcurrentTaskQueue::getInstance().runTaskInQueue(task);
-    else
-    {
-        LogWarn("ConcurrentTaskQueue is destroyed!");
-    }
-}
-
 void Utils::appExit(int exitCode)
 {
     std::terminate();
@@ -276,11 +261,11 @@ std::string Utils::getCurrentTime(bool hasMillisecond)
 
     // 格式化时间值为字符串
     std::stringstream ss;
-    ss << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S");
+    ss << std::put_time(std::localtime(&currentTime), "%Y_%m_%d%H_%M_%S");
     curTime = ss.str();
     if (hasMillisecond)
     {
-        curTime += std::string(".") +
+        curTime += std::string("_") +
                    std::to_string(
                        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000);
     }
@@ -352,7 +337,7 @@ std::string Utils::encryptByAES(const std::string &plain)
     }
 
     std::string encoded;
-    CryptoPP::StringSource(cipher, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(encoded)));
+    CryptoPP::StringSource encodeSource(cipher, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(encoded)));
     return encoded;
 }
 
@@ -361,7 +346,8 @@ std::string Utils::decryptByAES(const std::string &encode)
     std::string key("d~e!t@u#f1u2s3i");
     std::string iv("s~o!f@t#w1a2r3e");
     std::string encodeByte;
-    CryptoPP::StringSource(encode, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(encodeByte)));
+    CryptoPP::StringSource decodeSource(encode, true,
+                                        new CryptoPP::Base64Decoder(new CryptoPP::StringSink(encodeByte)));
 
     std::string recovered;
     try
@@ -431,15 +417,19 @@ void Utils::makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottom
     jsonBody = jsonToString(jsVal);
 }
 
-void Utils::saveImageToLocal(const QImage &image, const QString &filePath)
+void Utils::saveMatToLocal(const cv::Mat &image, const std::string &filePath)
 {
-    if (image.isNull())
+    if (image.empty())
     {
+        // 图像为空，无法保存
+        LogError("Empty image, cannot save to file: {}", filePath);
         return;
     }
-    if (!image.save(filePath))
+    // 使用 OpenCV 的 imwrite 函数保存图像到文件
+    if (!cv::imwrite(filePath, image))
     {
-        LogWarn("save image error: {}", filePath.toStdString());
+        // 保存失败
+        LogError("Failed to save image to file: {}", filePath);
     }
 }
 
@@ -524,4 +514,26 @@ std::string Utils::transferDataFromSql(std::string src)
         src.erase(pos);
     }
     return src;
+}
+
+uint16_t Utils::countSubstrings(const std::string &s, const std::string &&sub)
+{
+    uint16_t count = 0;
+    size_t subLen = sub.length();
+    size_t sLen = s.length();
+
+    // 遍历字符串 s 的所有子串
+    for (size_t i = 0; i <= sLen - subLen; ++i)
+    {
+        // 检查当前位置开始的子串是否为指定子串
+        if (s[i] == sub[0])
+        {
+            if (s.substr(i, subLen) == sub)
+            {
+                count++;
+                i = i + subLen - 1;
+            }
+        }
+    }
+    return count;
 }

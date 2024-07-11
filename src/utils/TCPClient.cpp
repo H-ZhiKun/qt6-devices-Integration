@@ -2,13 +2,12 @@
 #include "Logger.h"
 #include <QCoreApplication>
 #include <QMetaEnum>
-#include <QThread>
 
 TCPClient::TCPClient(QObject *parent) : QObject(parent)
 {
 }
 
-TCPClient::~TCPClient()
+TCPClient::~TCPClient() noexcept
 {
     cleanup();
 }

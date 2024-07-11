@@ -1,33 +1,31 @@
 #pragma once
+#include "AlertWapper.h"
 #include "BaseClient.h"
 #include <QObject>
+#include <atomic>
+#include <bitset>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <mutex>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
-enum class DeviceType
+enum class DeviceUnion
 {
-    CircleDevice,
-    LineDevice,
-    CapDevice
-};
-
-enum class PLCStateType
-{
-    PLCStates = 0,
-    PLCSteps = 1
-};
-
-enum class PLCCount
-{
-    InCount = 0,
-    OutCount = 1,
-    CameraCount = 2,
-    QRCodeCount = 4,
-    CodeCount
+    DevCircle = 0,
+    DevLine,
+    DevCap,
+    In,
+    Out,
+    Qrcode,
+    Print,
+    Ocr,
+    Location,
+    LocateCheck,
+    State,
+    Step
 };
 
 class BasePLCDevice : public QObject
@@ -36,11 +34,20 @@ class BasePLCDevice : public QObject
   public:
     explicit BasePLCDevice(QObject *parent = nullptr);
     virtual ~BasePLCDevice();
-    virtual bool init(const YAML::Node &config, const QString &path);
-    virtual void zeroClear();               // 清零PLC计数
-    virtual uint32_t getPlcCount(PLCCount); // 获取plc计数
+    bool init(const YAML::Node &config, const QString &path); // 清零PLC计数
+    void setExperiment(bool inTest);
     bool isConnected();
-    uint8_t getDeviceStatus(PLCStateType states);
+    void keepConnection();
+    uint32_t getDeviceData(const DeviceUnion wantKey);
+    DeviceUnion getDeviceType();
+    virtual bool fetchFast() = 0; // 快取寄存器
+    virtual bool fetchLazy() = 0; // 慢速寄存器
+    virtual bool fetchTest() = 0; // 测试寄存器
+    virtual void heart() = 0;
+    virtual bool getCollect(std::string windName)
+    {
+        return false;
+    };
     // 批量数值读写
     // 支持float/uint16_t/uint32_t/uint8_t
     // 其中uint8_t用于存储单个二进制位bit，多少个uint8_t就是多少位
@@ -78,52 +85,72 @@ class BasePLCDevice : public QObject
     // 多写
     template <typename ValueType>
     bool writeArray(const uint16_t dbNmuber, const uint16_t addr, const std::vector<ValueType> &values);
-  signals:
-    void signalProductIn(const uint32_t count);  // 进料信号 count是需要创建的个数 大于等于1
-    void signalProductOut(const uint32_t count); // 出料信号
-    void signalQR();     // 扫码信号 针对回转式而言 此信号相当于原bottlemove信号
-    void signalCoding(); // 打码信号
-    void signalOCR();    // OCR信号
-    void signalLocate(); // 定位相机信号
-    void signalCheck();  // 复核相机信号
 
-    void signalStatus(const uint8_t status); // 状态改变信号
-    void signalSteps(const uint8_t steps);   // 设备步骤改变信号
+    // 报警解析
+    template <typename ValueType> void parseAlert(uint16_t alertAddr, const std::vector<ValueType> &values);
+    template <typename ValueType, size_t TypeSize = 8>
+    void detailsAlert(const ValueType &value, size_t site, uint16_t dbNumber,
+                      std::map<std::string, std::string> &mapCurrentAlert);
+  signals:
+    void signalIn(const uint32_t count);     // 进料信号 count是需要创建的个数 大于等于1
+    void signalOut(const uint32_t count);    // 出料信号
+    void signalQR(const uint32_t count);     // 扫码信号 针对回转式而言 此信号相当于原bottlemove信号
+    void signalPrint(const uint32_t count);  // 打码信号
+    void signalOCR(const uint32_t count);    // OCR信号
+    void signalLocate(const uint32_t count); // 定位相机信号
+    void signalCheck(const uint32_t count);  // 复核相机信号
+
+    void signalState(const uint32_t status); // 状态改变信号
+    void signalStep(const uint32_t steps);   // 设备步骤改变信号
+    void triggerImage();
 
   protected:
     BasePLCDevice(const BasePLCDevice &) = delete;
     BasePLCDevice &operator=(const BasePLCDevice &) = delete;
     // 通用保护接口，无需子类化
+
     bool initAddress(const QString &path);
     bool initAlert(const QString &path);
-    void updateCaches(uint16_t address, const std::vector<uint8_t> &candidates);
+    template <typename ValueType> void updateCaches(uint16_t address, const std::vector<ValueType> &candidates)
+    {
+        std::lock_guard lock(mtxCaches_);
+        auto destination = caches_.begin() + (address - cacheAddress_);
+
+        if constexpr (std::is_same_v<ValueType, uint8_t>)
+        {
+            // 如果 ValueType 是 uint8_t，则进行类型转换后拷贝
+            std::transform(candidates.begin(), candidates.end(), destination,
+                           [](uint8_t value) { return static_cast<uint16_t>(value); });
+        }
+        else if constexpr (std::is_same_v<ValueType, uint16_t>)
+        {
+            // 如果 ValueType 是 uint16_t，则直接拷贝
+            std::copy(candidates.begin(), candidates.end(), destination);
+        }
+    }
+    virtual void idCompare(const uint32_t &currentId, const DeviceUnion key);
+    void stateCompare(const uint32_t &currentState, const DeviceUnion key);
     // 以下接口子类化
-    virtual bool afterInit() = 0;
-    virtual void heartbeat() = 0;
-    virtual void closeProductionLine() = 0;
-    virtual void updateRealTimeInfo() = 0;
-    virtual void parsingAlertInfo() = 0;
-    virtual void parsingStatusInfo() = 0;
-    virtual void parsingPLCIDInfo() = 0;
+    virtual bool additionalInit() = 0; // 补充任务开始前的初始化行为
+    virtual bool clearArguments() = 0; // 设置计数清零
+    virtual bool beforeClose();        // 任务关闭前的行为
+    virtual void parseFast() = 0;      // 解析快取寄存器
+    virtual void parseLazy() = 0;      // 解析慢速寄存器
     // 数据成员
     std::unique_ptr<BaseClient> client_{nullptr};
-    DeviceType devType;
+    DeviceUnion devType;
+    std::atomic_bool isTesting = false;
+    std::atomic_bool bReady_ = false;
 
-    std::atomic_bool updateHolder_{true};
-    std::thread thUpdate_;
-
-    bool bytesFlip_ = false;
+    std::vector<uint16_t> caches_; // 容器缓存
     uint16_t cacheAddress_ = 0;
+    size_t cacheSize_ = 0;
+    uint16_t dbNumber_ = 0;
+
     std::mutex mtxCaches_;
-    std::vector<uint8_t> caches_;
-    uint8_t plcStates_ = 0;
-    uint8_t plcSteps_ = 0;
-    uint32_t prudctInNumber_ = 0;
-    uint32_t prudctOutNumber_ = 0;
-    uint32_t productCameraNumber_ = 0;
-    uint32_t productQRCodeNumber_ = 0;
-    uint32_t productCodeNumber_ = 0;
-    uint8_t bHeartbeat_ = 0;
+    std::unordered_map<DeviceUnion, uint32_t> mapDevDatas_;
+    std::unordered_map<DeviceUnion, std::function<void(const uint32_t)>> mapDevSignals_;
+    uint8_t heartbeat_ = 0;
     // alert map
     std::unordered_map<std::string, std::string> mapAlertStore_;
     std::map<std::string, std::string> mapRecordAlert_;
@@ -144,70 +171,106 @@ inline std::vector<ValueType> BasePLCDevice::readArray(const uint16_t addr, cons
     static_assert(std::is_same_v<ValueType, float> || std::is_same_v<ValueType, uint16_t> ||
                       std::is_same_v<ValueType, uint32_t> || std::is_same_v<ValueType, uint8_t>,
                   "readDevices only supports float, uint16_t, uint8_t");
-
-    if constexpr (std::is_same_v<ValueType, uint8_t>)
+    if (protocol_ == "snap7")
     {
-        std::vector<uint8_t> retVec;
-
-        // 计算起始索引和结束索引
-        size_t startIndex = addr - cacheAddress_;
-        size_t endIndex = std::min(startIndex + size, caches_.size());
-        // 使用 std::copy_if 将数据从缓存中复制到返回向量中
-        std::lock_guard lock(mtxCaches_);
-        std::copy_if(caches_.begin() + startIndex, caches_.begin() + endIndex, std::back_inserter(retVec),
-                     [](uint8_t value) { return true; }); // 如果你有其他过滤条件，可以在这里添加
-        return retVec;
-    }
-    else if constexpr (std::is_same_v<ValueType, uint16_t>)
-    {
-        std::vector<uint8_t> retBytes = readArray<uint8_t>(addr, size * 2); // 乘以 2 获取字节数量
-        std::vector<uint16_t> values;
-
-        // 按照每两个字节高低翻转的顺序组合成 uint16_t 值，并放入 values 中
-        for (size_t i = 0; i < retBytes.size(); i += 2)
+        if constexpr (std::is_same_v<ValueType, uint8_t>)
         {
-            size_t low = i;
-            size_t high = i + 1;
-            if (bytesFlip_)
+            std::vector<uint8_t> retVec;
+
+            // 计算起始索引和结束索引
+            size_t startIndex = addr - cacheAddress_;
+            size_t endIndex = std::min(startIndex + size, caches_.size());
+            // 使用 std::copy_if 将数据从缓存中复制到返回向量中
+            std::lock_guard lock(mtxCaches_);
+            std::copy_if(caches_.begin() + startIndex, caches_.begin() + endIndex, std::back_inserter(retVec),
+                         [](uint8_t value) { return true; }); // 如果你有其他过滤条件，可以在这里添加
+            return retVec;
+        }
+        else if constexpr (std::is_same_v<ValueType, uint16_t>)
+        {
+            std::vector<uint8_t> retBytes = readArray<uint8_t>(addr, size * 2); // 乘以 2 获取字节数量
+            std::vector<uint16_t> values;
+
+            // 按照每两个字节高低翻转的顺序组合成 uint16_t 值，并放入 values 中
+            for (size_t i = 0; i < retBytes.size(); i += 2)
             {
-                std::swap(low, high);
+                size_t low = i + 1;
+                size_t high = i;
+                uint16_t value = retBytes[low] | (retBytes[high] << 8);
+                values.push_back(value);
             }
-            uint16_t value = retBytes[low] | (retBytes[high] << 8);
-            values.push_back(value);
+
+            return values;
         }
-
-        return values;
-    }
-    else if constexpr (std::is_same_v<ValueType, uint32_t>)
-    {
-        std::vector<uint16_t> retWords = readArray<uint16_t>(addr, size * 2);
-        std::vector<uint32_t> values;
-
-        // 按照每两个字节高低翻转的顺序组合成 uint32_t 值，并放入 values 中
-        for (size_t i = 0; i < retWords.size(); i += 2)
+        else if constexpr (std::is_same_v<ValueType, uint32_t>)
         {
-            size_t low = i;
-            size_t high = i + 1;
-            if (bytesFlip_)
+            std::vector<uint16_t> retWords = readArray<uint16_t>(addr, size * 2);
+            std::vector<uint32_t> values;
+
+            // 按照每两个字节高低翻转的顺序组合成 uint32_t 值，并放入 values 中
+            for (size_t i = 0; i < retWords.size(); i += 2)
             {
-                std::swap(low, high);
+                size_t low = i + 1;
+                size_t high = i;
+                uint32_t value = retWords[low] | (retWords[high] << 16);
+                values.push_back(value);
             }
-            uint32_t value = retWords[low] | (retWords[high] << 16);
-            values.push_back(value);
-        }
 
-        return values;
-    }
-    else if constexpr (std::is_same_v<ValueType, float>)
-    {
-        std::vector<uint32_t> retDInts = readArray<uint32_t>(addr, size * 2);
-        std::vector<float> values;
-        for (const auto &temp : retDInts)
-        {
-            values.push_back(temp / 100.0f);
+            return values;
         }
-        return values;
+        else if constexpr (std::is_same_v<ValueType, float>)
+        {
+            std::vector<uint32_t> retDInts = readArray<uint32_t>(addr, size);
+            std::vector<float> values;
+            for (const auto &temp : retDInts)
+            {
+                values.push_back(temp / 100.0f);
+            }
+            return values;
+        }
     }
+    else
+    {
+        if constexpr (std::is_same_v<ValueType, uint16_t>)
+        {
+            std::vector<uint16_t> retVec;
+
+            // 计算起始索引和结束索引
+            size_t startIndex = addr - cacheAddress_;
+            size_t endIndex = std::min(startIndex + size, caches_.size());
+            // 使用 std::copy_if 将数据从缓存中复制到返回向量中
+            std::lock_guard lock(mtxCaches_);
+            std::copy_if(caches_.begin() + startIndex, caches_.begin() + endIndex, std::back_inserter(retVec),
+                         [](uint16_t value) { return true; }); // 如果你有其他过滤条件，可以在这里添加
+            return retVec;
+        }
+        else if constexpr (std::is_same_v<ValueType, uint32_t>)
+        {
+            std::vector<uint16_t> retWords = readArray<uint16_t>(addr, size * 2);
+            std::vector<uint32_t> values;
+
+            // 按照每两个字节高低翻转的顺序组合成 uint32_t 值，并放入 values 中
+            for (size_t i = 0; i < retWords.size(); i += 2)
+            {
+                size_t low = i;
+                size_t high = i + 1;
+                uint32_t value = retWords[low] | (retWords[high] << 16);
+                values.push_back(value);
+            }
+            return values;
+        }
+        else if constexpr (std::is_same_v<ValueType, float>)
+        {
+            std::vector<uint32_t> retDInts = readArray<uint32_t>(addr, size);
+            std::vector<float> values;
+            for (const auto &temp : retDInts)
+            {
+                values.push_back(temp / 100.0f);
+            }
+            return values;
+        }
+    }
+    return {};
 }
 
 template <typename ValueType>
@@ -235,4 +298,58 @@ bool BasePLCDevice::writeArray(const uint16_t dbNumber, const uint16_t addr, con
         return client_->writeBytes(dbNumber, addr, values);
     }
     return false;
+}
+
+template <typename ValueType> void BasePLCDevice::parseAlert(uint16_t alertAddr, const std::vector<ValueType> &alerts)
+{
+    size_t bitLength = 0;
+    uint16_t dbNumber = 0;
+    if constexpr (std::is_same_v<ValueType, uint8_t>)
+    {
+        bitLength = 8;
+        dbNumber = 2;
+    }
+    else if constexpr (std::is_same_v<ValueType, uint16_t>)
+    {
+        bitLength = 16;
+    }
+    std::map<std::string, std::string> mapCurrentAlert;
+    for (size_t i = 0; i < alerts.size(); i++)
+    {
+        if (alerts[i] > 0)
+        {
+            if (bitLength == 8)
+            {
+                detailsAlert<uint8_t, 8>(alerts[i], i + alertAddr, dbNumber, mapCurrentAlert);
+            }
+            else if (bitLength == 16)
+            {
+                detailsAlert<uint16_t, 16>(alerts[i], i + alertAddr, dbNumber, mapCurrentAlert);
+            }
+        }
+    }
+    AlertWapper::updateRealtimeAlert(mapCurrentAlert, mapRecordAlert_);
+}
+
+template <typename ValueType, size_t TypeSize>
+inline void BasePLCDevice::detailsAlert(const ValueType &value, size_t site, uint16_t dbNumber,
+                                        std::map<std::string, std::string> &mapCurrentAlert)
+{
+    std::bitset<TypeSize> temp(value);
+
+    for (size_t j = 0; j < TypeSize; j++)
+    {
+        if (temp.test(j))
+        {
+            // 计算 key
+            const std::string key = fmt::format("{}_{}_{}", dbNumber, site, j);
+
+            auto finder = mapAlertStore_.find(key);
+            if (finder != mapAlertStore_.end())
+            {
+                // qDebug() << "parsAlertInfo key = " << key;
+                mapCurrentAlert[key] = finder->second;
+            }
+        }
+    }
 }

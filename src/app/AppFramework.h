@@ -2,11 +2,6 @@
 #include "NonCopyable.h"
 #include <QObject>
 #include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include <functional>
-#include <memory>
-#include <qobject.h>
-#include <string>
 
 namespace AppFrame
 {
@@ -29,7 +24,9 @@ enum class ExpectedFunction
     InitPageData = 13,    // 初始化页面数据
     PowerOff = 14,        // 自动关机
     GetPLCCount = 15,     // 获取PLC计数
-    GetDataReport = 16    // 获取测试数据报告
+    FuncTest = 16,        // 测试
+    EleSwitch = 17,       // 测试剔除
+    CollectTest = 18      // 采集测试
 };
 
 class AppFramework : public NonCopyable
@@ -44,9 +41,13 @@ class AppFramework : public NonCopyable
     static AppFramework &instance();
     virtual int run(QQmlApplicationEngine *) = 0;
     virtual QQmlApplicationEngine *getEngine() = 0;
+    virtual QObject *getMeta() = 0;
+    virtual void runAfter(std::string &&taskName, std::function<void(void)> &&task, uint32_t milliseconds = 0) = 0;
+    virtual void runEvery(std::string &&taskName, std::function<void(void)> &&task, uint32_t milliseconds = 0) = 0;
     virtual std::string expected(const ExpectedFunction &expectedType, const std::string &jsValue) = 0;
     virtual bool registerExpectation(const ExpectedFunction &expectedType,
                                      std::function<std::string(const std::string &)> &&api) = 0;
+    virtual void stop() = 0;
     virtual void quitProgram() = 0;
 
   public:

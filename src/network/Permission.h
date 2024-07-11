@@ -16,12 +16,13 @@ class Permission : public TCPClient
     void codeRight(uint32_t num, const std::string &code);
 
   private:
-    std::string strCodeError = "FFFFEor1\r\n";  // 激光码返回错误信息
-    std::string strSystemOk = "FFFFSysOK\r\n";  // 普什系统就绪
-    std::string strCodeNull = "FFFFNULL\r\n";   // 激光码空返回
-    std::string strSysEor1 = "FFFFSysEor1\r\n"; // 表示生产品出现连续NG等异常情况
-    std::string strHead = "FFFF";               // 协议头
-    std::string strTail = "\\r\\n";             // 协议尾
+    std::string strCodeError = "FFFFEor1";  // 激光码返回错误信息
+    std::string strCodeRepeat = "FFFFEor2"; // 激光码返回错误信息
+    std::string strSystemOk = "FFFFSysOK";  // 普什系统就绪
+    std::string strCodeNull = "FFFFNULL";   // 激光码空返回
+    std::string strSysEor1 = "FFFFSysEor1"; // 表示生产品出现连续NG等异常情况
+    std::string strHead = "FFFF";           // 协议头
+    std::string strTail = "\\r\\n";         // 协议尾
 };
 
 #endif // Permission_H

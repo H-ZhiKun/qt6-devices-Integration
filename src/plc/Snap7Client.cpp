@@ -2,35 +2,25 @@
 #include "snap7.h"
 #include <Logger.h>
 #include <QDebug>
-#include <chrono>
 #include <cstdint>
-#include <thread>
 #include <vector>
 
 Snap7Client::Snap7Client(const std::string &ip) : ip_(ip)
 {
-    // 启动连接线程
-    keepConnection();
 }
 
 Snap7Client::~Snap7Client()
 {
     // 设置线程退出条件为false
-    bConnected_.store(false, std::memory_order_release);
-    bThreadHolder_.store(false, std::memory_order_release);
-
+    bConnected_ = false;
+    bExit_ = true;
     // 唤醒连接线程并等待所有任务线程结束
-    cvConnector_.notify_all();
-
-    if (thKeepConnection_.joinable())
-    {
-        thKeepConnection_.join();
-    }
+    cvConnector_.notify_one();
 }
 
 bool Snap7Client::isConnected()
 {
-    return bConnected_.load(std::memory_order_acquire);
+    return bConnected_;
 }
 bool Snap7Client::readBit(const uint16_t dbNumber, const uint16_t address, const uint16_t bitPos, uint8_t &value)
 {
@@ -54,7 +44,7 @@ bool Snap7Client::readBytes(const uint16_t dbNumber, const uint16_t address, std
                  errorCode, CliErrorText(errorCode));
         if (!context_.Connected())
         {
-            bConnected_.store(false, std::memory_order_release);
+            bConnected_ = false;
             cvConnector_.notify_one();
         }
         return false;
@@ -137,11 +127,11 @@ bool Snap7Client::writeBytes(const uint16_t dbNumber, const uint16_t address, co
 
     if (errorCode != 0)
     {
-        LogError("Failed to write s7, addr = {}_{},size ={}, code = {},str = {}", dbNumber, address, values.size() * 2,
+        LogError("Failed to write s7, addr = {}_{},size ={}, code = {},str = {}", dbNumber, address, values.size(),
                  errorCode, CliErrorText(errorCode));
         if (!context_.Connected())
         {
-            bConnected_.store(false, std::memory_order_release);
+            bConnected_ = false;
             cvConnector_.notify_one();
         }
         return false;
@@ -190,28 +180,19 @@ bool Snap7Client::writeFloats(const uint16_t dbNumber, const uint16_t address, c
 
 void Snap7Client::keepConnection()
 {
-    thKeepConnection_ = std::thread([this]() {
-        while (bThreadHolder_.load(std::memory_order_acquire))
-        {
-            std::unique_lock lock(mtxContext_);
-
-            // 等待连接断开或者退出条件
-            cvConnector_.wait(lock, [this] { return bConnected_.load(std::memory_order_acquire) == false; });
-
-            // 检查线程退出条件
-            if (bThreadHolder_.load(std::memory_order_acquire) == false)
-                return;
-            int errorCode = context_.ConnectTo(ip_.c_str(), rack_, slot_);
-            if (errorCode == 0)
-            {
-                LogInfo("snap7 connect success");
-                bConnected_.store(true, std::memory_order_release);
-            }
-            else
-            {
-                LogInfo("snap7 connect failed,code = {}", errorCode);
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
-    });
+    std::unique_lock lock(mtxContext_);
+    // 等待连接断开或者退出条件
+    cvConnector_.wait(lock, [this] { return !bConnected_; });
+    if (bExit_)
+        return;
+    int errorCode = context_.ConnectTo(ip_.c_str(), rack_, slot_);
+    if (errorCode == 0)
+    {
+        LogInfo("snap7 connect success");
+        bConnected_ = true;
+    }
+    else
+    {
+        LogInfo("snap7 connect failed,code = {}", errorCode);
+    }
 }

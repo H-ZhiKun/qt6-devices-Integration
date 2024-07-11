@@ -33,8 +33,16 @@ class FormulaWapper
         Json::Value jsonValue = Utils::stringToJson(jsonString.toStdString());
         QVariantMap mapData;
         mapData.insert("name", jsonValue["name"].asCString());
-        mapData.insert("code_x_position", jsonValue["code_x_position"].asCString());
-        mapData.insert("code_y_position", jsonValue["code_y_position"].asCString());
+        if (jsonValue.isMember("code_x_position"))
+        {
+            mapData.insert("code_x_position", jsonValue["code_x_position"].asCString());
+            mapData.insert("code_y_position", jsonValue["code_y_position"].asCString());
+        }
+        if (jsonValue.isMember("impurity_locate"))
+        {
+            mapData.insert("impurity_locate", jsonValue["impurity_locate"].asCString());
+            mapData.insert("impurity_speed", jsonValue["impurity_speed"].asCString());
+        }
         // mapData.insert("impurity_locate", jsonValue["impurity_locate"].asCString());
         mapData.insert("speed_produce", jsonValue["speed_produce"].asCString());
         mapData.insert("acceleration_produce", jsonValue["acceleration_produce"].asCString());

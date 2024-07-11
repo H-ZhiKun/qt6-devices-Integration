@@ -19,6 +19,11 @@ AppFrame::AppMetaFlash::AppMetaFlash(QObject *parent) : QObject(parent)
     mapPageName_["bottom"] = PageIndex::PageBottom;
     mapPageName_["algorithm"] = PageIndex::PageAlgorithm;
     mapPageName_["statistics"] = PageIndex::PageStatistics;
+    mapImageWind_["192.168.0.2"] = "range1";
+    mapImageWind_["192.168.0.3"] = "range2";
+    mapImageWind_["192.168.0.4"] = "range3";
+    mapImageWind_["192.168.0.5"] = "range4";
+    mapImageWind_["192.168.0.6"] = "range5";
 }
 
 QString AppFrame::AppMetaFlash::qmlCallExpected(const ExpectedFunction &functionType, const QString &jsValue)
@@ -51,7 +56,7 @@ void AppFrame::AppMetaFlash::runtimeRoutine(PageIndex itemKey, const QString &va
     }
 }
 
-AppFrame::PageIndex AppFrame::AppMetaFlash::getPageIndex(const std::string &pageName)
+AppFrame::PageIndex AppFrame::AppMetaFlash::getPageIndex(const std::string &pageName) const
 {
     auto iter = mapPageName_.find(pageName);
     if (iter != mapPageName_.end())
@@ -59,4 +64,14 @@ AppFrame::PageIndex AppFrame::AppMetaFlash::getPageIndex(const std::string &page
         return iter->second;
     }
     return PageIndex::PageNull;
+}
+
+std::string AppFrame::AppMetaFlash::getWindName(const std::string &winName) const
+{
+    auto iter = mapImageWind_.find(winName);
+    if (iter != mapImageWind_.end())
+    {
+        return iter->second;
+    }
+    return "";
 }

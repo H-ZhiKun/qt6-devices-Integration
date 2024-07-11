@@ -61,11 +61,11 @@ void WebManager::processMessage(const ALGOType modelType, const std::string &dat
         break;
     }
     case ALGOType::OCR: {
-        LogInfo("get ocr info: {}", data);
         jsValue = Utils::stringToJson(data);
         bottomNum = jsValue["bottomNum"].asUInt();
         result = jsValue["result"].asString();
         result = result.substr(0, 24);
+        LogInfo("get ocr info: {}, bottomNum()", result, bottomNum);
         emit algoRight(modelType, bottomNum, result, jsValue["box"].asString());
         break;
     }
@@ -73,6 +73,7 @@ void WebManager::processMessage(const ALGOType modelType, const std::string &dat
         jsValue = Utils::stringToJson(data);
         bottomNum = jsValue["bottomNum"].asUInt();
         result = jsValue["result"].asString();
+        LogInfo("get check info: {}", result);
         emit algoRight(modelType, bottomNum, result);
         break;
     }

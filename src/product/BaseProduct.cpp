@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "ProductWapper.h"
 #include <cstdint>
+#include <fmt/core.h>
 #include <qimage.h>
 
 BaseProduct::BaseProduct(QObject *parent) : pdType_(TypeProduct::TypeBase), QObject(parent)
@@ -18,6 +19,7 @@ void BaseProduct::init(const YAML::Node &config)
     rotatingQueue_.resize(rotatingQueueLength_);
     printQueue_.resize(printQueueLength_);
     removeQueue_.resize(removeQueueLength_);
+    reRotatingQueue_.resize(reRotatingQueueLength_);
     // plcIds_ = {{keyStore_.bottle_num, 0},
     //            {keyStore_.qr_code, 0},
     //            {keyStore_.location_path, 0},
@@ -76,12 +78,6 @@ std::shared_ptr<ProductItem> BaseProduct::updateValue(const uint32_t productId, 
                                                       const ValueVariant &value)
 {
     std::lock_guard lock(mtxProduct_);
-    // uint32_t usedId = productId;
-    // if (key == keyStore_.qr_code || key == keyStore_.location_path || key == keyStore_.check_path ||
-    //     key == keyStore_.ocr_path)
-    // {
-    //     usedId = plcIds_.at(key) + 1;
-    // }
 
     auto findProductById = [&productId](const auto &product) -> bool { return product->bottleNumber() == productId; };
     auto iter = std::find_if(qProduct_.begin(), qProduct_.end(), findProductById);
@@ -89,24 +85,56 @@ std::shared_ptr<ProductItem> BaseProduct::updateValue(const uint32_t productId, 
     {
         auto product = *iter;
         product->setValue(key, value);
-        // if (key == keyStore_.qr_code || key == keyStore_.location_path || key == keyStore_.check_path ||
-        //     key == keyStore_.ocr_path)
-        // {
-        //     plcIds_.at(key) = usedId;
-        //     LogInfo("product id check,setValue qrcode={},location={},check={},ocr={}", plcIds_.at(keyStore_.qr_code),
-        //             plcIds_.at(keyStore_.location_path), plcIds_.at(keyStore_.check_path),
-        //             plcIds_.at(keyStore_.ocr_path));
-        // }
-        // else if (key == keyStore_.ocr_result)
-        // {
-        //     std::string code = std::get<std::string>(value);
-        //     std::string compare =
-        //         code == product->getValue<std::string>(BaseProduct::keyStore_.logistics) ? "true" : "false";
-        //     product->setValue(keyStore_.is_ocr_equal_code, compare);
-        // }
+        judgment(key, value, product);
         return product;
     }
+    LogInfo("product id={} not found, key={}", productId, key);
     return nullptr;
+}
+
+void BaseProduct::judgment(const std::string &key, const ValueVariant &value,
+                           const std::shared_ptr<ProductItem> &product)
+{
+    if (key == ProductItemKey::qr_code)
+    {
+        auto condition = std::get<std::string>(value);
+        if (condition == "no read")
+            product->setRemoveTrue();
+    }
+    else if (key == ProductItemKey::logistics)
+    {
+        auto condition = std::get<std::string>(value);
+        if (condition.size() != 24)
+        {
+            product->setRemoveTrue();
+            product->setPrintFalse();
+        }
+    }
+    else if (key == ProductItemKey::check_result)
+    {
+        auto condition = std::get<std::string>(value);
+        if (condition == "361")
+        {
+            product->setRemoveTrue();
+            product->setPrintFalse();
+        }
+    }
+    else if (key == ProductItemKey::ocr_result)
+    {
+        auto condition = std::get<std::string>(value);
+        std::string tempValue;
+        if (getType() == TypeProduct::TypeCap)
+        {
+            tempValue = condition == "1" ? "true" : "false";
+        }
+        else
+        {
+            tempValue = condition == product->getValue<std::string>(ProductItemKey::logistics) ? "true" : "false";
+        }
+        if (tempValue == "false")
+            product->setRemoveTrue();
+        product->setValue(ProductItemKey::is_ocr_equal_code, tempValue);
+    }
 }
 
 std::list<std::shared_ptr<ProductItem>> BaseProduct::deleteProduct(uint16_t count)
@@ -130,19 +158,40 @@ std::list<std::shared_ptr<ProductItem>> BaseProduct::deleteProduct(uint16_t coun
     return lvRet;
 }
 
-std::string BaseProduct::storeRotatingQueue(std::shared_ptr<ProductItem>)
+std::string BaseProduct::storeRotatingQueue(const std::string &value)
 {
-    return std::string();
+    auto pos = rotatingIndex_ % rotatingQueueLength_;
+    ++rotatingIndex_;
+    auto tempFloat = std::stof(value);
+    auto rotateValue = tempFloat * 100.0f;
+    rotatingQueue_[pos] = rotateValue;
+    return fmt::format("[{},{}]", pos, rotateValue);
 }
 
-std::string BaseProduct::storePrintQueue(std::shared_ptr<ProductItem>)
+std::string BaseProduct::storePrintQueue(uint8_t flag)
 {
-    return std::string();
+    auto pos = printIndex_ % printQueueLength_;
+    ++printIndex_;
+    printQueue_[pos] = flag;
+    return fmt::format("[{},{}]", pos, flag);
 }
 
-std::string BaseProduct::storeRemoveQueue(std::shared_ptr<ProductItem>)
+std::string BaseProduct::storeRemoveQueue(uint8_t flag)
 {
-    return std::string();
+    auto pos = removeIndex_ % removeQueueLength_;
+    ++removeIndex_;
+    removeQueue_[pos] = flag;
+    return fmt::format("[{},{}]", pos, flag);
+}
+
+std::string BaseProduct::storeReRotatingQueue(const std::string &value)
+{
+    auto pos = reRotatingIndex_ % reRotatingQueueLength_;
+    ++reRotatingIndex_;
+    auto tempFloat = std::stof(value);
+    auto rotateValue = tempFloat * 100.0f;
+    reRotatingQueue_[pos] = rotateValue;
+    return fmt::format("[{},{}]", pos, rotateValue);
 }
 
 void BaseProduct::clearQueue()
@@ -151,6 +200,11 @@ void BaseProduct::clearQueue()
     rotatingIndex_ = 0;
     printIndex_ = 0;
     removeIndex_ = 0;
+    reRotatingIndex_ = 0;
+    rotatingQueue_.assign(rotatingQueue_.size(), 0);
+    printQueue_.assign(printQueue_.size(), 0);
+    removeQueue_.assign(removeQueue_.size(), 0);
+    reRotatingQueue_.assign(reRotatingQueue_.size(), 0);
 }
 
 void BaseProduct::clearProductId()
@@ -161,6 +215,6 @@ void BaseProduct::setAllRemove()
 {
     for (auto &product : qProduct_)
     {
-        product->setRemove();
+        product->setRemoveTrue();
     }
 }

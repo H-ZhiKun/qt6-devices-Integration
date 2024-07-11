@@ -12,6 +12,7 @@
 #include <QSqlRecord>
 #include <QVariant>
 #include <json/json.h>
+#include <memory>
 
 class PgsqlHelper : public AppFrame::NonCopyable
 {
@@ -24,13 +25,13 @@ class PgsqlHelper : public AppFrame::NonCopyable
 
     ~PgsqlHelper()
     {
-        delete pool_;
     }
     bool initSqlHelper(const std::string &host, uint16_t port, const std::string &dbName, const std::string &user,
                        const std::string &password)
     {
-        pool_ = new PgsqlConnectionPool(host.c_str(), port, dbName.c_str(), user.c_str(), password.c_str(), 20, 5000);
-        return pool_->getCount();
+        pool_ = std::make_unique<PgsqlConnectionPool>(host.c_str(), port, dbName.c_str(), user.c_str(),
+                                                      password.c_str(), 20);
+        return pool_->getCount() > 0;
     }
     bool createTable(const std::string &tableName, std::list<std::string> &&fields) // ok
     {
@@ -74,7 +75,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         }
 
         sqlQuery += keys.join(", ") + ") VALUES (" + placeholders.left(placeholders.length() - 1) + ");";
-        LogInfo("insert data: {}", sqlQuery.toStdString());
+        // LogInfo("insert data: {}", sqlQuery.toStdString());
         QList<QVariantMap> sels;
         if (!executeSql(sels, std::move(sqlQuery), std::move(vals)))
         {
@@ -120,7 +121,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
 
         sqlQuery += valuePlaceholders.join(", ");
         sqlQuery += ";";
-        qDebug() << "Insert SQL: " << sqlQuery;
+        // qDebug() << "Insert SQL: " << sqlQuery;
 
         // Execute the SQL query
         QList<QVariantMap> result;
@@ -158,7 +159,7 @@ class PgsqlHelper : public AppFrame::NonCopyable
         sqlQuery += keys.join(" = ?, ");
         sqlQuery += " = ?";
         sqlQuery += QString(" WHERE ") + condition.c_str();
-        qDebug() << "sql update" << sqlQuery;
+        // qDebug() << "sql update" << sqlQuery;
         QList<QVariantMap> sels;
         if (!executeSql(sels, std::move(sqlQuery), std::move(vals)))
         {
@@ -376,58 +377,66 @@ class PgsqlHelper : public AppFrame::NonCopyable
                     bool isBatch = false)
     {
         bool ret = true;
-        QSqlDatabase *connect = pool_->getConnection();
+        auto connect = pool_->getConnection();
         if (connect == nullptr)
         {
-            LogError("database poll init failed!");
+            LogError("database poll get failed!");
             return false;
         }
-        QSqlQuery query(*connect);
-        query.prepare(sql);
-        for (const auto &val : vals)
+        try
         {
-            query.addBindValue(val);
-        }
-        bool execStatus = false;
-        if (isBatch)
-        {
-            execStatus = query.execBatch();
-        }
-        else
-        {
-            execStatus = query.exec();
-        }
-        if (execStatus)
-        {
-            if (query.isSelect())
+            QSqlQuery query(*connect);
+            query.prepare(sql);
+            for (const auto &val : vals)
             {
-                // 这是一个 SELECT 查询，可以处理结果集
-                while (query.next())
+                query.addBindValue(val);
+            }
+            bool execStatus = false;
+            if (isBatch)
+            {
+                execStatus = query.execBatch();
+            }
+            else
+            {
+                execStatus = query.exec();
+            }
+            if (execStatus)
+            {
+                if (query.isSelect())
                 {
-                    // 处理查询结果
-                    QVariantMap mapData;
-                    const QSqlRecord &record = query.record();
-                    for (int i = 0; i < record.count(); ++i)
+                    // 这是一个 SELECT 查询，可以处理结果集
+                    while (query.next())
                     {
-                        QString fieldName = record.fieldName(i);
-                        mapData[record.fieldName(i)] = record.value(i);
+                        // 处理查询结果
+                        QVariantMap mapData;
+                        const QSqlRecord &record = query.record();
+                        for (int i = 0; i < record.count(); ++i)
+                        {
+                            QString fieldName = record.fieldName(i);
+                            mapData[record.fieldName(i)] = record.value(i);
+                        }
+                        selectResults.append(mapData);
                     }
-                    selectResults.append(mapData);
+                }
+                else
+                {
+                    // 这不是一个 SELECT 查询，可能是 INSERT、UPDATE、DELETE 等
+                    // 执行相应的错误处理或其他操作
                 }
             }
             else
             {
-                // 这不是一个 SELECT 查询，可能是 INSERT、UPDATE、DELETE 等
-                // 执行相应的错误处理或其他操作
+                qDebug() << "query lastError: " << query.lastError().text();
+                LogError("query lastError: {}", query.lastError().text().toStdString());
+                ret = false;
             }
         }
-        else
+        catch (const std::exception &ex)
         {
-            qDebug() << "query lastError: " << query.lastError().text();
-            LogError("query lastError: {}", query.lastError().text().toStdString());
+            LogError("query exception caught: {}", ex.what());
             ret = false;
         }
-        pool_->releaseConnection(connect);
+        pool_->releaseConnection(std::move(connect));
         return ret;
     }
 
@@ -436,5 +445,5 @@ class PgsqlHelper : public AppFrame::NonCopyable
     {
     }
     QString connectionName_;
-    DBConnectionPool *pool_ = nullptr;
+    std::unique_ptr<DBConnectionPool> pool_ = nullptr;
 };

@@ -4,9 +4,10 @@
 class CapStatistics : public BaseStatistics
 {
   public:
-    explicit CapStatistics()
-    {
-        type_ = StatisticsType::CapType;
-    }
+    explicit CapStatistics();
     virtual ~CapStatistics() = default;
+    virtual void updateCount(const StatisticsKey key) override;
+
+  protected:
+    virtual QVariantMap serialization(const std::unordered_map<StatisticsKey, int32_t> &tempMap) override;
 };

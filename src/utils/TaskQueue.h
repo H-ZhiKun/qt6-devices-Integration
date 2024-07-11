@@ -3,12 +3,11 @@
 #include <functional>
 #include <future>
 #include <string>
-using namespace AppFrame;
-class TaskQueue : public NonCopyable
+class TaskQueue : public AppFrame::NonCopyable
 {
   public:
-    virtual void runTaskInQueue(const std::function<void()> &task) = 0;
-    virtual void runTaskInQueue(std::function<void()> &&task) = 0;
+    virtual void runTaskInQueue(const std::string &, const std::function<void()> &task) = 0;
+    virtual void runTaskInQueue(std::string &&, std::function<void()> &&task) = 0;
     virtual std::string getName() const
     {
         return "";
@@ -18,7 +17,7 @@ class TaskQueue : public NonCopyable
     {
         std::promise<int> prom;
         std::future<int> fut = prom.get_future();
-        runTaskInQueue([&]() {
+        runTaskInQueue("", [&]() {
             task();
             prom.set_value(1);
         });

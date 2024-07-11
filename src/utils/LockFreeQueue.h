@@ -51,7 +51,7 @@ template <typename T> class LockFreeQueue : public AppFrame::NonCopyable
         BufferNode *next = tail->next_.load(std::memory_order_acquire);
         return next == nullptr;
     }
-    uint16_t getSize()
+    uint16_t size()
     {
         return size_.load(std::memory_order_relaxed);
     }

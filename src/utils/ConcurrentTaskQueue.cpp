@@ -1,6 +1,7 @@
 #include "ConcurrentTaskQueue.h"
 #include <Logger.h>
 #include <assert.h>
+#include <cstddef>
 #include <fmt/core.h>
 #include <iostream>
 
@@ -9,24 +10,25 @@ ConcurrentTaskQueue::ConcurrentTaskQueue()
     queueCount_ = std::thread::hardware_concurrency();
     std::cout << "current hardware concurrency = " << queueCount_ << std::endl;
     assert(queueCount_ > 0);
-    execQueue_.resize(queueCount_);
-    for (uint16_t i = 0; i < queueCount_; ++i)
-    {
-        threads_.emplace_back(std::thread(std::bind(&ConcurrentTaskQueue::queueFunc, this, i)));
-    }
-    isInvalid_ = true;
+    expansion();
 }
 
-void ConcurrentTaskQueue::runTaskInQueue(const std::function<void()> &task)
+void ConcurrentTaskQueue::runTaskInQueue(const std::string &funcName, const std::function<void()> &task)
 {
+    if (stop_)
+        return;
+    expansion();
     std::lock_guard<std::mutex> lock(taskMutex_);
-    taskQueue_.push(task);
+    taskQueue_.push(TaskPackage(funcName, task));
     taskCond_.notify_one();
 }
-void ConcurrentTaskQueue::runTaskInQueue(std::function<void()> &&task)
+void ConcurrentTaskQueue::runTaskInQueue(std::string &&funcName, std::function<void()> &&task)
 {
+    if (stop_)
+        return;
+    expansion();
     std::lock_guard<std::mutex> lock(taskMutex_);
-    taskQueue_.push(std::move(task));
+    taskQueue_.push(std::move(TaskPackage(funcName, task)));
     taskCond_.notify_one();
 }
 void ConcurrentTaskQueue::queueFunc(const uint16_t queueNum)
@@ -34,6 +36,7 @@ void ConcurrentTaskQueue::queueFunc(const uint16_t queueNum)
     while (!stop_)
     {
         std::function<void()> r;
+        std::string funcName;
         {
             std::unique_lock<std::mutex> lock(taskMutex_);
             while (!stop_ && taskQueue_.size() == 0)
@@ -42,7 +45,9 @@ void ConcurrentTaskQueue::queueFunc(const uint16_t queueNum)
             }
             if (!taskQueue_.empty())
             {
-                r = std::move(taskQueue_.front());
+                auto &package = taskQueue_.front();
+                funcName = std::move(package.taskName_);
+                r = std::move(package.task_);
                 taskQueue_.pop();
             }
             else
@@ -50,13 +55,9 @@ void ConcurrentTaskQueue::queueFunc(const uint16_t queueNum)
                 continue;
             }
         }
-        execQueue_[queueNum] = 1;
-        auto inTaskCount = std::count_if(execQueue_.begin(), execQueue_.end(), [](uint8_t val) { return val == 1; });
-        std::cout << fmt::format("thread resource = {},thread in task = {},task queue = {}", queueCount_, inTaskCount,
-                                 taskQueue_.size())
-                  << std::endl;
+        storeTaskName(funcName);
         r();
-        execQueue_[queueNum] = 0;
+        removeTaskName(funcName);
     }
 }
 
@@ -66,6 +67,18 @@ size_t ConcurrentTaskQueue::getTaskCount()
     return taskQueue_.size();
 }
 
+size_t ConcurrentTaskQueue::storeTaskName(const std::string &taskName)
+{
+    std::lock_guard<std::mutex> lock(execMutex_);
+    lvExecution_.emplace_back(std::move(taskName));
+    return lvExecution_.size();
+}
+size_t ConcurrentTaskQueue::removeTaskName(const std::string &taskName)
+{
+    std::lock_guard<std::mutex> lock(execMutex_);
+    lvExecution_.remove_if([&taskName](const std::string &str) { return str == taskName; });
+    return lvExecution_.size();
+}
 void ConcurrentTaskQueue::stop()
 {
     if (!stop_)
@@ -73,11 +86,24 @@ void ConcurrentTaskQueue::stop()
         stop_ = true;
         taskCond_.notify_all();
         for (auto &t : threads_)
+        {
             t.join();
+        }
     }
 }
 ConcurrentTaskQueue::~ConcurrentTaskQueue()
 {
-    isInvalid_ = false;
     stop();
+}
+
+void ConcurrentTaskQueue::expansion()
+{
+    if (lvExecution_.size() == threads_.size() && threads_.size() <= queueCount_)
+    {
+        for (size_t i = 0; i < 5; ++i, ++threadId_)
+        {
+            threads_.emplace_back(std::thread(std::bind(&ConcurrentTaskQueue::queueFunc, this, threadId_)));
+            LogInfo("thread created id={}", threadId_);
+        }
+    }
 }

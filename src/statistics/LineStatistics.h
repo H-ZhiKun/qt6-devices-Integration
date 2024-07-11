@@ -4,9 +4,9 @@
 class LineStatistics : public BaseStatistics
 {
   public:
-    explicit LineStatistics()
-    {
-        type_ = StatisticsType::LineType;
-    }
+    explicit LineStatistics();
     virtual ~LineStatistics() = default;
+
+  protected:
+    virtual QVariantMap serialization(const std::unordered_map<StatisticsKey, int32_t> &tempMap) override;
 };

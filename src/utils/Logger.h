@@ -209,7 +209,7 @@ template <typename Mutex> class HtmlFormatSink final : public spdlog::sinks::bas
             pPrefix = R"(<font color=" #56B6C2">)";
             break;
         case spdlog::level::info:
-            pPrefix = R"(<font color=" #98C379">)";
+            pPrefix = R"(<font color=" #1a85fd">)";
             break;
         case spdlog::level::warn:
             pPrefix = R"(<font color=" #E5C07B">)";

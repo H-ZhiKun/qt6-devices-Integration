@@ -5,7 +5,7 @@
 class BaseClient
 {
   public:
-    BaseClient() = default;
+    explicit BaseClient() = default;
     virtual ~BaseClient() = default;
     BaseClient(const BaseClient &) = delete;
     BaseClient &operator=(const BaseClient &) = delete;
@@ -21,7 +21,5 @@ class BaseClient
     virtual bool writeWords(const uint16_t dbNumber, const uint16_t address, const std::vector<uint16_t> &values) = 0;
     virtual bool writeDInts(const uint16_t dbNumber, const uint16_t address, const std::vector<uint32_t> &values) = 0;
     virtual bool writeFloats(const uint16_t dbNumber, const uint16_t address, const std::vector<float> &values) = 0;
-
-  protected:
     virtual void keepConnection() = 0;
 };

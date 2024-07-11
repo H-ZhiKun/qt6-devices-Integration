@@ -1,11 +1,8 @@
 #include "DBConnectionPool.h"
-#include "Logger.h"
-#include "Utils.h"
-
+#include <mutex>
 DBConnectionPool::DBConnectionPool(QString host, quint16 port, QString dbName, QString user, QString password,
-                                   int maxConnections, int idleTimeout)
-    : host_(host), port_(port), dbName_(dbName), user_(user), password_(password), maxConnections_(maxConnections),
-      idleTimeout_(idleTimeout)
+                                   int maxConnections)
+    : host_(host), port_(port), dbName_(dbName), user_(user), password_(password), maxConnections_(maxConnections)
 {
 }
 
@@ -14,59 +11,46 @@ DBConnectionPool::~DBConnectionPool()
     releaseAllConnections();
 }
 
-QSqlDatabase *DBConnectionPool::getConnection()
+size_t DBConnectionPool::getCount()
 {
-    QMutexLocker locker(&mutex_);
-    QSqlDatabase *db = nullptr;
-    // 如果连接池中有可用连接，则返回
-    if (!connectionPool_.isEmpty())
+    std::lock_guard locker(mutex_);
+    return connectionPool_.size();
+}
+
+std::unique_ptr<QSqlDatabase> DBConnectionPool::getConnection()
+{
+    std::lock_guard locker(mutex_);
+    if (!connectionPool_.empty())
     {
-        db = connectionPool_.takeFirst();
-        if (!db->isOpen() || !db->isValid())
-        {
-            delete db;
-            db = nullptr;
-        }
+        auto db = std::move(connectionPool_.front());
+        connectionPool_.pop_front();
+        return db;
     }
     else
     {
-        if (connectionPool_.size() < maxConnections_)
-        {
-            db = createConnection();
-        }
+        return createConnection();
     }
-
-    return db;
 }
 
-void DBConnectionPool::releaseConnection(QSqlDatabase *db)
+void DBConnectionPool::releaseConnection(std::unique_ptr<QSqlDatabase> &&db)
 {
-    if (db != nullptr)
-    {
-        if (db->isOpen() && db->isValid())
-        {
-            QMutexLocker locker(&mutex_);
-            connectionPool_.append(db);
-        }
-        else
-        {
-            delete db;
-        }
-    }
+    std::lock_guard locker(mutex_);
+    if (db->isOpen())
+        connectionPool_.push_back(std::move(db));
+}
+
+std::unique_ptr<QSqlDatabase> DBConnectionPool::createConnection()
+{
+    return {};
 }
 
 void DBConnectionPool::releaseAllConnections()
 {
-    QMutexLocker locker(&mutex_);
-
-    for (QSqlDatabase *db : connectionPool_)
+    std::lock_guard locker(mutex_);
+    for (auto &db : connectionPool_)
     {
-        if (db->isOpen())
-        {
-            db->close();
-        }
-        delete db;
+        db->close();
+        QSqlDatabase::removeDatabase(db->connectionName());
     }
-
     connectionPool_.clear();
 }

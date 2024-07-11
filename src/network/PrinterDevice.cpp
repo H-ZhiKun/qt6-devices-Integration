@@ -1,16 +1,20 @@
 #include "PrinterDevice.h"
 #include "Logger.h"
+#include "Utils.h"
+#include <cstdint>
 #include <qtmetamacros.h>
+#include <string>
 
 PrinterDevice::PrinterDevice(QObject *parent) : TCPClient(parent)
 {
     lvStartCMD_.push_back(cmdStateChange_);
     lvStartCMD_.push_back(cmdPrinting_);
-    lvStartCMD_.push_back(cmdFinishPrint_);
+    // lvStartCMD_.push_back(cmdFinishPrint_);
     // lvStartCMD_.push_back(cmdCompile_);
     lvStartCMD_.push_back(cmdBufferWarning_);
     lvStartCMD_.push_back(cmdBufferCover_);
     lvStartCMD_.push_back(cmdBufferClear_);
+    lvStartCMD_.push_back(cmdMarkStart_);
     // lvStartCMD_.push_back(cmdPrintState_);
 }
 
@@ -28,17 +32,30 @@ void PrinterDevice::dealing(std::vector<unsigned char> buffer)
     {
         doStart();
     }
-    else if (originalString.contains("RESULT GETMARKMODE 0"))
+    if (originalString.contains("RESULT GETMARKMODE 0"))
     {
         sendData(QByteArray::fromStdString(cmdResetSystem_ + cmdTail_));
         lvStartCMD_.push_back(cmdMarkStart_);
+        return;
     }
-    else if (originalString.contains("RESULT GETMARKMODE 1"))
+    if (originalString.contains("RESULT GETMARKMODE 1"))
     {
         needSendBuffer_ = true;
+        return;
     }
-    else if (originalString.contains("MSG 2") && !originalString.contains("SETMSG"))
+    if (originalString.contains("MSG 2") && !originalString.contains("SETMSG"))
     {
+        if (originalString.size() > 9)
+        {
+            uint16_t msgNum = Utils::countSubstrings(originalString.toStdString(), std::string("MSG 2"));
+            while (msgNum > 1)
+            {
+                needSendBuffer_ = true;
+                emit printComplete();
+                doPrint();
+                msgNum--;
+            }
+        }
         needSendBuffer_ = true;
         emit printComplete();
     }
@@ -53,6 +70,9 @@ void PrinterDevice::sendOnceWhenConnected()
 
 void PrinterDevice::pushCode(std::string code)
 {
+    // std::string testCode = code;
+    // testCode[2] = '.';
+    // lvPrintCodes_.push_back(testCode);
     lvPrintCodes_.push_back(code);
     doPrint();
     LogInfo("printer push code: {},list size = {}", code, lvPrintCodes_.size());
@@ -77,18 +97,29 @@ void PrinterDevice::doPrint()
     if (needSendBuffer_ && lvPrintCodes_.size() > 0)
     {
         auto code = lvPrintCodes_.front();
-        // 使用 substr 分割成两个子串
-        uint16_t middle = code.length() / 2;
-        std::string firstHalf = code.substr(0, middle);
-        std::string secondHalf = code.substr(middle);
-        code = cmdBufferData_ + " " + secondHalf + " " + firstHalf + "\r\n";
+        if (code.size() == 24)
+        {
+            // 使用 substr 分割成两个子串
+            uint16_t middle = code.length() / 2;
+            std::string firstHalf = code.substr(0, middle);
+            std::string secondHalf = code.substr(middle);
+            code = cmdBufferData_ + " " + firstHalf + " " + secondHalf + "\r\n";
+        }
+        else
+        {
+            code = "BUFFERDATA -1 \" \" \" \"\r\n";
+        }
         if (sendData(QByteArray::fromStdString(code)))
         {
             needSendBuffer_ = false;
             lvPrintCodes_.pop_front();
-            LogInfo("printer print: {}", code);
+            LogInfo("printer recv: and printer print: {}", code);
             emit printSend();
         }
+    }
+    else
+    {
+        LogInfo("printer recv: doPrint failed, needSendBuffer_ :{}, size: {}", needSendBuffer_, lvPrintCodes_.size());
     }
 }
 

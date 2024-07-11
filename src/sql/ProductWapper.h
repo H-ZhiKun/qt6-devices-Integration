@@ -14,7 +14,7 @@ class ProductWapper
             ProductItemKey::location_result.c_str(),  ProductItemKey::check_result.c_str(),
             ProductItemKey::ocr_result.c_str(),       ProductItemKey::coding_values.c_str(),
             ProductItemKey::remove_values.c_str(),    ProductItemKey::rotating_values.c_str(),
-            ProductItemKey::is_ocr_equal_code.c_str()};
+            ProductItemKey::is_ocr_equal_code.c_str(), ProductItemKey::rerotating_values.c_str()};
         QVariantMap mapData;
 
         // mapData.insert(QString::fromStdString(ProductItemKey::formula_name), formula.c_str());
@@ -59,6 +59,7 @@ class ProductWapper
 
     static Json::Value selectDetailCountData()
     {
+        // 小奥这里查询会引发异常，由于这里异常导致数据库连接无法安全释放
         int countAll = PgsqlHelper::getSqlHelper().selectCount("product_data", "created_time >= CURRENT_DATE");
         int countQRCodeWaste = PgsqlHelper::getSqlHelper().selectCount(
             "product_data", "created_time >= CURRENT_DATE AND qr_code = 'no read'"); // 扫码器扫码失败次数

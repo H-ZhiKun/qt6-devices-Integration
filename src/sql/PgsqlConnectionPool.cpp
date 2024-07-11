@@ -1,22 +1,24 @@
 #include "PgsqlConnectionPool.h"
 #include "Logger.h"
 
-QSqlDatabase *PgsqlConnectionPool::createConnection()
+std::unique_ptr<QSqlDatabase> PgsqlConnectionPool::createConnection()
 {
-    QString name = QString("pgsql_connection_") + QString::number(count_);
-    QSqlDatabase *db = new QSqlDatabase(QSqlDatabase::addDatabase("QPSQL", name)); // 使用 "QPSQL" 代表 PostgreSQL
+
+    QString name = QString("pgsql_connection_%1").arg(count_++);
+    auto db = std::make_unique<QSqlDatabase>(QSqlDatabase::addDatabase("QPSQL", name));
     db->setHostName(host_);
-    db->setPort(port_); // PostgreSQL 默认端口号是 5132
+    db->setPort(port_);
     db->setDatabaseName(dbName_);
-    db->setUserName(user_);     // PostgreSQL 默认用户名是 "postgres"
-    db->setPassword(password_); // 注意使用的密码"~!dtfs@#"
+    db->setUserName(user_);
+    db->setPassword(password_);
     if (!db->open())
     {
         QSqlError error = db->lastError();
-        LogError("\r\n Database error:  {}", error.text().toStdString());
-        delete db;
-        return nullptr;
+        db.reset();
+        QSqlDatabase::removeDatabase(name);
+        LogError("create sql connection error,{}", error.text().toStdString());
+        return {};
     }
-    count_++;
+    LogInfo("create sql connection size={}", count_);
     return db;
 }

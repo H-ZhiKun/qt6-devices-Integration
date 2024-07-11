@@ -1,8 +1,9 @@
 ﻿#include "CameraManager.h"
 #include "Logger.h"
 #include <QDebug>
-#include <chrono>
+#include <memory>
 #include <mutex>
+
 using namespace BGAPI2;
 
 void BGAPI2CALL PnPEventHandler(void *callBackOwner, BGAPI2::Events::PnPEvent *pPnPEvent)
@@ -34,27 +35,27 @@ CameraManager::~CameraManager()
     stop();
 }
 
-void CameraManager::start(const YAML::Node &launchConfig)
+void CameraManager::init(const YAML::Node &config)
 {
 
-    interfaceMAC_ = launchConfig["baumer"]["interface"]["mac"].as<std::string>();
+    interfaceMAC_ = config["baumer"]["interface"]["mac"].as<std::string>();
     std::transform(interfaceMAC_.begin(), interfaceMAC_.end(), interfaceMAC_.begin(),
                    [](unsigned char c) { return std::tolower(c); });
     std::replace(interfaceMAC_.begin(), interfaceMAC_.end(), '-', ':');
-    interfaceMask_ = launchConfig["baumer"]["interface"]["mask"].as<std::string>();
-    interfaceIp_ = launchConfig["baumer"]["interface"]["ip"].as<std::string>();
+    interfaceMask_ = config["baumer"]["interface"]["mask"].as<std::string>();
+    interfaceIp_ = config["baumer"]["interface"]["ip"].as<std::string>();
 
-    nodeParams_ = launchConfig["baumer"]["camera"];
+    nodeParams_ = config["baumer"]["camera"];
 
     for (const auto &group : nodeParams_)
     {
         const auto &key = group["display_window"].as<std::string>();
         mapCameraCounts_[key] = 0;
     }
-
-    // 以下是后台任务，不会阻塞主线程
-    searchCamera();   // 后台执行相机查找逻辑并添加
-    getCameraImage(); // 后台执行图像获取
+    initTimer();
+    // 以下是后台任务，不能阻塞主线程
+    initializeBGAPI();
+    searchCamera(); // 后台执行相机查找逻辑并添加
 }
 
 void CameraManager::cleanCameraCount()
@@ -75,80 +76,75 @@ void CameraManager::resetCameraCount(const std::string &key, const uint32_t inpu
 
 void CameraManager::searchCamera()
 {
-    thSearch_ = std::thread([this] {
-        initializeBGAPI();
-        while (bHold_.load(std::memory_order_acquire))
+    try
+    {
+        LogInfo("process in search camera.");
+        BGAPI2::InterfaceList *interface_list = pSystem_->GetInterfaces();
+        interface_list->Refresh(100);
+        for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin(); ifc_iter != interface_list->end();
+             ifc_iter++)
         {
-            try
+            if (ifc_iter->second->IsOpen())
             {
-                BGAPI2::InterfaceList *interface_list = pSystem_->GetInterfaces();
-                interface_list->Refresh(100);
-                for (BGAPI2::InterfaceList::iterator ifc_iter = interface_list->begin();
-                     ifc_iter != interface_list->end(); ifc_iter++)
+                BGAPI2::DeviceList *device_list = ifc_iter->second->GetDevices();
+                device_list->Refresh(100);
+                for (BGAPI2::DeviceList::iterator device_iter = device_list->begin(); device_iter != device_list->end();
+                     device_iter++)
                 {
-                    if (ifc_iter->second->IsOpen())
+                    BGAPI2::NodeMap *pDeviceNodeMap = device_iter->second->GetNodeList();
+                    std::string number = device_iter->second->GetSerialNumber().get();
+                    if (forceIP(number, pDeviceNodeMap))
                     {
-                        BGAPI2::DeviceList *device_list = ifc_iter->second->GetDevices();
-                        device_list->Refresh(100);
-                        for (BGAPI2::DeviceList::iterator device_iter = device_list->begin();
-                             device_iter != device_list->end(); device_iter++)
-                        {
-                            BGAPI2::NodeMap *pDeviceNodeMap = device_iter->second->GetNodeList();
-                            std::string number = device_iter->second->GetSerialNumber().get();
-                            if (forceIP(number, pDeviceNodeMap))
-                            {
-                                continue;
-                            }
-                            std::string status = device_iter->second->GetAccessStatus().get();
-                            if (status == "RW" && !device_iter->second->IsOpen())
-                            {
-                                addCamera(number, device_iter->second);
-                            }
-                        }
+                        continue;
+                    }
+                    std::string status = device_iter->second->GetAccessStatus().get();
+                    if (status == "RW" && !device_iter->second->IsOpen())
+                    {
+                        addCamera(number, device_iter->second);
                     }
                 }
             }
-            catch (BGAPI2::Exceptions::IException &ex)
-            {
-                LogError("Error Type: {}", ex.GetType().get());
-                LogError("Error function: {}", ex.GetFunctionName().get());
-                LogError("Error description: {}", ex.GetErrorDescription().get());
-            }
-            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
-    });
+    }
+    catch (BGAPI2::Exceptions::IException &ex)
+    {
+        LogError("Error Type: {}", ex.GetType().get());
+        LogError("Error function: {}", ex.GetFunctionName().get());
+        LogError("Error description: {}", ex.GetErrorDescription().get());
+    }
 }
 
 void CameraManager::stop()
 {
-    bHold_.store(false, std::memory_order_release);
-    if (thSearch_.joinable())
-        thSearch_.join();
-    if (thCaputure_.joinable())
-        thCaputure_.join();
+    bHold_ = false;
+    timerSearch_->stop();
     mapCameras_.clear();
     deinitializeBGAPI();
 }
 
-void CameraManager::getCameraImage()
+void CameraManager::initTimer()
 {
-    thCaputure_ = std::thread([this] {
-        while (bHold_.load(std::memory_order_acquire))
+    timerSearch_ = new QTimer(this);
+    QObject::connect(timerSearch_, &QTimer::timeout, [this]() { emit signalSearch(); });
+    timerSearch_->setInterval(5000);
+    timerSearch_->start();
+}
+
+void CameraManager::captureImageStart()
+{
+    for (const auto &[key, cam] : mapCameras_)
+    {
+        auto mat = cam->getCurrentMat();
+        if (!mat.empty())
         {
-            for (const auto &[key, cam] : mapCameras_)
-            {
-                auto mat = cam->getCurrentMat();
-                if (!mat.empty())
-                {
-                    std::lock_guard lock(mtxCount_);
-                    auto &count = mapCameraCounts_.at(key);
-                    ++count;
-                    emit caputureImage(key, count, mat);
-                }
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::lock_guard lock(mtxCount_);
+            if (!bHold_)
+                return;
+            auto &count = mapCameraCounts_.at(key);
+            ++count;
+            emit signalImgGet(key, count, mat);
         }
-    });
+    }
 }
 
 void CameraManager::initializeBGAPI()

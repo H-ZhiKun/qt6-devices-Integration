@@ -5,7 +5,6 @@
 #include <modbus.h>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <vector>
 
 /**
@@ -54,18 +53,14 @@ class ModbusClient : public BaseClient
                             const std::vector<uint32_t> &values) override;
     virtual bool writeFloats(const uint16_t dbNumber, const uint16_t address,
                              const std::vector<float> &values) override;
+    virtual void keepConnection() override;
 
   protected:
-    /**
-     * @brief 自动重连到Modbus设备
-     */
-    virtual void keepConnection() override;
     std::string ip_;
     uint16_t port_;
-    modbus_t *mbsContext_ = nullptr;       /**< Modbus上下文指针 */
-    std::mutex mtxMbs_;                    /**< 互斥锁，用于保护Modbus访问 */
-    std::thread thKeepConnection_;         // 保持连接线程。
-    std::atomic_bool bThreadHolder_{true}; // 线程保持者，在析构中退出。
-    std::condition_variable cvConnector_;  // 重连线程条件变量
-    std::atomic_bool bConnected_{false};   // 当前连接设备状态
+    modbus_t *mbsContext_ = nullptr;      /**< Modbus上下文指针 */
+    std::mutex mtxMbs_;                   /**< 互斥锁，用于保护Modbus访问 */
+    std::condition_variable cvConnector_; // 重连线程条件变量
+    std::atomic_bool bConnected_{false};  // 当前连接设备状态
+    bool bExit_ = false;
 };

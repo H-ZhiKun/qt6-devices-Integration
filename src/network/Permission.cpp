@@ -9,6 +9,7 @@ Permission::Permission(QObject *parent) : TCPClient(parent)
 
 Permission::~Permission()
 {
+    sendData("FIN\r\n");
 }
 
 void Permission::dealing(std::vector<unsigned char> buffer)
@@ -21,7 +22,7 @@ void Permission::dealing(std::vector<unsigned char> buffer)
         auto vResult = Utils::splitString(info, ",");
         if (vResult.size() == 5)
         {
-            return;
+            continue;
         }
         size_t commaPos = info.find_first_of(',');
         std::string code;
@@ -30,7 +31,17 @@ void Permission::dealing(std::vector<unsigned char> buffer)
         {
             QString strNumber = QString().fromStdString(info.substr(0, commaPos));
             number = strNumber.replace("FFFF", "").toInt();
-            code = info.substr(commaPos + 1); // 添加1来跳过逗号
+            code = info.substr(commaPos + 1);
+            if (code.size() > 20)
+            {
+                uint16_t middle = code.length() / 2;
+                std::string firstHalf = code.substr(0, middle);
+                std::string secondHalf = code.substr(middle);
+                // 根据与普什信息沟通，将收到的物流码24位
+                // 前12打印在第二行
+                // 后12打印在第一行
+                code = secondHalf + firstHalf;
+            }
             emit codeRight(number, code);
             LogInfo("Permission::add count : {}: {}, info: {}, result: {}", number, code, info, result);
         }

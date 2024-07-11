@@ -2,7 +2,6 @@
 #include <vld/vld.h>
 #endif
 #include "AppFramework.h"
-#include "AppTest.h"
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQuickStyle>
@@ -36,5 +35,7 @@ int main(int argc, char *argv[])
         Qt::AutoConnection);
     app.setWindowIcon(QIcon("file:///" + qApp->applicationDirPath() + "/ico/logo4.ico")); // 添加图标
     appFramework().run(&engine);
-    return app.exec();
+    int retCode = app.exec();
+    appFramework().stop();
+    return retCode;
 }

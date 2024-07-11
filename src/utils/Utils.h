@@ -7,6 +7,7 @@
 #include <chrono>
 #include <filesystem>
 #include <json/json.h>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/opencv.hpp>
 #include <qimage.h>
 #include <string>
@@ -107,8 +108,6 @@ class Utils
      */
     static bool removeOutdatedFiles(const std::string &currentTime, const std::string &path, int offsetDay);
 
-    static void asyncTask(std::function<void(void)> &&task);
-
     static void appExit(int exitCode = 0);
 
     static QImage matToQImage(const cv::Mat &matData);
@@ -134,7 +133,7 @@ class Utils
         ss >> value;
         return value;
     }
-    static void saveImageToLocal(const QImage &image, const QString &filePath);
+    static void saveMatToLocal(const cv::Mat &image, const std::string &filePath);
     static cv::Mat qImageToMat(QImage &qim);
     static std::vector<std::string> splitString(const std::string &input, const std::string &delimiter);
     static void makeJsonAndByteArray(const cv::Mat &algoImage, const uint16_t bottomNum, std::string &jsonBody,
@@ -144,4 +143,5 @@ class Utils
     static void drawImgText(QImage &img, const std::string &text,
                             const std::string &area); // 图像添加文字
     static std::string transferDataFromSql(std::string);
+    static uint16_t countSubstrings(const std::string &s, const std::string &&sub);
 };

@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <vector>
 
 /**
@@ -38,19 +37,18 @@ class Snap7Client : public BaseClient
                             const std::vector<uint32_t> &values) override;
     virtual bool writeFloats(const uint16_t dbNumber, const uint16_t address,
                              const std::vector<float> &values) override;
-
-  protected:
     /**
      * @brief 自动重连到Modbus设备
      */
     virtual void keepConnection() override;
+
+  protected:
     std::string ip_;
     std::mutex mtxContext_;
-    uint16_t rack_ = 0;                    // 机架号 默认0
-    uint16_t slot_ = 0;                    // 槽号 默认0
-    TS7Client context_;                    /**< Modbus上下文指针 */
-    std::thread thKeepConnection_;         // 保持连接线程。
-    std::atomic_bool bThreadHolder_{true}; // 线程保持者，在析构中退出。
-    std::condition_variable cvConnector_;  // 重连线程条件变量
-    std::atomic_bool bConnected_{false};   // 当前连接设备状态
+    uint16_t rack_ = 0;                   // 机架号 默认0
+    uint16_t slot_ = 0;                   // 槽号 默认0
+    TS7Client context_;                   /**< Modbus上下文指针 */
+    std::condition_variable cvConnector_; // 重连线程条件变量
+    std::atomic_bool bConnected_{false};  // 当前连接设备状态
+    bool bExit_ = false;
 };

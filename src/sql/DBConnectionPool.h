@@ -6,29 +6,24 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QWaitCondition>
+#include <cstddef>
+#include <memory>
+#include <mutex>
 
 class DBConnectionPool
 {
   public:
     explicit DBConnectionPool(QString host, quint16 port, QString dbName, QString user, QString password,
-                              int maxConnections = 5, int idleTimeout = 5000);
+                              int maxConnections = 20);
     virtual ~DBConnectionPool();
-    int getCount()
-    {
-        return count_;
-    }
-    QSqlDatabase *getConnection();
-    void releaseConnection(QSqlDatabase *db);
-
-  public:
-    virtual QSqlDatabase *createConnection()
-    {
-        return nullptr;
-    };
+    size_t getCount();
+    std::unique_ptr<QSqlDatabase> getConnection();
+    void releaseConnection(std::unique_ptr<QSqlDatabase> &&db);
 
   protected:
-    QList<QSqlDatabase *> connectionPool_;
-    QMutex mutex_;
+    virtual std::unique_ptr<QSqlDatabase> createConnection();
+    std::list<std::unique_ptr<QSqlDatabase>> connectionPool_;
+    std::mutex mutex_;
     int maxConnections_;
     int count_ = 0;
     int idleTimeout_;

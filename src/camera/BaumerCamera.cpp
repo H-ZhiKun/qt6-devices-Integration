@@ -2,7 +2,6 @@
 #include "BaumerCamera.h"
 #include "Logger.h"
 #include <QDebug>
-#include <QThread>
 #include <string>
 
 void BGAPI2CALL BufferHandler(void *callBackOwner, BGAPI2::Buffer *pBufferFilled)
@@ -223,14 +222,13 @@ void BaumerCamera::storeImg(unsigned char *buffer, const std::string &pixFormat,
 cv::Mat BaumerCamera::getCurrentMat()
 {
     std::lock_guard lock(mtxCRT);
-    cv::Mat mat;
     if (matBuffers_.empty())
     {
-        return mat;
+        return {};
     }
     else
     {
-        mat = matBuffers_.front();
+        auto mat = matBuffers_.front();
         matBuffers_.pop();
         return mat;
     }

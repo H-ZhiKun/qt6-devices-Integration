@@ -1,6 +1,8 @@
 #include "Cognex.h"
 #include "Logger.h"
+#include "Utils.h"
 #include <atomic>
+#include <string>
 
 Cognex::Cognex(QObject *parent)
 {
@@ -9,15 +11,21 @@ Cognex::Cognex(QObject *parent)
 void Cognex::dealing(std::vector<unsigned char> buffer)
 {
     std::string str(buffer.begin(), buffer.end());
-    LogInfo("Cognex recv: {}", str);
-    size_t commaPos = str.find_first_of(',');
-    std::string code = "no read";
-    recvCount_.fetch_add(1, std::memory_order_release);
-    if (commaPos != std::string::npos)
+    LogInfo("Cognex recv all: {}", str);
+    auto vRecvData = Utils::splitString(str, "\r\n");
+    for (const auto &info : vRecvData)
     {
-        code = str.substr(commaPos + 1); // 添加1来跳过逗号
+        std::string code = "no read";
+        size_t commaPos = info.find_first_of(',');
+        recvCount_.fetch_add(1, std::memory_order_release);
+        int recvCount = recvCount_.load(std::memory_order_acquire);
+        LogInfo("Cognex recv: {}, qrCode count: {}", info, recvCount);
+        if (commaPos != std::string::npos)
+        {
+            code = info.substr(commaPos + 1); // 添加1来跳过逗号
+        }
+        emit readQRCode(recvCount, code);
     }
-    emit readQRCode(recvCount_.load(std::memory_order_acquire), code);
 }
 
 Cognex::~Cognex() noexcept

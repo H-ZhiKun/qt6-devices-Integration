@@ -24,11 +24,12 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 include_directories(${3RD_ROOT_DIR}/include/
+                    ${CMAKE_SOURCE_DIR}/src/app
+                    ${CMAKE_SOURCE_DIR}/src/app/interface
                     ${CMAKE_SOURCE_DIR}/src/utils
                     ${CMAKE_SOURCE_DIR}/src/sql
                     ${CMAKE_SOURCE_DIR}/src/network
                     ${CMAKE_SOURCE_DIR}/src/plc
-                    ${CMAKE_SOURCE_DIR}/src/app
                     ${CMAKE_SOURCE_DIR}/src/camera
                     ${CMAKE_SOURCE_DIR}/src/http
                     ${CMAKE_SOURCE_DIR}/src/product
@@ -55,7 +56,6 @@ qt_standard_project_setup(REQUIRES 6.5)
 #使用aux_source_directory把当前目录下的源文件存列表存放到变量SRC_LIST里
 aux_source_directory (./src/utils SRC_UTILS)
 aux_source_directory (./src/sql SRC_SQL)
-aux_source_directory (./src/app SRC_APP)
 aux_source_directory (./src/network SRC_NETWORK)
 aux_source_directory (./src/plc SRC_PLC)
 aux_source_directory (./src/camera SRC_CAMERA)
@@ -64,16 +64,19 @@ aux_source_directory (./src/product SRC_PRODUCT)
 aux_source_directory (./src/gpu SRC_GPU)
 aux_source_directory (./src/statistics SRC_STATISTICS)
 aux_source_directory (./src/test SRC_TEST)
+aux_source_directory (./src/app SRC_APP)
+aux_source_directory (./src/app/interface SRC_APP_INTERFACE)
 
 qt_add_executable(${PROJECT_NAME}
         src/main.cpp
+        ${SRC_APP}
+        ${SRC_APP_INTERFACE}
         ${SRC_STATISTICS}
         ${SRC_SQL}
         ${SRC_UTILS}
         ${SRC_NETWORK}
         ${SRC_PLC}
         ${SRC_CAMERA}
-        ${SRC_APP}
         ${SRC_HTTP}
         ${SRC_PRODUCT}
         ${SRC_GPU}
@@ -133,7 +136,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     spdlog::spdlog
     cryptopp::cryptopp
     xlnt::xlnt
-    yaml-cpp
+    yaml-cpp::yaml-cpp
     modbus
     ${OpenCV_LIBS}
     ${THIRD_PARTY_LIBS}  # 添加所有第三方库文件
